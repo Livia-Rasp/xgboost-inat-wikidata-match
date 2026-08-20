@@ -10,9 +10,14 @@ Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-matc
 
 ## Status
 
-Nothing is implemented yet — this repo currently holds only the spec. No commands run.
+Repo scaffold is in place (`pyproject.toml`, `src/` module stubs, `gold/`, `notebooks/`); no
+milestone from the spec's §7 list is implemented yet.
 
 ## Install / run
 
-Not yet — the Python package layout (`pyproject.toml`, `src/`) described in the spec has not
-been built. This section will carry the real commands once it has.
+```
+pip install -e ".[dev]"
+```
+
+No scripts have real logic yet — this section will carry the real commands as the spec's
+milestones (§7) land.
