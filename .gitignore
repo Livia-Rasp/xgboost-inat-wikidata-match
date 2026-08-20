@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.ipynb_checkpoints/
+
+# Project data and model artifacts
+data/
+*.parquet
+*.model
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+credentials.json
