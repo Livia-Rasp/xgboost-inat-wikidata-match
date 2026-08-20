@@ -10,10 +10,15 @@ Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-matc
 
 ## Status
 
-Milestone 1 of the spec's §7 list (**ingest**) is done. `src/normalize.py` implements the
-name-normalisation rules from spec §1; `src/candidates.py` builds a cached normalised-name +
-FTS5 trigram lookup table from the local iNat taxa index, read-only. No other milestone is
-implemented yet.
+Milestones 1–2 of the spec's §7 list are done.
+
+- **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
+  and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
+  read-only.
+- **Wikidata pull** (`src/wikidata.py`): batched SPARQL, `LIMIT`-capped to 60,000 taxa with
+  P3151 set (of 856,040 that actually have it — see Commands below), cached to parquet.
+
+No other milestone is implemented yet.
 
 ## Install / run
 
@@ -37,15 +42,16 @@ days. `npm run links` is the one worth running here since it also produces
 
 ### This repo
 
-```
-pip install -e ".[dev]"
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -e ".[dev]"
 ```
 
 **Ingest check (milestone 1).** Reads `~/.cache/wikidata-inat-checker/taxa.db` read-only,
 builds a cache at `data/lookup.sqlite` (gitignored — first run ~20s over 1.4M rows, cached
 after), and looks up `prunella`, the spec's acceptance check: a genus name shared by a bird
 family (Prunellidae) and a mint family (Lamiaceae) that only differ by ancestry. Run from the
-repo root; needs no dependencies beyond the standard library.
+repo root; needs no dependencies beyond the standard library, so `python3` (no venv) works too.
 
 ```
 python3 -m src.candidates
@@ -57,6 +63,26 @@ Expected output:
 2 match(es) for 'prunella':
   {'taxon_id': '13982', 'name': 'Prunella', 'rank': 'genus', 'ancestry': '48460/1/2/355675/3/7251/71358'}
   {'taxon_id': '52765', 'name': 'Prunella', 'rank': 'genus', 'ancestry': '48460/47126/211194/47125/47124/48151/48623/520502/918917/919181'}
+```
+
+**Wikidata pull (milestone 2).** Batched SPARQL against `https://query.wikidata.org/sparql` for
+taxa carrying P3151, cached to `data/wikidata_taxa.parquet` (+ a sidecar manifest that the
+cache-hit check compares against, gitignored). Needs the venv (`pandas`, `pyarrow`, `requests`).
+First run takes a few minutes and makes ~30 batched network requests; reruns are a cache hit.
+
+```
+.venv/bin/python -m src.wikidata
+```
+
+Expected output (first run — a fresh pull; reruns say `cache hit, no network` and return in
+under a second):
+
+```
+58,064 Wikidata taxa with P3151 (fresh pull)
+        qid inat_id                      name rank_qid parent_qid   parent_name iucn_qid  sitelinks  statements  has_commons_cat  p3151_has_reference
+0   Q557493   18161    Melanerpes uropygialis    Q7432    Q131901    Melanerpes  Q211005         31          74             True                False
+1   Q569535   18205      Melanerpes carolinus    Q7432    Q131901    Melanerpes  Q211005         34          94             True                False
+2  Q1263378    1371  Odontophorus leucolaemus    Q7432   Q1080907  Odontophorus  Q211005         22          60             True                False
 ```
 
 No other commands exist yet — this section grows as the remaining milestones (§7) land.

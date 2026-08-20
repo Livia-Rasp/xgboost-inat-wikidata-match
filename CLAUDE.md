@@ -35,6 +35,20 @@ for the full command.
   ```
   First run ~20s over 1.4M rows; reruns are a cache hit unless `taxa.db`'s mtime changes.
 
+- **Wikidata pull (milestone 2)** — batched SPARQL against `query.wikidata.org`, `LIMIT`-capped
+  to 60,000 taxa with P3151 (of 856,040 that actually have it), cached to
+  `data/wikidata_taxa.parquet` + a manifest the cache-hit check compares request shape against.
+  Needs the venv (`pandas`/`pyarrow`/`requests`): `python3 -m venv .venv && .venv/bin/pip
+  install -e ".[dev]"` once.
+  ```
+  .venv/bin/python -m src.wikidata
+  ```
+  First run: a few minutes, ~30 batched POST requests (2000 QIDs/batch, timed against the real
+  endpoint). Reruns are a cache hit unless the target size or column set changes — no
+  time-based staleness check, since there's no local source file to diff against and this
+  shouldn't silently re-hit a shared public endpoint. Pass `force_refresh=True` to
+  `build_pull_cache()` for a deliberate re-pull.
+
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 
