@@ -10,7 +10,7 @@ Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-matc
 
 ## Status
 
-Milestones 1–4 of the spec's §7 list are done.
+Milestones 1–5 of the spec's §7 list are done.
 
 - **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
   and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
@@ -30,6 +30,15 @@ Milestones 1–4 of the spec's §7 list are done.
   since milestone 2 only had one hop of P171), labels from P3151 with spec §3's 15% synthetic
   abstention dropout, and `GroupKFold(n_splits=5)` on family. **Check passes: no QID appears in
   two folds.** Cached to `data/features.parquet` (590,671 rows × 52 columns).
+- **Baseline** (`src/evaluate.py`): the honest exact-match rule, tie-broken by iNat observation
+  count (sourced from the API, scoped to just the ~27.5k taxa actually involved in a tie — the
+  bulk `observations.csv.gz` spec's wording implies is 12.7 GB, disproportionate for that narrow
+  use), scored on the same folds. **87.0% coverage, 80.3% precision, 81.2% accuracy** overall.
+  Correctly resolves `Prunella` (222,630 vs. 55,702 real observations). Abstention accuracy
+  splits sharply by reason — 85.3% for genuinely-unresolvable (`stale_p3151`) items vs. 2.1% for
+  `synthetic_dropout` ones, since the naive rule has no way to tell "no real candidate exists"
+  apart from "the true candidate's label was hidden for this exercise but the candidate itself is
+  still right there" — a naive-rule limitation the real model (milestone 6) should improve on.
 
 Full breakdowns and plots for every milestone in
 [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
@@ -149,6 +158,38 @@ stale_p3151           7615
 Name: count, dtype: int64
 
 distinct family_key groups: 4,679
+```
+
+**Baseline (milestone 5).** The honest exact-match rule (spec §6): predict the candidate found
+via the `exact` strategy, tie-broken by real iNat observation count (fetched from the API,
+batched 200 ids/request, scoped to only the taxa actually involved in a tie — cached to
+`data/inat_observation_counts.parquet`). Scores per fold and overall, plus abstention accuracy
+split by `no_answer_reason`.
+
+```
+.venv/bin/python -m src.evaluate
+```
+
+First run: ~2-3 min (network, ~138 batched requests — one-time, scoped to ~27.5k taxa, not the
+full candidate set). Reruns are a cache hit.
+
+Expected output:
+
+```
+Baseline (exact-match, observation-count tiebreak) — per fold and overall:
+         n_items  coverage  precision  accuracy
+0        11229.0  0.854128   0.803566  0.803188
+1        11121.0  0.869706   0.801282  0.813956
+2        12610.0  0.872244   0.806892  0.815860
+3        13804.0  0.868371   0.812881  0.820921
+4        10078.0  0.889065   0.785156  0.800953
+overall  58842.0  0.870280   0.802808  0.811716
+
+Abstention accuracy by reason:
+                   abstention_accuracy     n
+no_answer_reason
+stale_p3151                   0.852791  7615
+synthetic_dropout             0.020562  7684
 ```
 
 No other commands exist yet — this section grows as the remaining milestones (§7) land.

@@ -93,6 +93,26 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   First run: ~8 min (ancestor pull, network, one-time) + <1 min (everything else, local).
   Reruns are a cache hit unless the upstream caches' row counts change or `N_SPLITS` changes.
 
+- **Baseline (milestone 5)** — `src/evaluate.py`: the honest exact-match rule (spec §6), tie-
+  broken by real iNat observation count. Spec's own wording implies sourcing that offline from
+  `observations.csv.gz`, but that file is 12.7 GB (vs. `taxa.csv.gz`'s 39.5 MB) — disproportionate
+  for a signal only ever consulted on the ~27.5k taxa actually involved in an exact-match tie
+  (6,842 of 58,842 items have one). Sourced from the iNat API instead
+  (`GET /v1/taxa?id=a,b,c,...`, batches 200/request, ~138 requests total), scoped to just those
+  tied taxa — cached to `data/inat_observation_counts.parquet` + manifest (same deterministic-
+  fingerprint approach as the ancestor-chain cache, reusing `wikidata.py`'s `_qid_set_fingerprint`
+  and `RateLimiter`). An old (2022) forum post describes `observations_count` capping at 10,000
+  on this endpoint; a live check found no such cap in practice (got 222,630 for one taxon).
+  ```
+  .venv/bin/python -m src.evaluate
+  ```
+  First run: ~2-3 min (network, one-time, scoped to the tied subset only). Reruns are a cache
+  hit. Scores per fold and overall (spec's "same folds" requirement) plus abstention accuracy
+  split by `no_answer_reason` — the naive rule can't distinguish "genuinely no candidate exists"
+  (`stale_p3151`, 85.3% correctly abstained) from "the true candidate's label was hidden for this
+  exercise but the candidate itself is still right there" (`synthetic_dropout`, only 2.1%) — a
+  limitation the trained model (milestone 6) should improve on.
+
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 
