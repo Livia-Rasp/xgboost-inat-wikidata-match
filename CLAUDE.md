@@ -113,6 +113,45 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   exercise but the candidate itself is still right there" (`synthetic_dropout`, only 2.1%) — a
   limitation the trained model (milestone 6) should improve on.
 
+- **Model + threshold selection (milestone 6)** — `src/train.py`: two objective variants on the
+  same 5-fold OOF CV (`build_oof_predictions()`, cached to `data/oof_predictions.parquet` +
+  manifest) — `binary:logistic` with per-fold `scale_pos_weight` (12.5:1 imbalance), and
+  `rank:map` (not spec's literal `rank:pairwise` — XGBoost's current docs recommend `rank:map`
+  specifically for binary-relevance labels with enough data, which is exactly this problem).
+  Both get `monotone_constraints` built programmatically from `FEATURE_COLUMNS`
+  (`monotone_constraints_tuple()`) rather than a hardcoded position tuple — verified live: zero
+  monotonicity violations sweeping `jaro_winkler_full`/`kingdom_match`/`shared_ancestor_depth`.
+  `XGBRanker.fit()` needs a numeric `qid`, not the raw `wikidata_qid` string — factorized via
+  `pd.factorize()`.
+  `TREE_PARAMS` includes a fixed `random_state` — `subsample`/`colsample_bytree` make training
+  nondeterministic without one, which would silently break milestone 6's own literal check
+  ("precision-at-threshold table reproduces"). The OOF cache's manifest (`shape_key`) includes
+  `TREE_PARAMS` and `MONOTONE_UP` themselves, not just data shape — a hyperparameter change must
+  invalidate the cache, the same way a schema change must for milestone 1's cache (§ above).
+  `_oof_manifest_matches()` does a **subset** match (`shape_key`'s keys ⊆ manifest's keys), not
+  exact dict equality — the manifest gains `*_avg_best_iteration` keys after training that
+  `shape_key` never has going in, so exact equality would never match and every "cache hit" would
+  silently retrain. (Both of these were real bugs caught here during development — worth keeping
+  the guardrails, not just the fix, since the failure mode is silent either way: wrong-but-not-
+  crashing results, not an exception.)
+  ```
+  .venv/bin/python -m src.train
+  ```
+  ~2 min for the full 590k-row × 5-fold × 2-objective run, pure local CPU; genuine cache hit on
+  rerun is ~1.5s. `build_final_models(features)` (not run from `__main__` — call directly) refits
+  both variants on all folds for milestone 7, using each variant's OOF-fold `best_iteration`s
+  averaged as a fixed `n_estimators` (no held-out set exists once trained on everything), saved
+  to `data/models/` with their calibrators pickled alongside.
+
+  **Real finding, not a bug**: isotonic calibration on the OOF scores shows the raw model is
+  badly overconfident (50,296 rows score ≥0.95 raw; only 83.9% are correct) — the strict
+  99.5%-precision auto-accept band this produces covers only 10 rows for `binary:logistic` (none
+  for `rank:map`). Investigated rather than just reported: inside that cluster, correct and
+  incorrect rows are statistically indistinguishable across every engineered feature, and it's
+  almost never a multi-candidate tie — most consistent with label noise in P3151 (spec §3's
+  disclosed concern) capping what any feature set could achieve, not a deficiency in this model.
+  Full investigation in the notebook.
+
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 

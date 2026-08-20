@@ -10,7 +10,7 @@ Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-matc
 
 ## Status
 
-Milestones 1–5 of the spec's §7 list are done.
+Milestones 1–6 of the spec's §7 list are done.
 
 - **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
   and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
@@ -39,6 +39,28 @@ Milestones 1–5 of the spec's §7 list are done.
   `synthetic_dropout` ones, since the naive rule has no way to tell "no real candidate exists"
   apart from "the true candidate's label was hidden for this exercise but the candidate itself is
   still right there" — a naive-rule limitation the real model (milestone 6) should improve on.
+- **Model + threshold selection** (`src/train.py`): two objective variants compared on the same
+  5-fold OOF CV — `binary:logistic` (+ `scale_pos_weight` for the 12.5:1 class imbalance) and
+  `rank:map` (XGBoost's current docs recommend it over the literally-spec'd `rank:pairwise` for
+  binary-relevance labels like ours), both with monotone constraints on `jaro_winkler_full`,
+  `shared_ancestor_depth`, `kingdom_match` (verified: zero violations). Both variants land close
+  together — **top-1 accuracy 99.2%/99.1%, MRR 0.995/0.994** — comfortably beating the milestone
+  5 baseline's 81.2% accuracy. No winner picked yet; that's milestone 7's call, once the gold set
+  can break the tie without bot-added label noise. Training is deterministic (fixed
+  `random_state`) and fully cached, so this table reproduces exactly on rerun.
+
+  **The precision-at-threshold table surfaces a real finding**: isotonic calibration
+  reveals the model's raw probabilities are badly overconfident — 50,296 rows score ≥0.95 raw,
+  but only 83.9% are actually correct. After calibration, the strict 99.5%-precision auto-accept
+  band covers only 10 rows for `binary:logistic` (and none at all for `rank:map`); a ≥91.6%
+  reject band (≥99.5% confidence of *no* match) does almost all of the practical work.
+  Investigating *why*: inside that overconfident cluster, right and wrong rows are statistically
+  indistinguishable on every engineered feature, and it's almost never a multi-candidate tie
+  (14/50,282 items) — pointing to label noise in P3151 itself (spec §3's own disclosed concern),
+  not a model or feature deficiency. SHAP confirms the model's *reasoning* is sound where it has
+  signal (`name_exact_raw`, `jaro_winkler_full`, and `sim_margin_to_runner_up` dominate; the
+  `Prunella` bird candidate is correctly rejected despite a raw name match, driven by
+  `kingdom_match=0` and `shared_ancestor_depth=0`).
 
 Full breakdowns and plots for every milestone in
 [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
@@ -191,5 +213,37 @@ no_answer_reason
 stale_p3151                   0.852791  7615
 synthetic_dropout             0.020562  7684
 ```
+
+**Model + threshold selection (milestone 6).** Trains both objective variants across the 5 OOF
+folds, calibrates each (isotonic regression), sweeps the threshold, and reports top-1
+accuracy/MRR/Brier score plus the auto-accept threshold. Cached to `data/oof_predictions.parquet`
++ manifest.
+
+```
+.venv/bin/python -m src.train
+```
+
+First run: ~2.5 min (590k rows × 5 folds × 2 objectives, pure local CPU work). Reruns are a
+cache hit. Final full-data models (for milestone 7) are a separate call:
+`train.build_final_models(features)`, saved to `data/models/`.
+
+Expected output:
+
+```
+=== binary:logistic ===
+top-1 accuracy: 0.9915   MRR: 0.9950   Brier: 0.0129
+auto-accept @ threshold 0.87: precision=1.0000, coverage=0.0000
+reject threshold: 0.82
+
+=== rank:map ===
+top-1 accuracy: 0.9905   MRR: 0.9944   Brier: 0.0130
+no threshold reaches 99.5% precision
+reject threshold: 0.83
+```
+
+(Coverage prints as `0.0000` at 4 decimals for `binary:logistic` — it's 0.0017%, not literally
+zero (10 of 590,671 rows); `rank:map` doesn't clear the 99.5% precision bar at all on this run.
+See the Status section above and the notebook for the full three-band breakdown and why it's
+this small.)
 
 No other commands exist yet — this section grows as the remaining milestones (§7) land.
