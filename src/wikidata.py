@@ -60,6 +60,8 @@ COLUMNS = [
     "statements",
     "has_commons_cat",
     "p3151_has_reference",
+    "synonym_names",
+    "basionym_names",
 ]
 
 
@@ -189,9 +191,12 @@ def _fetch_attributes_batch(qids: list[str]) -> list[dict]:
     so the statement node is available to check whether it carries a reference — spec §3's
     label-noise mitigation needs that signal, and it's free to capture here rather than requiring
     a second pull over the same QIDs later.
+
+    P1420 (synonym) and P566 (basionym) are multi-valued and OPTIONAL, so an item with several
+    synonyms comes back as several rows — resolved by _aggregate_batch_rows(), not here.
     """
     values = " ".join(f"wd:{q}" for q in qids)
-    query = f"""SELECT ?item ?inatId ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements ?commonsSitelink ?p3151Ref WHERE {{
+    query = f"""SELECT ?item ?inatId ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements ?commonsSitelink ?p3151Ref ?synonymName ?basionymName WHERE {{
   VALUES ?item {{ {values} }}
   ?item p:P3151 ?p3151Statement .
   ?p3151Statement a wikibase:BestRank ; ps:P3151 ?inatId .
@@ -206,25 +211,54 @@ def _fetch_attributes_batch(qids: list[str]) -> list[dict]:
     ?commonsSitelink schema:about ?item ; schema:isPartOf <https://commons.wikimedia.org/> .
     FILTER(CONTAINS(STR(?commonsSitelink), "/wiki/Category:"))
   }}
+  OPTIONAL {{ ?item wdt:P1420 ?synonym . OPTIONAL {{ ?synonym wdt:P225 ?synonymName . }} }}
+  OPTIONAL {{ ?item wdt:P566 ?basionym . OPTIONAL {{ ?basionym wdt:P225 ?basionymName . }} }}
 }}"""
     _ATTRIBUTE_RATE_LIMITER.wait()
     return _sparql_post_tsv(query)
 
 
-def _parse_attribute_row(r: dict) -> dict:
-    return {
-        "qid": _qid_from_uri(r["item"]) if r.get("item") else None,
-        "inat_id": r.get("inatId"),
-        "name": r.get("name"),
-        "rank_qid": _qid_from_uri(r["rank"]) if r.get("rank") else None,
-        "parent_qid": _qid_from_uri(r["parent"]) if r.get("parent") else None,
-        "parent_name": r.get("parentName"),
-        "iucn_qid": _qid_from_uri(r["iucn"]) if r.get("iucn") else None,
-        "sitelinks": int(r["sitelinks"]) if r.get("sitelinks") else 0,
-        "statements": int(r["statements"]) if r.get("statements") else 0,
-        "has_commons_cat": bool(r.get("commonsSitelink")),
-        "p3151_has_reference": bool(r.get("p3151Ref")),
-    }
+def _aggregate_batch_rows(rows: list[dict]) -> list[dict]:
+    """Group a batch's raw TSV rows by item, since multi-valued P171/P1420/P566 OPTIONALs can
+    produce several rows per item. Scalar fields take the first non-null value seen; synonym and
+    basionym names are collected into a deduplicated, sorted list per item."""
+    by_item: dict[str, dict] = {}
+    for r in rows:
+        item = r.get("item")
+        if not item:
+            continue
+        group = by_item.setdefault(item, {"row": {}, "synonyms": set(), "basionyms": set()})
+        for key, value in r.items():
+            if key in ("synonymName", "basionymName"):
+                continue
+            if value and key not in group["row"]:
+                group["row"][key] = value
+        if r.get("synonymName"):
+            group["synonyms"].add(r["synonymName"])
+        if r.get("basionymName"):
+            group["basionyms"].add(r["basionymName"])
+
+    records = []
+    for item, group in by_item.items():
+        r = group["row"]
+        records.append(
+            {
+                "qid": _qid_from_uri(item),
+                "inat_id": r.get("inatId"),
+                "name": r.get("name"),
+                "rank_qid": _qid_from_uri(r["rank"]) if r.get("rank") else None,
+                "parent_qid": _qid_from_uri(r["parent"]) if r.get("parent") else None,
+                "parent_name": r.get("parentName"),
+                "iucn_qid": _qid_from_uri(r["iucn"]) if r.get("iucn") else None,
+                "sitelinks": int(r["sitelinks"]) if r.get("sitelinks") else 0,
+                "statements": int(r["statements"]) if r.get("statements") else 0,
+                "has_commons_cat": bool(r.get("commonsSitelink")),
+                "p3151_has_reference": bool(r.get("p3151Ref")),
+                "synonym_names": sorted(group["synonyms"]),
+                "basionym_names": sorted(group["basionyms"]),
+            }
+        )
+    return records
 
 
 def _manifest_matches(manifest_path: Path, target_size: int) -> bool:
@@ -256,8 +290,7 @@ def build_pull_cache(
     records: list[dict] = []
     seen: set[str] = set()
     for batch in _chunked(qids, ATTRIBUTE_BATCH_SIZE):
-        for row in _fetch_attributes_batch(batch):
-            record = _parse_attribute_row(row)
+        for record in _aggregate_batch_rows(_fetch_attributes_batch(batch)):
             qid = record["qid"]
             if qid and qid not in seen:
                 seen.add(qid)

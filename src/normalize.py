@@ -65,8 +65,8 @@ def _split_hybrid_marker(tokens: list[str]) -> tuple[list[str], bool]:
 
 
 def normalize_name(raw: str) -> NormalizedName:
-    if not raw or not raw.strip():
-        return NormalizedName(raw or "", "", None, None, None, None, False, None)
+    if not isinstance(raw, str) or not raw.strip():
+        return NormalizedName(raw if isinstance(raw, str) else "", "", None, None, None, None, False, None)
 
     cleaned = strip_diacritics(raw)
     tokens, hybrid = _split_hybrid_marker(cleaned.split())
