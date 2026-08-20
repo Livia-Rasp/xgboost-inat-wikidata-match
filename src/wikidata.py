@@ -8,6 +8,7 @@ VALUES queries instead of asking WDQS to scan/join the full (856k-row) taxon set
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass
@@ -312,6 +313,134 @@ def build_pull_cache(
         )
     )
     return PullResult(df, cache_hit=False)
+
+
+# ---- Ancestor chains (milestone 4: kingdom_match, family_match, order_match, ---------------
+# ---- shared_ancestor_depth) -----------------------------------------------------------------
+#
+# Mirrors wikidata-inat-checker's fetchWdAncestorChains/compareAncestorTrees (lib/utils.js), but
+# simpler: that code also fetches each ancestor's own parent to reconstruct an *ordered* chain,
+# because it needs to walk it. compareAncestorTrees itself never uses the order, though — it
+# only ever indexes by rank ("wdByRank"/"inatByRank" maps), and every standard rank appears at
+# most once per lineage anyway. So this only fetches (item, ancestor, name, rank) — unordered,
+# no extra parent hop — and callers key off rank the same way.
+
+ANCESTORS_BATCH_SIZE = 750
+
+DEFAULT_ANCESTORS_CACHE_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "wikidata_ancestors.parquet"
+)
+DEFAULT_ANCESTORS_MANIFEST_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "wikidata_ancestors.manifest.json"
+)
+
+_ANCESTORS_RATE_LIMITER = RateLimiter(0.5)
+
+# Live-observed: WDQS can return an HTTP 200 with a silently incomplete result for this
+# transitive-path query under load (one batch came back with ancestor data for 199/300 items;
+# the identical query moments later returned 300/300). No error, no retryable status code — the
+# only signal is implausibly low coverage. MIN_COVERAGE is a heuristic floor: below it, treat
+# the response as suspect and retry rather than silently caching a partial pull. It's not 100%
+# because a batch can legitimately contain items with no P171 statement at all.
+ANCESTOR_MIN_COVERAGE = 0.5
+ANCESTOR_COVERAGE_RETRIES = 3
+
+
+def _fetch_ancestor_batch_raw(qids: list[str]) -> list[dict]:
+    values = " ".join(f"wd:{q}" for q in qids)
+    query = f"""SELECT ?item ?ancestor ?ancestorName ?ancestorRank WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P171+ ?ancestor .
+  ?ancestor wdt:P225 ?ancestorName .
+  OPTIONAL {{ ?ancestor wdt:P105 ?ancestorRank . }}
+}}"""
+    _ANCESTORS_RATE_LIMITER.wait()
+    return _sparql_post_tsv(query)
+
+
+def _fetch_ancestor_batch(qids: list[str]) -> list[dict]:
+    """Like _fetch_ancestor_batch_raw, but retries a suspiciously low-coverage response (see
+    ANCESTOR_MIN_COVERAGE above) instead of trusting it."""
+    rows = _fetch_ancestor_batch_raw(qids)
+    for attempt in range(ANCESTOR_COVERAGE_RETRIES):
+        covered = len({r["item"] for r in rows if r.get("item")})
+        if covered / len(qids) >= ANCESTOR_MIN_COVERAGE:
+            return rows
+        print(
+            f"ancestor batch coverage {covered}/{len(qids)} looks incomplete, "
+            f"retrying ({attempt + 1}/{ANCESTOR_COVERAGE_RETRIES})..."
+        )
+        rows = _fetch_ancestor_batch_raw(qids)
+    return rows
+
+
+def _qid_set_fingerprint(qids: list[str]) -> str:
+    """Deterministic fingerprint of a QID set for the manifest — plain hash() is randomized
+    per-process (PYTHONHASHSEED), so it would never match across separate runs."""
+    return hashlib.sha256("\n".join(sorted(qids)).encode()).hexdigest()
+
+
+def _ancestors_manifest_matches(manifest_path: Path, qids: list[str]) -> bool:
+    if not manifest_path.exists():
+        return False
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return manifest.get("qid_count") == len(qids) and manifest.get("qid_fingerprint") == _qid_set_fingerprint(qids)
+
+
+def build_ancestor_chains(
+    qids: list[str],
+    cache_path: Path = DEFAULT_ANCESTORS_CACHE_PATH,
+    manifest_path: Path = DEFAULT_ANCESTORS_MANIFEST_PATH,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """One row per (item, ancestor) pair: qid, ancestor_qid, ancestor_name, ancestor_rank_qid.
+    Cached like the other pulls — no time-based staleness, persists until the QID set changes or
+    force_refresh=True (a fresh QID set, e.g. a re-run of build_pull_cache with a different
+    target_size, naturally invalidates this via the qid_count/qid_hash manifest check)."""
+    if not force_refresh and cache_path.exists() and _ancestors_manifest_matches(manifest_path, qids):
+        return pd.read_parquet(cache_path)
+
+    records: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for batch in _chunked(qids, ANCESTORS_BATCH_SIZE):
+        for r in _fetch_ancestor_batch(batch):
+            if not r.get("item") or not r.get("ancestor"):
+                continue
+            item_qid = _qid_from_uri(r["item"])
+            ancestor_qid = _qid_from_uri(r["ancestor"])
+            key = (item_qid, ancestor_qid)
+            if key in seen:
+                continue
+            seen.add(key)
+            records.append(
+                {
+                    "qid": item_qid,
+                    "ancestor_qid": ancestor_qid,
+                    "ancestor_name": r.get("ancestorName"),
+                    "ancestor_rank_qid": _qid_from_uri(r["ancestorRank"]) if r.get("ancestorRank") else None,
+                }
+            )
+
+    df = pd.DataFrame.from_records(
+        records, columns=["qid", "ancestor_qid", "ancestor_name", "ancestor_rank_qid"]
+    )
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(cache_path, index=False)
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "pulled_at": datetime.now(timezone.utc).isoformat(),
+                "qid_count": len(qids),
+                "qid_fingerprint": _qid_set_fingerprint(qids),
+                "endpoint": SPARQL_ENDPOINT,
+            },
+            indent=2,
+        )
+    )
+    return df
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-matc
 
 ## Status
 
-Milestones 1–3 of the spec's §7 list are done.
+Milestones 1–4 of the spec's §7 list are done.
 
 - **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
   and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
@@ -23,8 +23,16 @@ Milestones 1–3 of the spec's §7 list are done.
   K=20 per item, cached to `data/candidates.parquet`. **Recall @ K=20: 87.01%** raw (spec target
   ≥97%) — but 12.85% of P3151 links point to iNat taxon_ids that no longer exist as active taxa
   (stale/deactivated references, a data-quality issue, not a generation gap); recall among the
-  resolvable items is **99.84%**. Full breakdown and plots in
-  [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
+  resolvable items is **99.84%**.
+- **Features + splits** (`src/labels.py`, `src/features.py`): all of spec §4's feature groups
+  (string similarity, taxonomic agreement, group context, popularity/quality — `kingdom_match`
+  and `family_match` needed extending `src/wikidata.py` with a full Wikidata ancestor-chain pull,
+  since milestone 2 only had one hop of P171), labels from P3151 with spec §3's 15% synthetic
+  abstention dropout, and `GroupKFold(n_splits=5)` on family. **Check passes: no QID appears in
+  two folds.** Cached to `data/features.parquet` (590,671 rows × 52 columns).
+
+Full breakdowns and plots for every milestone in
+[`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
 
 No other milestone is implemented yet.
 
@@ -101,6 +109,46 @@ Expected output (after the `prunella` check above):
 raw recall @ K=20: 87.01% (spec target: >=97%)
   7,564/58,874 (12.85%) true P3151 links point to iNat taxon_ids that don't exist in the active-taxa index (stale/deactivated) -- unreachable by any strategy, not a generation gap
   recall among the 51,310 resolvable items: 99.84%
+```
+
+**Features + splits (milestone 4).** Pulls each Wikidata item's full ancestor chain (needed for
+`kingdom_match`/`family_match`/`order_match`; cached separately to
+`data/wikidata_ancestors.parquet`, ~8 min one-time network cost, ~2.7M rows), builds labels
+(P3151 positives + spec §3's 15% synthetic abstention dropout), computes every feature in spec
+§4, and splits `GroupKFold(n_splits=5)` on family — grouping on the Wikidata item's *own*
+ancestor chain, not the candidate's, so a WD item's rows always land in one fold regardless of
+which candidate turns out correct.
+
+```
+.venv/bin/python -m src.features
+```
+
+First run: ~8 min (network, one-time) + <1 min (local). Reruns of just this step are instant
+cache hits; the ancestor pull only re-runs if the Wikidata item set changes.
+
+Expected output (local part only — after the ancestor pull, which prints its own progress):
+
+```
+590,671 feature rows, 52 columns
+no QID split across folds: True
+
+fold sizes:
+fold
+0    11229
+1    11121
+2    12610
+3    13804
+4    10078
+Name: wikidata_qid, dtype: int64
+
+no_answer_reason breakdown (per item):
+no_answer_reason
+has_positive         43543
+synthetic_dropout     7684
+stale_p3151           7615
+Name: count, dtype: int64
+
+distinct family_key groups: 4,679
 ```
 
 No other commands exist yet — this section grows as the remaining milestones (§7) land.

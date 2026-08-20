@@ -73,6 +73,26 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   point to iNat taxon_ids that no longer exist as active taxa — a data-quality issue, not a
   generation gap).
 
+- **Features + splits (milestone 4)** — `src/labels.py` (P3151 positives/negatives, spec §3's
+  15% synthetic abstention dropout, `no_answer_reason` tagging `stale_p3151` separately from
+  `synthetic_dropout`) and `src/features.py` (every feature group in spec §4, `GroupKFold`
+  splits). Needs `src/wikidata.py`'s `build_ancestor_chains()` first — one hop of P171 (milestone
+  2) isn't enough for `kingdom_match`/`family_match`/`order_match`/`shared_ancestor_depth`, so
+  this pulls the full transitive chain (`wdt:P171+`, mirroring the Node project's
+  `fetchWdAncestorChains`), cached separately to `data/wikidata_ancestors.parquet`. **Caution:**
+  WDQS can return an HTTP 200 with a silently incomplete result for this query under load (seen
+  live: one batch came back 140/750, a retry got 750/750) — `build_ancestor_chains()` guards
+  against this with a coverage-ratio check and retry, not just the usual HTTP-status retry.
+  `WD_RANK_TO_NAME` (Wikidata rank QID → rank name) in `labels.py` was derived empirically by
+  cross-tabulating known WD/iNat rank pairs from the resolvable population, not hardcoded from
+  memory; `RANK_LEVEL` reuses wikidata-inat-checker's own `RANK_ORDER` constant
+  (`lib/getInatTaxaDb.js`) rather than inventing a new numbering.
+  ```
+  .venv/bin/python -m src.features
+  ```
+  First run: ~8 min (ancestor pull, network, one-time) + <1 min (everything else, local).
+  Reruns are a cache hit unless the upstream caches' row counts change or `N_SPLITS` changes.
+
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 
