@@ -13,6 +13,7 @@ from rapidfuzz.distance import JaroWinkler, Levenshtein
 from sklearn.model_selection import GroupKFold
 
 from .candidates import DEFAULT_CACHE_PATH as LOOKUP_SQLITE_PATH
+from .candidates import STRATEGY_TAGS
 from .labels import RANK_LEVEL, WD_RANK_TO_NAME, apply_synthetic_dropout, build_family_keys, build_labels
 from .normalize import normalize_name
 
@@ -182,7 +183,7 @@ def build_features(
     df["sim_rank_in_group"] = df.groupby("wikidata_qid")["similarity"].rank(ascending=False, method="first")
     top2 = df.groupby("wikidata_qid")["similarity"].transform(lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0])
     df["sim_margin_to_runner_up"] = df["similarity"] - top2
-    for tag in sorted(set("|".join(df["strategies"]).split("|"))):
+    for tag in STRATEGY_TAGS:
         df[f"strategy_{tag}"] = df["strategies"].str.contains(tag, regex=False)
 
     # ---- Popularity / quality ----

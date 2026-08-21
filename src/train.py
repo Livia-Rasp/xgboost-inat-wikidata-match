@@ -349,11 +349,12 @@ def build_final_models(
         if not force_refresh and model_path.exists() and calibrator_path.exists():
             model = (xgboost.XGBClassifier() if objective == "binary" else xgboost.XGBRanker())
             model.load_model(model_path)
+            calibrator = pickle.loads(calibrator_path.read_bytes())
         else:
             model = train_final_model(df, objective, n_estimators=manifest[n_est_key])
             model.save_model(model_path)
-        calibrator, _ = calibrate(oof[score_col].to_numpy(), labels)
-        calibrator_path.write_bytes(pickle.dumps(calibrator))
+            calibrator, _ = calibrate(oof[score_col].to_numpy(), labels)
+            calibrator_path.write_bytes(pickle.dumps(calibrator))
         models[objective] = (model, calibrator)
     return models
 

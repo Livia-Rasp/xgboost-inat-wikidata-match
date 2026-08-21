@@ -10,6 +10,12 @@ data/
 *.parquet
 *.model
 
+# Gold-set intermediates — regenerable from build_gold_labeling_kit.py + the seeded sample.
+# gold/hard_cases.csv (the actual deliverable, spec §0) and gold/labeling_filled.csv (your raw
+# answers — small, worth keeping) are NOT excluded.
+gold/links-ambiguous-sample.html
+gold/labeling_template.csv
+
 # Secrets
 .env
 .env.*

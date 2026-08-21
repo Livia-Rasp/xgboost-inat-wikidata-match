@@ -1,1 +1,1919 @@
-wikidata_qid,wikidata_name,inat_taxon_id,inat_name,label,notes
+wikidata_qid,wikidata_name,inat_taxon_id,inat_name,inat_rank,strategies,similarity,label,found_by_generation,notes
+Q29588749,Abietinella,155572,Abietinella,genus,exact|trigram,1.0,0,True,
+Q29588749,Abietinella,155573,Abietinella,genus,exact|trigram,1.0,1,True,
+Q29588749,Abietinella,55322,Abietinaria,genus,trigram,0.7272727272727273,0,True,
+Q29588749,Abietinella,211820,Ptinella,genus,trigram,0.6363636363636364,0,True,
+Q29588749,Abietinella,157814,Abietinella abietina,species,trigram,0.55,0,True,
+Q29588749,Abietinella,1122139,Abietinella abietina minor,subspecies,trigram,0.55,0,True,
+Q29588749,Abietinella,1270178,Abietinella abietina hystricosa,variety,trigram,0.55,0,True,
+Q29588749,Abietinella,1270176,Abietinella abietina abietina,variety,trigram,0.55,0,True,
+Q29588749,Abietinella,1369648,Abietinella operculata,species,trigram,0.5,0,True,
+Q29588749,Abietinella,60651,Abietinaria abietina,species,trigram,0.44999999999999996,0,True,
+Q50749187,Ablabesmyia,247694,Ablabesmyia,genus,exact|trigram,1.0,0,True,
+Q50749187,Ablabesmyia,549454,Ablabesmyia,subgenus,exact|trigram,1.0,1,True,
+Q50749187,Ablabesmyia,385603,Ablabesmyia mala,species,trigram,0.6875,0,True,
+Q50749187,Ablabesmyia,1101257,Ablabesmyia alba,species,trigram,0.6875,0,True,
+Q50749187,Ablabesmyia,627385,Ablabesmyia janta,species,trigram,0.6470588235294117,0,True,
+Q50749187,Ablabesmyia,1473604,Ablabesmyia hilli,species,trigram,0.6470588235294117,0,True,
+Q50749187,Ablabesmyia,630363,Ablabesmyia phatta,species,trigram,0.6111111111111112,0,True,
+Q50749187,Ablabesmyia,576342,Ablabesmyia rhamphe,species,trigram,0.5789473684210527,0,True,
+Q50749187,Ablabesmyia,576337,Ablabesmyia monilis,species,trigram,0.5789473684210527,0,True,
+Q50749187,Ablabesmyia,1371663,Ablabesmyia indicus,species,trigram,0.5789473684210527,0,True,
+Q138641856,Abrothrix,71812,Abrothrix,genus,exact|trigram,1.0,0,True,
+Q138641856,Abrothrix,1431436,Abrothrix,subgenus,exact|trigram,1.0,1,True,
+Q138641856,Abrothrix,375501,Abrotheus,genus,trigram,0.6666666666666667,0,True,
+Q138641856,Abrothrix,735078,Abrothrichini,tribe,trigram,0.6153846153846154,0,True,
+Q138641856,Abrothrix,1104464,Abrothrix hirta,species,trigram,0.6,0,True,
+Q138641856,Abrothrix,1106815,Abrothrix manni,species,trigram,0.6,0,True,
+Q138641856,Abrothrix,882921,Abrothrix lanosa,species,trigram,0.5625,0,True,
+Q138641856,Abrothrix,882919,Abrothrix andina,species,trigram,0.5625,0,True,
+Q138641856,Abrothrix,174651,Abrothallus,genus,trigram,0.5454545454545454,0,True,
+Q138641856,Abrothrix,791199,Abrothallales,order,trigram,0.46153846153846156,0,True,
+Q50746010,Absidia,552980,Absidia,genus,exact|trigram,1.0,0,True,
+Q50746010,Absidia,552989,Absidia,subgenus,exact|trigram,1.0,1,True,
+Q50746010,Absidia,1013355,Pakabsidia,genus,trigram,0.7,0,True,
+Q50746010,Absidia,1188340,Pseudoabsidia,subgenus,trigram,0.5384615384615384,0,True,
+Q50746010,Absidia,552983,Absidia glauca,species,trigram,0.5,0,True,
+Q50746010,Absidia,552981,Absidia spinosa,species,trigram,0.4666666666666667,0,True,
+Q50746010,Absidia,552985,Absidia caerulea,species,trigram,0.4375,0,True,
+Q50746010,Absidia,1013354,Pakabsidia mixtus,species,trigram,0.4117647058823529,0,True,
+Q50746010,Absidia,1013353,Pakabsidia olexai,species,trigram,0.4117647058823529,0,True,
+Q50746010,Absidia,1013360,Pakabsidia svihlai,species,trigram,0.38888888888888884,0,True,
+Q4671795,Acalyptris psammophricta,1393789,Acalyptris psammophricta,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q4671795,Acalyptris psammophricta,1393788,Acalyptris psammophricta,section,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4671795,Acalyptris psammophricta,768502,Aphis psammophila,species,trigram,0.625,0,True,
+Q4671795,Acalyptris psammophricta,363075,Dypsis psammophila,species,trigram,0.625,0,True,
+Q4671795,Acalyptris psammophricta,591257,Oxalis psammophila,species,trigram,0.625,0,True,
+Q4671795,Acalyptris psammophricta,1183483,Agrotis psammophaea,species,trigram,0.5833333333333333,0,True,
+Q4671795,Acalyptris psammophricta,353643,Phoronis psammophila,species,trigram,0.5416666666666667,0,True,
+Q4671795,Acalyptris psammophricta,646424,Acalyptris krooni,species,trigram,0.5416666666666667,0,True,
+Q4671795,Acalyptris psammophricta,646422,Acalyptris fulva,species,trigram,0.5,0,True,
+Q4671795,Acalyptris psammophricta,477578,Acalyptris,genus,trigram,0.41666666666666663,0,True,
+Q4671809,Acalyptris shafirkanus,1393791,Acalyptris shafirkanus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q4671809,Acalyptris shafirkanus,1393790,Acalyptris shafirkanus,section,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4671809,Acalyptris shafirkanus,1151423,Acalyptris scirpi,species,trigram,0.6363636363636364,0,True,
+Q4671809,Acalyptris shafirkanus,1227269,Acalyptris fortis,species,trigram,0.6363636363636364,0,True,
+Q4671809,Acalyptris shafirkanus,1393785,Acalyptris scirpi,section,trigram,0.6363636363636364,0,True,
+Q4671809,Acalyptris shafirkanus,646422,Acalyptris fulva,species,trigram,0.5909090909090908,0,True,
+Q4671809,Acalyptris shafirkanus,646424,Acalyptris krooni,species,trigram,0.5909090909090908,0,True,
+Q4671809,Acalyptris shafirkanus,1323080,Acalyptris lesbia,species,trigram,0.5909090909090908,0,True,
+Q4671809,Acalyptris shafirkanus,554185,Acalyptris lotella,species,trigram,0.5454545454545454,0,True,
+Q4671809,Acalyptris shafirkanus,477578,Acalyptris,genus,trigram,0.4545454545454546,0,True,
+Q121887868,Acanthocephala,61446,Acanthocephala,genus,exact|trigram,1.0,0,True,
+Q121887868,Acanthocephala,151826,Acanthocephala,phylum,exact|trigram,1.0,1,True,
+Q121887868,Acanthocephala,1683912,Acanthocephala,subgenus,exact|trigram,1.0,0,True,
+Q121887868,Acanthocephala,152108,Eoacanthocephala,class,trigram,0.875,0,True,
+Q121887868,Acanthocephala,152755,Gyracanthocephala,order,trigram,0.8235294117647058,0,True,
+Q121887868,Acanthocephala,152107,Archiacanthocephala,class,trigram,0.736842105263158,0,True,
+Q121887868,Acanthocephala,152109,Palaeacanthocephala,class,trigram,0.736842105263158,0,True,
+Q121887868,Acanthocephala,1683926,Acanthocephala rufa,species,trigram,0.736842105263158,0,True,
+Q121887868,Acanthocephala,516258,Acanthocephala alata,species,trigram,0.7,0,True,
+Q121887868,Acanthocephala,1602263,Acanthocephala nigra,species,trigram,0.7,0,True,
+Q4671891,Acanthocephala,61446,Acanthocephala,genus,exact|trigram,1.0,1,True,
+Q4671891,Acanthocephala,151826,Acanthocephala,phylum,exact|trigram,1.0,0,True,
+Q4671891,Acanthocephala,1683912,Acanthocephala,subgenus,exact|trigram,1.0,0,True,
+Q4671891,Acanthocephala,152108,Eoacanthocephala,class,trigram,0.875,0,True,
+Q4671891,Acanthocephala,152755,Gyracanthocephala,order,trigram,0.8235294117647058,0,True,
+Q4671891,Acanthocephala,152107,Archiacanthocephala,class,trigram,0.736842105263158,0,True,
+Q4671891,Acanthocephala,152109,Palaeacanthocephala,class,trigram,0.736842105263158,0,True,
+Q4671891,Acanthocephala,1683926,Acanthocephala rufa,species,trigram,0.736842105263158,0,True,
+Q4671891,Acanthocephala,516258,Acanthocephala alata,species,trigram,0.7,0,True,
+Q4671891,Acanthocephala,1602263,Acanthocephala nigra,species,trigram,0.7,0,True,
+Q13223600,Acanthostichus brevicornis,1453538,Acanthostichus brevicornis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q13223600,Acanthostichus brevicornis,1453541,Acanthostichus brevicornis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q13223600,Acanthostichus brevicornis,1453547,Acanthostichus brevinodis,species,trigram,0.8846153846153846,0,True,
+Q13223600,Acanthostichus brevicornis,1453552,Acanthostichus laticornis,species,trigram,0.8461538461538461,0,True,
+Q13223600,Acanthostichus brevicornis,1131135,Acanthognathus brevicornis,species,trigram,0.8461538461538461,0,True,
+Q13223600,Acanthostichus brevicornis,229323,Pterostichus brevicornis,species,trigram,0.7692307692307692,0,True,
+Q13223600,Acanthostichus brevicornis,884896,Lasius brevicornis,species,trigram,0.6538461538461539,0,True,
+Q13223600,Acanthostichus brevicornis,1453556,Acanthostichus emmae,species,trigram,0.6153846153846154,0,True,
+Q13223600,Acanthostichus brevicornis,250462,Acanthostichus,genus,trigram,0.5384615384615384,0,True,
+Q13223600,Acanthostichus brevicornis,327597,Lydus brevicornis,species,trigram,0.5384615384615384,0,True,
+Q13223621,Acanthostichus serratulus,1453542,Acanthostichus serratulus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q13223621,Acanthostichus serratulus,1453555,Acanthostichus serratulus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q13223621,Acanthostichus serratulus,299267,Acanthostichus texanus,species,trigram,0.76,0,True,
+Q13223621,Acanthostichus serratulus,1453540,Acanthostichus texanus,complex,trigram,0.76,0,True,
+Q13223621,Acanthostichus serratulus,1453556,Acanthostichus emmae,species,trigram,0.6799999999999999,0,True,
+Q13223621,Acanthostichus serratulus,1453548,Acanthostichus bentoni,species,trigram,0.6799999999999999,0,True,
+Q13223621,Acanthostichus serratulus,1255684,Acanthostichus davisi,species,trigram,0.64,0,True,
+Q13223621,Acanthostichus serratulus,1438373,Acanthostichus kirbyi,species,trigram,0.64,0,True,
+Q13223621,Acanthostichus serratulus,1453544,Acanthostichus quirozi,species,trigram,0.64,0,True,
+Q13223621,Acanthostichus serratulus,250462,Acanthostichus,genus,trigram,0.56,0,True,
+Q110755301,Acauloplacella,635057,Acauloplacella,genus,exact|trigram,1.0,0,True,
+Q110755301,Acauloplacella,767670,Acauloplacella,subgenus,exact|trigram,1.0,1,True,
+Q110755301,Acauloplacella,1089514,Acauloplacella incisa,species,trigram,0.6666666666666667,0,True,
+Q110755301,Acauloplacella,1466767,Acauloplacella mecyna,species,trigram,0.6666666666666667,0,True,
+Q110755301,Acauloplacella,1646435,Acauloplacella immunis,species,trigram,0.6363636363636364,0,True,
+Q110755301,Acauloplacella,1440900,Acauloplacella oceanica,species,trigram,0.6086956521739131,0,True,
+Q110755301,Acauloplacella,1466768,Acauloplacella hasenpuschae,species,trigram,0.5185185185185186,0,True,
+Q110755301,Acauloplacella,635058,Acauloplacella serraticollis,species,trigram,0.5,0,True,
+Q110755301,Acauloplacella,1437281,Acauloplacella queenslandica,species,trigram,0.5,0,True,
+Q110755301,Acauloplacella,155582,Acaulon,genus,trigram,0.4285714285714286,0,True,
+Q50750088,Acetropis,132328,Acetropis,genus,exact|trigram,1.0,0,True,
+Q50750088,Acetropis,1634518,Acetropis,subgenus,exact|trigram,1.0,1,True,
+Q50750088,Acetropis,1634519,Paracetropis,subgenus,trigram,0.75,0,True,
+Q50750088,Acetropis,1491836,Acetropis stysi,species,trigram,0.6,0,True,
+Q50750088,Acetropis,1449852,Acetropis sinuata,species,trigram,0.5294117647058824,0,True,
+Q50750088,Acetropis,1495268,Acetropis atropis,species,trigram,0.5294117647058824,0,True,
+Q50750088,Acetropis,132326,Acetropis carinata,species,trigram,0.5,0,True,
+Q50750088,Acetropis,132329,Acetropis americana,species,trigram,0.4736842105263158,0,True,
+Q50750088,Acetropis,459658,Placetron,genus,trigram,0.4444444444444444,0,True,
+Q50750088,Acetropis,132324,Acetropis gimmerthalii,species,trigram,0.40909090909090906,0,True,
+Q18617001,Achlya,416166,Achlya,genus,exact|trigram,1.0,0,True,
+Q18617001,Achlya,416167,Achlya,genus,exact|trigram,1.0,1,True,
+Q18617001,Achlya,1433370,Isoachlya,genus,trigram,0.6666666666666667,0,True,
+Q18617001,Achlya,1433324,Apodachlya,genus,trigram,0.6,0,True,
+Q18617001,Achlya,1640459,Rhodachlya,genus,trigram,0.6,0,True,
+Q18617001,Achlya,1433374,Protoachlya,genus,trigram,0.5454545454545454,0,True,
+Q18617001,Achlya,940931,Achlya dubia,species,trigram,0.5,0,True,
+Q18617001,Achlya,550931,Rhodachlyales,order,trigram,0.46153846153846156,0,True,
+Q18617001,Achlya,1280612,Eudonia achlya,species,trigram,0.4285714285714286,0,True,
+Q18617001,Achlya,1640458,Rhodachlyaceae,family,trigram,0.4285714285714286,0,True,
+Q21438872,Acmaeodera,127631,Acmaeodera,subgenus,exact|trigram,1.0,1,True,
+Q21438872,Acmaeodera,886834,Acmaeodera,genus,exact|trigram,1.0,0,True,
+Q21438872,Acmaeodera,1076703,Cavacmaeodera,subgenus,trigram,0.7692307692307692,0,True,
+Q21438872,Acmaeodera,1075632,Rugacmaeodera,subgenus,trigram,0.7692307692307692,0,True,
+Q21438872,Acmaeodera,1075624,Paracmaeodera,subgenus,trigram,0.7692307692307692,0,True,
+Q21438872,Acmaeodera,1076702,Bellacmaeodera,subgenus,trigram,0.7142857142857143,0,True,
+Q21438872,Acmaeodera,271927,Acmaeodera loei,species,trigram,0.6666666666666667,0,True,
+Q21438872,Acmaeodera,346273,Acmaeodera tuta,species,trigram,0.6666666666666667,0,True,
+Q21438872,Acmaeodera,477738,Acmaeodera nexa,species,trigram,0.6666666666666667,0,True,
+Q21438872,Acmaeodera,1332177,Microacmaeodera,genus,trigram,0.6666666666666667,0,True,
+Q21438878,Acmaeoderella,327587,Acmaeoderella,genus,exact|trigram,1.0,0,True,
+Q21438878,Acmaeoderella,1147313,Acmaeoderella,subgenus,exact|trigram,1.0,1,True,
+Q21438878,Acmaeoderella,1075639,Euacmaeoderella,subgenus,trigram,0.8666666666666667,0,True,
+Q21438878,Acmaeoderella,1452265,Acmaeoderella jonica,species,trigram,0.65,0,True,
+Q21438878,Acmaeoderella,327591,Acmaeoderella muehlei,species,trigram,0.6190476190476191,0,True,
+Q21438878,Acmaeoderella,1080676,Acmaeoderella mimonti,species,trigram,0.6190476190476191,0,True,
+Q21438878,Acmaeoderella,1121032,Acmaeoderella elbursi,species,trigram,0.6190476190476191,0,True,
+Q21438878,Acmaeoderella,1121020,Acmaeoderella vetusta,species,trigram,0.6190476190476191,0,True,
+Q21438878,Acmaeoderella,1187207,Acmaeoderella corsica,species,trigram,0.6190476190476191,0,True,
+Q21438878,Acmaeoderella,1637585,Acmaeoderella elegans,species,trigram,0.6190476190476191,0,True,
+Q21769877,Acmella,121286,Acmella,genus,exact|trigram,1.0,0,True,
+Q21769877,Acmella,1349449,Acmella,genus,exact|trigram,1.0,1,True,
+Q21769877,Acmella,605091,Lacmellea,genus,trigram,0.7777777777777778,0,True,
+Q21769877,Acmella,87585,Conacmella,genus,trigram,0.7,0,True,
+Q21769877,Acmella,632408,Lacmelleinae,subtribe,trigram,0.5833333333333333,0,True,
+Q21769877,Acmella,709766,Acmella alba,species,trigram,0.5833333333333333,0,True,
+Q21769877,Acmella,1349450,Acmella nana,species,trigram,0.5833333333333333,0,True,
+Q21769877,Acmella,149822,Cavernacmella,genus,trigram,0.5384615384615384,0,True,
+Q21769877,Acmella,1203359,Acmella calva,species,trigram,0.5384615384615384,0,True,
+Q21769877,Acmella,1349471,Acmella tersa,species,trigram,0.5384615384615384,0,True,
+Q106123971,Acmella pusilla,157976,Acmella pusilla,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q106123971,Acmella pusilla,1349465,Acmella pusilla,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q106123971,Acmella pusilla,664245,Entella pusilla,species,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,748308,Entella pusilla cruciata,subspecies,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,1001329,Entella pusilla pusilla,subspecies,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,1509039,Gulella pusilla,species,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,1531928,Nolella pusilla,species,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,1618175,Cypella pusilla,species,trigram,0.8,0,True,
+Q106123971,Acmella pusilla,9152,Spizella pusilla,species,trigram,0.75,0,True,
+Q106123971,Acmella pusilla,512388,Spizella pusilla arenacea,subspecies,trigram,0.75,0,True,
+Q2641201,Acomys,45580,Acomys,genus,exact|trigram,1.0,0,True,
+Q2641201,Acomys,1431431,Acomys,subgenus,exact|trigram,1.0,1,True,
+Q2641201,Acomys,44773,Neacomys,genus,trigram,0.75,0,True,
+Q2641201,Acomys,45520,Malacomys,genus,trigram,0.6666666666666667,0,True,
+Q2641201,Acomys,1431429,Subacomys,subgenus,trigram,0.6666666666666667,0,True,
+Q2641201,Acomys,1431430,Peracomys,subgenus,trigram,0.6666666666666667,0,True,
+Q2641201,Acomys,44963,Leimacomys,genus,trigram,0.6,0,True,
+Q2641201,Acomys,45713,Phenacomys,genus,trigram,0.6,0,True,
+Q2641201,Acomys,71865,Mastacomys,genus,trigram,0.6,0,True,
+Q2641201,Acomys,45583,Acomys kempi,species,trigram,0.5,0,True,
+Q50746351,Acritus,172724,Acritus,genus,exact|trigram,1.0,0,True,
+Q50746351,Acritus,538991,Acritus,subgenus,exact|trigram,1.0,1,True,
+Q50746351,Acritus,638898,Diacritus,genus,trigram,0.7777777777777778,0,True,
+Q50746351,Acritus,251140,Halacritus,genus,trigram,0.7,0,True,
+Q50746351,Acritus,1266294,Midacritus,genus,trigram,0.7,0,True,
+Q50746351,Acritus,538993,Pycnacritus,subgenus,trigram,0.6363636363636364,0,True,
+Q50746351,Acritus,538996,Cis acritus,species,trigram,0.6363636363636364,0,True,
+Q50746351,Acritus,1011644,Iberacritus,genus,trigram,0.6363636363636364,0,True,
+Q50746351,Acritus,1638461,Onomacritus,genus,trigram,0.6363636363636364,0,True,
+Q50746351,Acritus,267420,Acritus komai,species,trigram,0.5384615384615384,0,True,
+Q8187676,Acrobotrys,950949,Acrobotrys,genus,exact|trigram,1.0,1,True,
+Q8187676,Acrobotrys,1357676,Acrobotrys,genus,exact|trigram,1.0,0,True,
+Q8187676,Acrobotrys,1196424,Ribes macrobotrys,species,trigram,0.5882352941176471,0,True,
+Q8187676,Acrobotrys,977659,Agatea macrobotrys,species,trigram,0.5555555555555556,0,True,
+Q8187676,Acrobotrys,1417856,Mucuna macrobotrys,species,trigram,0.5555555555555556,0,True,
+Q8187676,Acrobotrys,950948,Acrobotrys discolor,species,trigram,0.5263157894736843,0,True,
+Q8187676,Acrobotrys,1194329,Cirsium macrobotrys,species,trigram,0.5263157894736843,0,True,
+Q8187676,Acrobotrys,1357678,Acrobotrys teralans,species,trigram,0.5263157894736843,0,True,
+Q8187676,Acrobotrys,139519,Canavalia macrobotrys,species,trigram,0.47619047619047616,0,True,
+Q8187676,Acrobotrys,1357677,Acrobotrys chelinobotrys,species,trigram,0.41666666666666663,0,True,
+Q25368354,Acrobotrys,950949,Acrobotrys,genus,exact|trigram,1.0,0,True,
+Q25368354,Acrobotrys,1357676,Acrobotrys,genus,exact|trigram,1.0,1,True,
+Q25368354,Acrobotrys,1196424,Ribes macrobotrys,species,trigram,0.5882352941176471,0,True,
+Q25368354,Acrobotrys,977659,Agatea macrobotrys,species,trigram,0.5555555555555556,0,True,
+Q25368354,Acrobotrys,1417856,Mucuna macrobotrys,species,trigram,0.5555555555555556,0,True,
+Q25368354,Acrobotrys,950948,Acrobotrys discolor,species,trigram,0.5263157894736843,0,True,
+Q25368354,Acrobotrys,1194329,Cirsium macrobotrys,species,trigram,0.5263157894736843,0,True,
+Q25368354,Acrobotrys,1357678,Acrobotrys teralans,species,trigram,0.5263157894736843,0,True,
+Q25368354,Acrobotrys,139519,Canavalia macrobotrys,species,trigram,0.47619047619047616,0,True,
+Q25368354,Acrobotrys,1357677,Acrobotrys chelinobotrys,species,trigram,0.41666666666666663,0,True,
+Q10400171,Acrodonta,767234,Acrodonta,genus,exact|trigram,1.0,1,True,
+Q10400171,Acrodonta,1567778,Acrodonta,parvorder,exact|trigram,1.0,0,True,
+Q10400171,Acrodonta,967512,Macrodonta,section,trigram,0.9,0,True,
+Q10400171,Acrodonta,89679,Macrodontia,genus,trigram,0.8181818181818181,0,True,
+Q10400171,Acrodonta,417288,Acrodontis,genus,trigram,0.8,0,True,
+Q10400171,Acrodonta,531632,Acrodon,genus,trigram,0.7777777777777778,0,True,
+Q10400171,Acrodonta,1260880,Acrodon,subgenus,trigram,0.7777777777777778,0,True,
+Q10400171,Acrodonta,374443,Acrodontium,genus,trigram,0.7272727272727273,0,True,
+Q10400171,Acrodonta,89678,Macrodon,genus,trigram,0.6666666666666667,0,True,
+Q10400171,Acrodonta,980772,Diacrodon,genus,trigram,0.5555555555555556,0,True,
+Q21441028,Acronicta,55624,Acronicta,genus,exact|trigram,1.0,0,True,
+Q21441028,Acronicta,1096177,Acronicta,subgenus,exact|trigram,1.0,1,True,
+Q21441028,Acronicta,244174,Anacronicta,genus,trigram,0.8181818181818181,0,True,
+Q21441028,Acronicta,933628,Acronia,genus,trigram,0.7777777777777778,0,True,
+Q21441028,Acronicta,536191,Lacronia,genus,trigram,0.6666666666666667,0,True,
+Q21441028,Acronicta,1424050,Acroniae,subsection,trigram,0.6666666666666667,0,True,
+Q21441028,Acronicta,1425968,Acroniopus,genus,trigram,0.6,0,True,
+Q21441028,Acronicta,519306,Vacronini,tribe,trigram,0.5555555555555556,0,True,
+Q21441028,Acronicta,522228,Macronini,tribe,trigram,0.5555555555555556,0,True,
+Q21441028,Acronicta,1150090,Mimacronia,genus,trigram,0.5,0,True,
+Q21445344,Acrotrichis,172729,Acrotrichis,genus,exact|trigram,1.0,0,True,
+Q21445344,Acrotrichis,996882,Acrotrichis,subgenus,exact|trigram,1.0,1,True,
+Q21445344,Acrotrichis,373624,Acrotrichini,tribe,trigram,0.8333333333333334,0,True,
+Q21445344,Acrotrichis,1587392,Macrotrichia,genus,trigram,0.8333333333333334,0,True,
+Q21445344,Acrotrichis,373363,Acrotrichinae,subfamily,trigram,0.7692307692307692,0,True,
+Q21445344,Acrotrichis,457138,Acrotrichis parva,species,trigram,0.6470588235294117,0,True,
+Q21445344,Acrotrichis,212469,Acrotrichis aspera,species,trigram,0.6111111111111112,0,True,
+Q21445344,Acrotrichis,457143,Acrotrichis vicina,species,trigram,0.6111111111111112,0,True,
+Q21445344,Acrotrichis,457144,Acrotrichis volans,species,trigram,0.6111111111111112,0,True,
+Q21445344,Acrotrichis,987102,Acrotrichis pumila,species,trigram,0.6111111111111112,0,True,
+Q21441202,Actebia,172760,Actebia,genus,exact|trigram,1.0,0,True,
+Q21441202,Actebia,1114433,Actebia,subgenus,exact|trigram,1.0,1,True,
+Q21441202,Actebia,1246128,Actebia ala,species,trigram,0.6363636363636364,0,True,
+Q21441202,Actebia,875835,Actebia fugax,species,trigram,0.5384615384615384,0,True,
+Q21441202,Actebia,1255277,Actebia dizyx,species,trigram,0.5384615384615384,0,True,
+Q21441202,Actebia,1274933,Actebia ficta,species,trigram,0.5384615384615384,0,True,
+Q21441202,Actebia,1274966,Actebia nivea,species,trigram,0.5384615384615384,0,True,
+Q21441202,Actebia,1246131,Actebia flacca,species,trigram,0.5,0,True,
+Q21441202,Actebia,1274942,Actebia amydra,species,trigram,0.5,0,True,
+Q21441202,Actebia,1650889,Actebia iuguma,species,trigram,0.5,0,True,
+Q16294898,Actinella,86234,Actinella,genus,exact|trigram,1.0,0,True,
+Q16294898,Actinella,153214,Actinella,genus,exact|trigram,1.0,0,True,
+Q16294898,Actinella,1409548,Actinea,section,trigram,0.7777777777777778,0,True,
+Q16294898,Actinella,1210955,Actinecta,genus,trigram,0.7777777777777778,0,True,
+Q16294898,Actinella,1409368,Actineria,genus,trigram,0.7777777777777778,0,True,
+Q16294898,Actinella,871644,Hexactinella,genus,trigram,0.75,0,True,
+Q16294898,Actinella,71788,Actinemys,genus,trigram,0.6666666666666667,0,True,
+Q16294898,Actinella,459902,Actinernus,genus,trigram,0.6,0,True,
+Q16294898,Actinella,459903,Actinernidae,family,trigram,0.5833333333333333,0,True,
+Q16294898,Actinella,1616600,Isactinernus,genus,trigram,0.5,0,True,
+Q23070154,Actinella,86234,Actinella,genus,exact|trigram,1.0,0,True,
+Q23070154,Actinella,153214,Actinella,genus,exact|trigram,1.0,1,True,
+Q23070154,Actinella,1409548,Actinea,section,trigram,0.7777777777777778,0,True,
+Q23070154,Actinella,1210955,Actinecta,genus,trigram,0.7777777777777778,0,True,
+Q23070154,Actinella,1409368,Actineria,genus,trigram,0.7777777777777778,0,True,
+Q23070154,Actinella,871644,Hexactinella,genus,trigram,0.75,0,True,
+Q23070154,Actinella,71788,Actinemys,genus,trigram,0.6666666666666667,0,True,
+Q23070154,Actinella,459902,Actinernus,genus,trigram,0.6,0,True,
+Q23070154,Actinella,459903,Actinernidae,family,trigram,0.5833333333333333,0,True,
+Q23070154,Actinella,1616600,Isactinernus,genus,trigram,0.5,0,True,
+Q50757168,Actinella,86234,Actinella,genus,exact|trigram,1.0,0,True,
+Q50757168,Actinella,153214,Actinella,genus,exact|trigram,1.0,0,True,
+Q50757168,Actinella,1409548,Actinea,section,trigram,0.7777777777777778,0,True,
+Q50757168,Actinella,1210955,Actinecta,genus,trigram,0.7777777777777778,0,True,
+Q50757168,Actinella,1409368,Actineria,genus,trigram,0.7777777777777778,0,True,
+Q50757168,Actinella,871644,Hexactinella,genus,trigram,0.75,0,True,
+Q50757168,Actinella,71788,Actinemys,genus,trigram,0.6666666666666667,0,True,
+Q50757168,Actinella,459902,Actinernus,genus,trigram,0.6,0,True,
+Q50757168,Actinella,459903,Actinernidae,family,trigram,0.5833333333333333,0,True,
+Q50757168,Actinella,1616600,Isactinernus,genus,trigram,0.5,0,True,
+Q119571967,Acuera,544587,Acuera,genus,exact|trigram,1.0,0,True,
+Q119571967,Acuera,638538,Acuera,subgenus,exact|trigram,1.0,1,True,
+Q119571967,Acuera,544586,Acuera luhea,species,trigram,0.5,0,True,
+Q119571967,Acuera,1444708,Acuera umbra,species,trigram,0.5,0,True,
+Q119571967,Acuera,1444709,Acuera menaca,species,trigram,0.46153846153846156,0,True,
+Q119571967,Acuera,1444731,Acuera angera,species,trigram,0.46153846153846156,0,True,
+Q119571967,Acuera,1444730,Acuera levara,species,trigram,0.46153846153846156,0,True,
+Q119571967,Acuera,1444710,Acuera laudara,species,trigram,0.4285714285714286,0,True,
+Q119571967,Acuera,1444727,Acuera incepta,species,trigram,0.4285714285714286,0,True,
+Q119571967,Acuera,1177240,Folicana acuera,species,trigram,0.4,0,True,
+Q41150341,Adamsiella,566360,Adamsiella,genus,exact|trigram,1.0,0,True,
+Q41150341,Adamsiella,776263,Adamsiella,genus,exact|trigram,1.0,1,True,
+Q41150341,Adamsiella,776291,Cubadamsiella,genus,trigram,0.7692307692307692,0,True,
+Q41150341,Adamsiella,494241,Adamsia,genus,trigram,0.7,0,True,
+Q41150341,Adamsiella,1123766,Adamsiana,genus,trigram,0.7,0,True,
+Q41150341,Adamsiella,873904,Adamsiella chauvinii,species,trigram,0.5,0,True,
+Q41150341,Adamsiella,1219894,Adamsiella mirabilis,species,trigram,0.5,0,True,
+Q41150341,Adamsiella,566346,Adamsiella angustifolia,species,trigram,0.4347826086956522,0,True,
+Q41150341,Adamsiella,1063262,Cycladamsia,genus,trigram,0.36363636363636365,0,True,
+Q41150341,Adamsiella,197760,Argia adamsi,species,trigram,0.16666666666666663,0,True,
+Q10400945,Adapantus,767109,Adapantus,genus,exact|trigram,1.0,1,True,
+Q10400945,Adapantus,1562811,Adapantus,subgenus,exact|trigram,1.0,0,True,
+Q10400945,Adapantus,1591071,Adapanetus,genus,trigram,0.9,0,True,
+Q10400945,Adapantus,1562819,Neoadapantus,subgenus,trigram,0.75,0,True,
+Q10400945,Adapantus,774272,Adapantus nitens,species,trigram,0.5625,0,True,
+Q10400945,Adapantus,1562812,Adapantus bardus,species,trigram,0.5625,0,True,
+Q10400945,Adapantus,1562816,Adapantus osorioi,species,trigram,0.5294117647058824,0,True,
+Q10400945,Adapantus,1562813,Adapantus brunneus,species,trigram,0.5,0,True,
+Q10400945,Adapantus,1562820,Adapantus affluens,species,trigram,0.5,0,True,
+Q10400945,Adapantus,1600327,Cecile radapan,species,trigram,0.2142857142857143,0,True,
+Q111939572,Adelanthus,272738,Adelanthus,genus,exact|trigram,1.0,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011365,Adelanthus,section,exact|trigram,1.0,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011427,Adelanthus tenuis,species,trigram,0.5882352941176471,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,399397,Adelanthus occlusus,species,trigram,0.5263157894736843,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,399391,Adelanthus falcatus,species,trigram,0.5263157894736843,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011560,Adelanthus pittieri,species,trigram,0.5263157894736843,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,399404,Adelanthus gemmiparus,species,trigram,0.47619047619047616,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011426,Adelanthus lingulatus,species,trigram,0.47619047619047616,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011561,Adelanthus squarrosus,species,trigram,0.47619047619047616,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q111939572,Adelanthus,1011469,Adelanthus carabayensis,species,trigram,0.4347826086956522,0,True,taxon seems to be replaced by Pyrenacantha 181119
+Q13890759,Adelphia,324694,Adelphia,genus,exact|trigram,1.0,1,True,
+Q13890759,Adelphia,1069889,Adelphia,genus,exact|trigram,1.0,0,True,
+Q13890759,Adelphia,48661,Adelpha,genus,trigram,0.875,0,True,
+Q13890759,Adelphia,506972,Anadelphia,genus,trigram,0.8,0,True,
+Q13890759,Adelphia,639384,Adelphion,genus,trigram,0.7777777777777778,0,True,
+Q13890759,Adelphia,250801,Adelphe,genus,trigram,0.75,0,True,
+Q13890759,Adelphia,27393,Adelphicos,genus,trigram,0.7,0,True,
+Q13890759,Adelphia,514560,Ozadelpha,genus,trigram,0.6666666666666667,0,True,
+Q13890759,Adelphia,1415644,Anadelphe,genus,trigram,0.5555555555555556,0,True,
+Q13890759,Adelphia,92541,Tiradelphe,genus,trigram,0.5,0,True,
+Q110901482,Adenopterus,625458,Adenopterus,genus,exact|trigram,1.0,0,True,
+Q110901482,Adenopterus,767390,Adenopterus,subgenus,exact|trigram,1.0,1,True,
+Q110901482,Adenopterus,1253420,Adenopterus rouxi,species,trigram,0.6470588235294117,0,True,
+Q110901482,Adenopterus,1253431,Adenopterus dubius,species,trigram,0.6111111111111112,0,True,
+Q110901482,Adenopterus,1253427,Adenopterus kraussi,species,trigram,0.5789473684210527,0,True,
+Q110901482,Adenopterus,1253430,Adenopterus dumbeus,species,trigram,0.5789473684210527,0,True,
+Q110901482,Adenopterus,1253436,Adenopterus baloghi,species,trigram,0.5789473684210527,0,True,
+Q110901482,Adenopterus,1253421,Adenopterus roseola,species,trigram,0.5789473684210527,0,True,
+Q110901482,Adenopterus,1253419,Adenopterus sarasini,species,trigram,0.55,0,True,
+Q110901482,Adenopterus,1253428,Adenopterus incertus,species,trigram,0.55,0,True,
+Q119573500,Adesmia,138506,Adesmia,genus,exact|trigram,1.0,0,True,
+Q119573500,Adesmia,202167,Adesmia,genus,exact|trigram,1.0,0,True,
+Q119573500,Adesmia,1479496,Adesmia,subgenus,exact|trigram,1.0,1,True,
+Q119573500,Adesmia,1479498,Adesmina,subgenus,trigram,0.875,0,True,
+Q119573500,Adesmia,933746,Adesmiella,genus,trigram,0.7,0,True,
+Q119573500,Adesmia,995712,Katadesmia,genus,trigram,0.7,0,True,
+Q119573500,Adesmia,510297,Adesmiini,tribe,trigram,0.6666666666666667,0,True,
+Q119573500,Adesmia,533635,Diadesmis,genus,trigram,0.6666666666666667,0,True,
+Q119573500,Adesmia,640209,Physadesmia,genus,trigram,0.6363636363636364,0,True,
+Q119573500,Adesmia,1479499,Macradesmia,subgenus,trigram,0.6363636363636364,0,True,
+Q15521945,Adesmia montana,814653,Adesmia montana,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q15521945,Adesmia montana,1667679,Adesmia montana,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q15521945,Adesmia montana,1667683,Adesmia montana parallela,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q15521945,Adesmia montana,1667716,Adesmia montana acervata,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q15521945,Adesmia montana,1667680,Adesmia montana montana,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q15521945,Adesmia montana,226675,Osmia montana,species,trigram,0.8,0,True,
+Q15521945,Adesmia montana,700378,Osmia montana montana,subspecies,trigram,0.8,0,True,
+Q15521945,Adesmia montana,1668298,Adesmia monilis,species,trigram,0.7333333333333334,0,True,
+Q15521945,Adesmia montana,135597,Zamia montana,species,trigram,0.7333333333333334,0,True,
+Q15521945,Adesmia montana,703938,Adesmia monosperma,species,trigram,0.6666666666666667,0,True,
+Q47091388,Adischissus,924877,Adischissus,genus,exact|trigram,1.0,1,True,
+Q47091388,Adischissus,1694207,Adischissus,subgenus,exact|trigram,1.0,0,True,
+Q47091388,Adischissus,422473,Dischissus,genus,trigram,0.9090909090909091,0,True,
+Q47091388,Adischissus,924883,Adischissus pradieri,species,trigram,0.55,0,True,
+Q47091388,Adischissus,924882,Adischissus borneensis,species,trigram,0.5,0,True,
+Q47091388,Adischissus,550374,Dischissus mirandus,species,trigram,0.4736842105263158,0,True,
+Q47091388,Adischissus,1350158,Phaloria paradischidia,species,trigram,0.2727272727272727,0,True,
+Q107269675,Adonis,54004,Adonis,genus,exact|trigram,1.0,0,True,
+Q107269675,Adonis,1673518,Adonis,subgenus,exact|trigram,1.0,0,True,
+Q107269675,Adonis,1413555,Pseudadonis,section,trigram,0.5454545454545454,0,True,
+Q107269675,Adonis,158029,Adonis annua,species,trigram,0.5,0,True,
+Q107269675,Adonis,520728,Adonis annua cupaniana,subspecies,trigram,0.5,0,True,
+Q107269675,Adonis,1163740,Sagra adonis,species,trigram,0.5,0,True,
+Q107269675,Adonis,1498573,Adonis annua annua,subspecies,trigram,0.5,0,True,
+Q107269675,Adonis,214792,Baetis adonis,species,trigram,0.46153846153846156,0,True,
+Q107269675,Adonis,452321,Adonis ramosa fupingensis,subspecies,trigram,0.46153846153846156,0,True,
+Q107269675,Adonis,452322,Adonis ramosa,species,trigram,0.46153846153846156,0,True,
+Q29372944,Adoretus,355549,Adoretus,genus,exact|trigram,1.0,0,True,
+Q29372944,Adoretus,1508176,Adoretus,subgenus,exact|trigram,1.0,1,True,
+Q29372944,Adoretus,1007002,Mimadoretus,genus,trigram,0.7272727272727273,0,True,
+Q29372944,Adoretus,1484371,Lepadoretus,subgenus,trigram,0.7272727272727273,0,True,
+Q29372944,Adoretus,528299,Adoretini,tribe,trigram,0.6666666666666667,0,True,
+Q29372944,Adoretus,1582543,Adoretina,subtribe,trigram,0.6666666666666667,0,True,
+Q29372944,Adoretus,979328,Phaeadoretus,genus,trigram,0.6666666666666667,0,True,
+Q29372944,Adoretus,1105823,Adoretosoma,genus,trigram,0.6363636363636364,0,True,
+Q29372944,Adoretus,640212,Cestradoretus,genus,trigram,0.6153846153846154,0,True,
+Q29372944,Adoretus,961289,Chaetadoretus,subgenus,trigram,0.6153846153846154,0,True,
+Q21441058,Adscita,333235,Adscita,genus,exact|trigram,1.0,0,True,
+Q21441058,Adscita,1656767,Adscita,subgenus,exact|trigram,1.0,1,True,
+Q21441058,Adscita,333240,Adscita amaura,species,trigram,0.5,0,True,
+Q21441058,Adscita,354780,Adscita geryon chrysocephala,subspecies,trigram,0.5,0,True,
+Q21441058,Adscita,354781,Adscita geryon orientalis,subspecies,trigram,0.5,0,True,
+Q21441058,Adscita,354782,Adscita geryon acutafibra,subspecies,trigram,0.5,0,True,
+Q21441058,Adscita,354779,Adscita geryon,species,trigram,0.5,0,True,
+Q21441058,Adscita,852474,Adscita alpina,species,trigram,0.5,0,True,
+Q21441058,Adscita,1134171,Adscita mannii,species,trigram,0.5,0,True,
+Q21441058,Adscita,953684,Rubus adscitus,species,trigram,0.4285714285714286,0,True,
+Q14574701,Aedes detritus,1244712,Aedes detritus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,1466225,Aedes detritus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,1159166,Aliteus detritus,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,496212,Bassareus detritus,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,410176,Saprinus detritus,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,661910,Dichelus detritus,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,653782,Brachycerus detritus,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,918695,Iphiclus detritus,species,trigram,0.5882352941176471,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,497624,Camponotus detritus,species,trigram,0.5789473684210527,0,True,Wikidata doesn't seem to have the complex 1466225
+Q14574701,Aedes detritus,483740,Plagionotus detritus,species,trigram,0.55,0,True,Wikidata doesn't seem to have the complex 1466225
+Q3913364,Aenictus currax,1423958,Aenictus currax,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1423949,Aenictus currax,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,647448,Aenictus crucifer tuberculatus,subspecies,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,696678,Aenictus crucifer,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1423950,Aenictus cornutus,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1423927,Aenictus concavus,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1423990,Aenictus chapmani,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1520351,Aenictus crucifer crucifer,subspecies,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1424011,Aenictus camposi,species,trigram,0.625,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3913364,Aenictus currax,1405062,Aenictus ceylonicus,species,trigram,0.5263157894736843,0,True,Wikidata doesn't seem to have the complex 1423949
+Q3912708,Aenictus hottai,1423960,Aenictus hottai,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1423959,Aenictus hottai,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1250636,Aenictus hilli,species,trigram,0.7333333333333334,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1423976,Aenictus hodgsoni,species,trigram,0.7058823529411764,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1423954,Aenictus huonicus,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1250703,Aenictus henanensis,species,trigram,0.5789473684210527,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,471930,Aenictus hoelldobleri,species,trigram,0.5714285714285714,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1196316,Pycnomerus hottae,species,trigram,0.5294117647058824,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,137857,Diplazium hottae,species,trigram,0.4375,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3912708,Aenictus hottai,1665911,Borneoa hottae,species,trigram,0.4,0,True,Wikidata doesn't seem to have the complex 1423959
+Q3914169,Aenictus javanus,1250702,Aenictus javanus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,1423962,Aenictus javanus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,1423934,Aenictus jawadwipa,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,1424005,Aenictus jarujini,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,1077374,Thylactus javanicus,species,trigram,0.631578947368421,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,368752,Aenictus,genus,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,668163,Halictus jonesi,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,605476,Aenictes,genus,trigram,0.4375,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,1613626,Thorictus johni,species,trigram,0.4375,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3914169,Aenictus javanus,832748,Borboropactus javanicola,species,trigram,0.41666666666666663,0,True,Wikidata doesn't seem to have the complex 1423962
+Q3912728,Aenictus minutulus,1423986,Aenictus minutulus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1423982,Aenictus minutulus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1423983,Aenictus minimus,species,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,436608,Juncus minutulus,species,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1229880,Aenictus mentu,species,trigram,0.7222222222222222,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1423977,Aenictus montivagus,species,trigram,0.6842105263157895,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1423937,Aenictus maneerati,species,trigram,0.6111111111111112,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1217603,Cautor minutulus,species,trigram,0.6111111111111112,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,647453,Aenictus mariae,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912728,Aenictus minutulus,1250686,Aenictus mocsaryi,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1423982
+Q3912255,Aenictus philippinensis,1250699,Aenictus philippinensis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,1424000,Aenictus philippinensis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,825333,Bocus philippinensis,species,trigram,0.782608695652174,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,73875,Naja philippinensis,species,trigram,0.6956521739130435,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,520068,Leea philippinensis,species,trigram,0.6956521739130435,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,925400,Maua philippinensis,species,trigram,0.6956521739130435,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,708671,Vespa philippinensis,species,trigram,0.6956521739130435,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,745294,Dares philippinensis,species,trigram,0.6956521739130435,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,1423995,Aenictus philiporum,species,trigram,0.6521739130434783,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3912255,Aenictus philippinensis,193462,Hopea philippinensis,species,trigram,0.6521739130434783,0,True,Wikidata doesn't seem to have the complex 1424000
+Q3913700,Aenictus silvestrii,1424003,Aenictus silvestrii,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,1424007,Aenictus silvestrii,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,342134,Felis silvestris silvestris,subspecies,trigram,0.6842105263157895,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,1424014,Aenictus sagei,species,trigram,0.631578947368421,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,136038,Cycas silvestris,species,trigram,0.631578947368421,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,705783,Senna silvestris,species,trigram,0.631578947368421,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,1424015,Aenictus samungi,species,trigram,0.5789473684210527,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,689774,Silvestrina silvestrii,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,783702,Zora silvestris,species,trigram,0.5263157894736843,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3913700,Aenictus silvestrii,482015,Carex silvestris,species,trigram,0.5263157894736843,0,True,Wikidata doesn't seem to have the complex 1424003
+Q3914191,Aenictus wroughtonii,1424018,Aenictus wroughtonii,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,1424008,Aenictus wroughtonii,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,822779,Olios wroughtoni,species,trigram,0.65,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,668649,Helina wroughtoni,species,trigram,0.65,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,1431866,Aenictus wilsoni,species,trigram,0.65,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,822625,Lycosa wroughtoni,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,1423957,Aenictus wayani,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,41308,Otomops wroughtoni,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,819169,Oxyopes wroughtoni,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1424008
+Q3914191,Aenictus wroughtonii,1423946,Aenictus wilaiae,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1424008
+Q15869297,Aesa,933945,Aesa,genus,exact|trigram,1.0,1,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,1667105,Aesa,subgenus,exact|trigram,1.0,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,186025,Maesa,genus,trigram,0.8,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,251105,Aesalus,genus,trigram,0.5714285714285714,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,471840,Aesalini,tribe,trigram,0.5,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,1258340,Neonaesa,genus,trigram,0.5,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,373364,Aesalinae,subfamily,trigram,0.4444444444444444,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,906595,Caesareae,section,trigram,0.4444444444444444,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,905610,Inuromaesa,genus,trigram,0.4,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q15869297,Aesa,33070,Chamaesaura,genus,trigram,0.36363636363636365,0,True,taxon tree seems a bit incomplete on Wikidata lacking subfamily and tribe
+Q13231927,Afrasura submarmorata,1302239,Afrasura submarmorata,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1364075,Afrasura submarmorata,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1419522,Paruraecha submarmorata,species,trigram,0.7391304347826086,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,521120,Tipula submarmorata,species,trigram,0.7142857142857143,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1468436,Phelipara submarmorata,species,trigram,0.6818181818181819,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1689503,Idioptera submarmorata,species,trigram,0.6818181818181819,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1299228,Afrasura subfulvia,species,trigram,0.6190476190476191,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1632354,Tonicella submarmorea,species,trigram,0.5238095238095238,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,1441040,Monocrepidius submarmoratus,species,trigram,0.4814814814814815,0,True,Wikidata doesn't seem to have the complex 1364075
+Q13231927,Afrasura submarmorata,446921,Afrasura,genus,trigram,0.38095238095238093,0,True,Wikidata doesn't seem to have the complex 1364075
+Q105937260,Afrius,627723,Afrius,genus,exact|trigram,1.0,0,True,
+Q105937260,Afrius,1360412,Afrius,subgenus,exact|trigram,1.0,1,True,
+Q105937260,Afrius,1360413,Subafrius,subgenus,trigram,0.6666666666666667,0,True,
+Q105937260,Afrius,709787,Afrius kolleri,species,trigram,0.4285714285714286,0,True,
+Q105937260,Afrius,1458194,Afrius yolofus,species,trigram,0.4285714285714286,0,True,
+Q105937260,Afrius,709785,Afrius flavirostrum,species,trigram,0.3157894736842105,0,True,
+Q20668495,Afrocrania,1296985,Afrocrania,subgenus,exact|trigram,1.0,1,True,
+Q20668495,Afrocrania,1642969,Afrocrania,genus,exact|trigram,1.0,0,True,
+Q20668495,Afrocrania,1646939,Afrocranus,genus,trigram,0.8,0,True,
+Q20668495,Afrocrania,559806,Afrocrocus,genus,trigram,0.6,0,True,
+Q20668495,Afrocrania,708236,Crania,genus,trigram,0.6,0,True,
+Q20668495,Afrocrania,1231166,Dicrania,genus,trigram,0.6,0,True,
+Q20668495,Afrocrania,1646940,Afrocranus mixtus,species,trigram,0.5294117647058824,0,True,
+Q20668495,Afrocrania,1642970,Afrocrania foveolata,species,trigram,0.5,0,True,
+Q20668495,Afrocrania,753560,Afrocriotettix,genus,trigram,0.5,0,True,
+Q20668495,Afrocrania,152118,Craniata,class,trigram,0.4,0,True,
+Q2506863,Afrocrania,1296985,Afrocrania,subgenus,exact|trigram,1.0,0,True,
+Q2506863,Afrocrania,1642969,Afrocrania,genus,exact|trigram,1.0,1,True,
+Q2506863,Afrocrania,1646939,Afrocranus,genus,trigram,0.8,0,True,
+Q2506863,Afrocrania,559806,Afrocrocus,genus,trigram,0.6,0,True,
+Q2506863,Afrocrania,708236,Crania,genus,trigram,0.6,0,True,
+Q2506863,Afrocrania,1231166,Dicrania,genus,trigram,0.6,0,True,
+Q2506863,Afrocrania,1646940,Afrocranus mixtus,species,trigram,0.5294117647058824,0,True,
+Q2506863,Afrocrania,1642970,Afrocrania foveolata,species,trigram,0.5,0,True,
+Q2506863,Afrocrania,753560,Afrocriotettix,genus,trigram,0.5,0,True,
+Q2506863,Afrocrania,152118,Craniata,class,trigram,0.4,0,True,
+Q10402424,Afrophisis,767273,Afrophisis,genus,exact|trigram,1.0,1,True,
+Q10402424,Afrophisis,767600,Afrophisis,subgenus,exact|trigram,1.0,0,True,
+Q10402424,Afrophisis,1485690,Afrophisis parva,species,trigram,0.625,0,True,
+Q10402424,Afrophisis,1485687,Afrophisis undosa,species,trigram,0.5882352941176471,0,True,
+Q10402424,Afrophisis,1485682,Afrophisis dumosa,species,trigram,0.5882352941176471,0,True,
+Q10402424,Afrophisis,1485684,Afrophisis kisarawe,species,trigram,0.5263157894736843,0,True,
+Q10402424,Afrophisis,1485686,Afrophisis tanzanica,species,trigram,0.5,0,True,
+Q10402424,Afrophisis,1485683,Afrophisis flagellata,species,trigram,0.47619047619047616,0,True,
+Q10402424,Afrophisis,1485681,Afrophisis carminator,species,trigram,0.47619047619047616,0,True,
+Q10402424,Afrophisis,1485688,Afrophisis leptopennis,species,trigram,0.4545454545454546,0,True,
+Q125221278,Agalope geoffi,1579313,Agalope geoffi,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q125221278,Agalope geoffi,1579324,Agalope geoffi,section,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q125221278,Agalope geoffi,947470,Agalope mineti,species,trigram,0.6428571428571428,0,True,
+Q125221278,Agalope geoffi,1371174,Agalope livida,species,trigram,0.5714285714285714,0,True,
+Q125221278,Agalope geoffi,1579325,Agalope livida,section,trigram,0.5714285714285714,0,True,
+Q125221278,Agalope geoffi,560922,Agalope,genus,trigram,0.5,0,True,
+Q125221278,Agalope geoffi,1256599,Tagalopsyche,genus,trigram,0.3571428571428571,0,True,
+Q125221278,Agalope geoffi,714448,Tagalopsocina,subtribe,trigram,0.3571428571428571,0,True,
+Q125221278,Agalope geoffi,1579311,Paragalope,genus,trigram,0.2857142857142857,0,True,
+Q125221278,Agalope geoffi,1579310,Rotundagalope,genus,trigram,0.0714285714285714,0,True,
+Q21439421,Agapanthia,52439,Agapanthia,genus,exact|trigram,1.0,0,True,
+Q21439421,Agapanthia,739334,Agapanthia,subgenus,exact|trigram,1.0,1,True,
+Q21439421,Agapanthia,941421,Cyanagapanthia,genus,trigram,0.7142857142857143,0,True,
+Q21439421,Agapanthia,543835,Agapanthia lais,species,trigram,0.6666666666666667,0,True,
+Q21439421,Agapanthia,941225,Cribragapanthia,genus,trigram,0.6666666666666667,0,True,
+Q21439421,Agapanthia,1119291,Agapanthia viti,species,trigram,0.6666666666666667,0,True,
+Q21439421,Agapanthia,1591392,Agapanthia paki,species,trigram,0.6666666666666667,0,True,
+Q21439421,Agapanthia,905956,Agapanthia soror,species,trigram,0.625,0,True,
+Q21439421,Agapanthia,1591663,Agapanthia posti,species,trigram,0.625,0,True,
+Q21439421,Agapanthia,1591296,Agapanthia yagii,species,trigram,0.625,0,True,
+Q10403226,Agnesiella,1154843,Agnesiella,genus,exact|trigram,1.0,1,True,
+Q10403226,Agnesiella,1667509,Agnesiella,subgenus,exact|trigram,1.0,0,True,
+Q10403226,Agnesiella,906059,Romagnesiella,genus,trigram,0.7692307692307692,0,True,
+Q10403226,Agnesiella,1667534,Agnesiella ela,species,trigram,0.7142857142857143,0,True,
+Q10403226,Agnesiella,1154842,Agnesiella aino,species,trigram,0.6666666666666667,0,True,
+Q10403226,Agnesiella,1667529,Agnesiella bupa,species,trigram,0.6666666666666667,0,True,
+Q10403226,Agnesiella,1666421,Agnesiella azra,species,trigram,0.6666666666666667,0,True,
+Q10403226,Agnesiella,1667524,Agnesiella alni,species,trigram,0.6666666666666667,0,True,
+Q10403226,Agnesiella,1667548,Agnesiella irma,species,trigram,0.6666666666666667,0,True,
+Q10403226,Agnesiella,1667551,Agnesiella lata,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1154843,Agnesiella,genus,exact|trigram,1.0,0,True,
+Q119572410,Agnesiella,1667509,Agnesiella,subgenus,exact|trigram,1.0,1,True,
+Q119572410,Agnesiella,906059,Romagnesiella,genus,trigram,0.7692307692307692,0,True,
+Q119572410,Agnesiella,1667534,Agnesiella ela,species,trigram,0.7142857142857143,0,True,
+Q119572410,Agnesiella,1154842,Agnesiella aino,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1667529,Agnesiella bupa,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1666421,Agnesiella azra,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1667524,Agnesiella alni,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1667548,Agnesiella irma,species,trigram,0.6666666666666667,0,True,
+Q119572410,Agnesiella,1667551,Agnesiella lata,species,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,154600,Agonum,genus,exact|trigram,1.0,0,True,
+Q21440670,Agonum,1395737,Agonum,subgenus,exact|trigram,1.0,1,True,
+Q21440670,Agonum,422646,Liagonum,genus,trigram,0.75,0,True,
+Q21440670,Agonum,379446,Notagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422701,Speagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422714,Vitagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422626,Idiagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422571,Altagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422629,Incagonum,genus,trigram,0.6666666666666667,0,True,
+Q21440670,Agonum,422630,Iridagonum,genus,trigram,0.6,0,True,
+Q13234250,Agonum fallax,1249451,Agonum fallax,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,1681224,Agonum fallax,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,154600,Agonum,genus,trigram,0.46153846153846156,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,1395737,Agonum,subgenus,trigram,0.46153846153846156,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,422646,Liagonum,genus,trigram,0.3076923076923077,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,379446,Notagonum,genus,trigram,0.23076923076923073,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,422701,Speagonum,genus,trigram,0.23076923076923073,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,422714,Vitagonum,genus,trigram,0.23076923076923073,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,422626,Idiagonum,genus,trigram,0.23076923076923073,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q13234250,Agonum fallax,422571,Altagonum,genus,trigram,0.23076923076923073,0,True,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
+Q21441374,Agraphydrus,641690,Agraphydrus,genus,exact|trigram,1.0,0,True,
+Q21441374,Agraphydrus,1396733,Agraphydrus,subgenus,exact|trigram,1.0,1,True,
+Q21441374,Agraphydrus,1137578,Megagraphydrus,genus,trigram,0.7857142857142857,0,True,
+Q21441374,Agraphydrus,1188174,Agraphydrus avita,species,trigram,0.6470588235294117,0,True,
+Q21441374,Agraphydrus,1137590,Agraphydrus jaechi,species,trigram,0.6111111111111112,0,True,
+Q21441374,Agraphydrus,1396739,Agraphydrus ogatai,species,trigram,0.6111111111111112,0,True,
+Q21441374,Agraphydrus,1137582,Agraphydrus politus,species,trigram,0.5789473684210527,0,True,
+Q21441374,Agraphydrus,1188175,Agraphydrus hanseni,species,trigram,0.5789473684210527,0,True,
+Q21441374,Agraphydrus,1396741,Agraphydrus coomani,species,trigram,0.5789473684210527,0,True,
+Q21441374,Agraphydrus,1396738,Agraphydrus narusei,species,trigram,0.5789473684210527,0,True,
+Q6080542,Agriades,209734,Agriades,genus,exact|trigram,1.0,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1456512,Agriades,subgenus,exact|trigram,1.0,1,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1073729,Agriades dis,species,trigram,0.6666666666666667,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1280352,Agriades luana,species,trigram,0.5714285714285714,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1347881,Agriades leela,species,trigram,0.5714285714285714,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,209736,Agriades alexis,species,trigram,0.5333333333333333,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,209735,Agriades aquilo,species,trigram,0.5333333333333333,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1073716,Agriades errans,species,trigram,0.5333333333333333,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1073717,Agriades jaloka,species,trigram,0.5333333333333333,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q6080542,Agriades,1073726,Agriades pheres,species,trigram,0.5333333333333333,0,True,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
+Q4694188,Agrisius japonicus,1265680,Agrisius japonicus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4694188,Agrisius japonicus,1364106,Agrisius japonicus japonicus,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4694188,Agrisius japonicus,1364108,Agrisius japonicus albida,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4694188,Agrisius japonicus,1364110,Agrisius japonicus dubatolovi,subspecies,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4694188,Agrisius japonicus,1364097,Agrisius japonicus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4694188,Agrisius japonicus,1042717,Lasius japonicus,species,trigram,0.7777777777777778,0,True,
+Q4694188,Agrisius japonicus,101316,Gekko japonicus,species,trigram,0.6111111111111112,0,True,
+Q4694188,Agrisius japonicus,418112,Lates japonicus,species,trigram,0.6111111111111112,0,True,
+Q4694188,Agrisius japonicus,556238,Rumex japonicus,species,trigram,0.6111111111111112,0,True,
+Q4694188,Agrisius japonicus,486630,Buteo japonicus,species,trigram,0.5555555555555556,0,True,
+Q4694188,Agrisius japonicus,265680,Poecilopompilus algidus,species,,,1,False,
+Q108068642,Agrisius leloii,1364098,Agrisius leloii,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1364094,Agrisius leloii,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1648936,Agrisius cernyi,species,trigram,0.7333333333333334,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1669922,Agrisius soror,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1669923,Agrisius witti,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,466819,Agrisius albula,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,364827,Calamus leloi,species,trigram,0.5333333333333333,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,356276,Agrisius,genus,trigram,0.5333333333333333,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1020454,Agrisicula,genus,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1364098
+Q108068642,Agrisius leloii,1622689,Marcopoloia leloi,species,trigram,0.3529411764705882,0,True,Wikidata doesn't seem to have the complex 1364098
+Q5022943,Alaria,124813,Alaria,genus,exact|trigram,1.0,0,True,
+Q5022943,Alaria,1579828,Alaria,genus,exact|trigram,1.0,1,True,
+Q5022943,Alaria,91843,Salaria,genus,trigram,0.8571428571428572,0,True,
+Q5022943,Alaria,1257768,Zalaria,genus,trigram,0.8571428571428572,0,True,
+Q5022943,Alaria,91844,Salarias,genus,trigram,0.75,0,True,
+Q5022943,Alaria,464013,Eualaria,genus,trigram,0.75,0,True,
+Q5022943,Alaria,554476,Adalaria,genus,trigram,0.75,0,True,
+Q5022943,Alaria,602000,Ocalaria,genus,trigram,0.75,0,True,
+Q5022943,Alaria,175677,Megalaria,genus,trigram,0.6666666666666667,0,True,
+Q5022943,Alaria,1014387,Sexalaria,section,trigram,0.6666666666666667,0,True,
+Q4712739,Albugo ipomoeae-panduratae,774949,Albugo ipomoeae-panduratae,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q4712739,Albugo ipomoeae-panduratae,1577655,Albugo ipomoeae-panduratae,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1118097,Albugo ipomoeae-aquaticae,species,trigram,0.7692307692307692,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1086934,Albugo ipomoeae-pes-caprae,species,trigram,0.7307692307692308,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1444134,Albugo ipomoeae-hardwickii,species,trigram,0.6923076923076923,0,True,
+Q4712739,Albugo ipomoeae-panduratae,119737,Ipomoea pandurata,species,trigram,0.6153846153846154,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1603752,Salvia muratae,species,trigram,0.34615384615384615,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1328337,Inuncus juratae,species,trigram,0.2692307692307693,0,True,
+Q4712739,Albugo ipomoeae-panduratae,59967,Albugo,genus,trigram,0.23076923076923073,0,True,
+Q4712739,Albugo ipomoeae-panduratae,1215775,Diala albugo,species,trigram,0.15384615384615385,0,True,
+Q21440968,Aleochara,173233,Aleochara,genus,exact|trigram,1.0,0,True,
+Q21440968,Aleochara,1182432,Aleochara,subgenus,exact|trigram,1.0,1,True,
+Q21440968,Aleochara,88438,Galeocharax,genus,trigram,0.8181818181818181,0,True,
+Q21440968,Aleochara,373858,Aleocharina,subtribe,trigram,0.8181818181818181,0,True,
+Q21440968,Aleochara,203242,Aleocharinae,subfamily,trigram,0.75,0,True,
+Q21440968,Aleochara,373629,Aleocharini,tribe,trigram,0.7272727272727273,0,True,
+Q21440968,Aleochara,424368,Staleochlora,genus,trigram,0.6666666666666667,0,True,
+Q21440968,Aleochara,212944,Aleochara lata,species,trigram,0.6428571428571428,0,True,
+Q21440968,Aleochara,212955,Aleochara verna,species,trigram,0.6,0,True,
+Q21440968,Aleochara,385207,Aleochara watti,species,trigram,0.6,0,True,
+Q4721033,Alexandromys,887381,Alexandromys,genus,exact|trigram,1.0,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,1431458,Alexandromys,subgenus,exact|trigram,1.0,1,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,945290,Alexandromenia,genus,trigram,0.7142857142857143,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,887386,Alexandromys fortis,species,trigram,0.631578947368421,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,1431626,Alexandromys alpinus,species,trigram,0.6,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,887384,Alexandromys kikuchii,species,trigram,0.5714285714285714,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,887398,Alexandromys oeconomus popofensis,subspecies,trigram,0.5454545454545454,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,1174184,Alexandromenia pilosa,species,trigram,0.5238095238095238,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,1174196,Alexandromenia crassa,species,trigram,0.5238095238095238,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q4721033,Alexandromys,1174195,Alexandromenia valida,species,trigram,0.47619047619047616,0,True,the taxon tree on wikidata here seems to differ from the one in inat
+Q125399249,Alexandromys,887381,Alexandromys,genus,exact|trigram,1.0,1,True,
+Q125399249,Alexandromys,1431458,Alexandromys,subgenus,exact|trigram,1.0,0,True,
+Q125399249,Alexandromys,945290,Alexandromenia,genus,trigram,0.7142857142857143,0,True,
+Q125399249,Alexandromys,887386,Alexandromys fortis,species,trigram,0.631578947368421,0,True,
+Q125399249,Alexandromys,1431626,Alexandromys alpinus,species,trigram,0.6,0,True,
+Q125399249,Alexandromys,887384,Alexandromys kikuchii,species,trigram,0.5714285714285714,0,True,
+Q125399249,Alexandromys,887398,Alexandromys oeconomus popofensis,subspecies,trigram,0.5454545454545454,0,True,
+Q125399249,Alexandromys,1174184,Alexandromenia pilosa,species,trigram,0.5238095238095238,0,True,
+Q125399249,Alexandromys,1174196,Alexandromenia crassa,species,trigram,0.5238095238095238,0,True,
+Q125399249,Alexandromys,1174195,Alexandromenia valida,species,trigram,0.47619047619047616,0,True,
+Q134006982,Alexandromys,887381,Alexandromys,genus,exact|trigram,1.0,0,True,
+Q134006982,Alexandromys,1431458,Alexandromys,subgenus,exact|trigram,1.0,1,True,
+Q134006982,Alexandromys,945290,Alexandromenia,genus,trigram,0.7142857142857143,0,True,
+Q134006982,Alexandromys,887386,Alexandromys fortis,species,trigram,0.631578947368421,0,True,
+Q134006982,Alexandromys,1431626,Alexandromys alpinus,species,trigram,0.6,0,True,
+Q134006982,Alexandromys,887384,Alexandromys kikuchii,species,trigram,0.5714285714285714,0,True,
+Q134006982,Alexandromys,887398,Alexandromys oeconomus popofensis,subspecies,trigram,0.5454545454545454,0,True,
+Q134006982,Alexandromys,1174184,Alexandromenia pilosa,species,trigram,0.5238095238095238,0,True,
+Q134006982,Alexandromys,1174196,Alexandromenia crassa,species,trigram,0.5238095238095238,0,True,
+Q134006982,Alexandromys,1174195,Alexandromenia valida,species,trigram,0.47619047619047616,0,True,
+Q108526678,Alfaria,1353598,Alfaria,genus,exact|trigram,1.0,0,True,
+Q108526678,Alfaria,1560252,Alfaria,genus,exact|trigram,1.0,1,True,
+Q108526678,Alfaria,1479084,Alfaria piei,species,trigram,0.5833333333333333,0,True,
+Q108526678,Alfaria,1560254,Alfaria poae,species,trigram,0.5833333333333333,0,True,
+Q108526678,Alfaria,1560257,Alfaria thymi,species,trigram,0.5384615384615384,0,True,
+Q108526678,Alfaria,1560265,Alfaria vitis,species,trigram,0.5384615384615384,0,True,
+Q108526678,Alfaria,1560261,Alfaria junci,species,trigram,0.5384615384615384,0,True,
+Q108526678,Alfaria,1353599,Alfaria minuta,species,trigram,0.5,0,True,
+Q108526678,Alfaria,1559161,Praos alfari,species,trigram,0.41666666666666663,0,True,
+Q108526678,Alfaria,266000,Azteca alfari,species,trigram,0.3846153846153846,0,True,
+Q118460899,Alfaria,1353598,Alfaria,genus,exact|trigram,1.0,1,True,
+Q118460899,Alfaria,1560252,Alfaria,genus,exact|trigram,1.0,0,True,
+Q118460899,Alfaria,1479084,Alfaria piei,species,trigram,0.5833333333333333,0,True,
+Q118460899,Alfaria,1560254,Alfaria poae,species,trigram,0.5833333333333333,0,True,
+Q118460899,Alfaria,1560257,Alfaria thymi,species,trigram,0.5384615384615384,0,True,
+Q118460899,Alfaria,1560265,Alfaria vitis,species,trigram,0.5384615384615384,0,True,
+Q118460899,Alfaria,1560261,Alfaria junci,species,trigram,0.5384615384615384,0,True,
+Q118460899,Alfaria,1353599,Alfaria minuta,species,trigram,0.5,0,True,
+Q118460899,Alfaria,1559161,Praos alfari,species,trigram,0.41666666666666663,0,True,
+Q118460899,Alfaria,266000,Azteca alfari,species,trigram,0.3846153846153846,0,True,
+Q4726221,Alicia,201297,Alicia,genus,exact|trigram,1.0,0,True,
+Q4726221,Alicia,1069902,Alicia,genus,exact|trigram,1.0,1,True,
+Q4726221,Alicia,1175485,Malicia,genus,trigram,0.8571428571428572,0,True,
+Q4726221,Alicia,949756,Egalicia,genus,trigram,0.75,0,True,
+Q4726221,Alicia,1105322,Aliciana,genus,trigram,0.75,0,True,
+Q4726221,Alicia,372828,Caliciales,order,trigram,0.6,0,True,
+Q4726221,Alicia,576103,Ruthalicia,genus,trigram,0.6,0,True,
+Q4726221,Alicia,1018354,Tetralicia,genus,trigram,0.6,0,True,
+Q4726221,Alicia,117923,Caliciaceae,family,trigram,0.5454545454545454,0,True,
+Q4726221,Alicia,252306,Alicianella,genus,trigram,0.5454545454545454,0,True,
+Q124258740,Aliena,711681,Aliena,subsection,exact|trigram,1.0,0,True,
+Q124258740,Aliena,754344,Aliena,genus,exact|trigram,1.0,0,True,
+Q124258740,Aliena,1569045,Aliena,genus,exact|trigram,1.0,1,True,
+Q124258740,Aliena,1654821,Alienates,genus,trigram,0.6666666666666667,0,True,
+Q124258740,Aliena,1431514,Alienauroa,subgenus,trigram,0.6,0,True,
+Q124258740,Aliena,667476,Gouna aliena,species,trigram,0.5,0,True,
+Q124258740,Aliena,760993,Aliena arida,species,trigram,0.5,0,True,
+Q124258740,Aliena,910357,Stipa aliena,species,trigram,0.5,0,True,
+Q124258740,Aliena,1405283,Bia alienata,species,trigram,0.5,0,True,
+Q124258740,Aliena,1569046,Aliena parva,species,trigram,0.5,0,True,
+Q38834566,Allawrencius,998018,Allawrencius,genus,exact|trigram,1.0,1,True,
+Q38834566,Allawrencius,808315,Lawrencia,genus,trigram,0.6666666666666667,0,True,
+Q38834566,Allawrencius,1521188,Allawrencius nodulosus,species,trigram,0.5454545454545454,0,True,
+Q38834566,Allawrencius,1242419,Lawrencia diffusa,species,trigram,0.47058823529411764,0,True,
+Q38834566,Allawrencius,12752,Turdus lawrencii,species,trigram,0.4375,0,True,
+Q38834566,Allawrencius,1676480,Lawrencia repens,species,trigram,0.4375,0,True,
+Q38834566,Allawrencius,677196,Nelrivia lawrenci,species,trigram,0.4117647058823529,0,True,
+Q38834566,Allawrencius,808316,Lawrencia spicata,species,trigram,0.4117647058823529,0,True,
+Q38834566,Allawrencius,896439,Lawrencia helmsii,species,trigram,0.4117647058823529,0,True,
+Q38834566,Allawrencius,1470956,Lawrencia berthae,species,trigram,0.3529411764705882,0,True,
+Q21441307,Allodonta,701642,Allodonta,genus,exact|trigram,1.0,0,True,
+Q21441307,Allodonta,1583545,Allodonta,subgenus,exact|trigram,1.0,1,True,
+Q21441307,Allodonta,1671232,Mallodonina,subtribe,trigram,0.7272727272727273,0,True,
+Q21441307,Allodonta,252109,Mallodon,genus,trigram,0.6666666666666667,0,True,
+Q21441307,Allodonta,88342,Exallodontus,genus,trigram,0.6666666666666667,0,True,
+Q21441307,Allodonta,642898,Allodontermes,genus,trigram,0.6153846153846154,0,True,
+Q21441307,Allodonta,707860,Allodontoides,genus,trigram,0.6153846153846154,0,True,
+Q21441307,Allodonta,252166,Mallodonopsis,genus,trigram,0.5384615384615384,0,True,
+Q21441307,Allodonta,1414053,Neomallodon,genus,trigram,0.4545454545454546,0,True,
+Q21441307,Allodonta,934176,Allomallodon,genus,trigram,0.41666666666666663,0,True,
+Q50749900,Alloeorhynchus,375430,Alloeorhynchus,genus,exact|trigram,1.0,0,True,
+Q50749900,Alloeorhynchus,1496470,Alloeorhynchus,subgenus,exact|trigram,1.0,1,True,
+Q50749900,Alloeorhynchus,1604829,Alloeorhynchus wau,species,trigram,0.7777777777777778,0,True,
+Q50749900,Alloeorhynchus,1604822,Alloeorhynchus macer,species,trigram,0.7,0,True,
+Q50749900,Alloeorhynchus,1601872,Alloeorhynchus niger,species,trigram,0.7,0,True,
+Q50749900,Alloeorhynchus,407435,Alloeorhynchus myersi,species,trigram,0.6666666666666667,0,True,
+Q50749900,Alloeorhynchus,1491840,Alloeorhynchus putoni,species,trigram,0.6666666666666667,0,True,
+Q50749900,Alloeorhynchus,1539870,Alloeorhynchus grossi,species,trigram,0.6666666666666667,0,True,
+Q50749900,Alloeorhynchus,1604799,Alloeorhynchus piceus,species,trigram,0.6666666666666667,0,True,
+Q50749900,Alloeorhynchus,1604817,Alloeorhynchus furens furens,subspecies,trigram,0.6666666666666667,0,True,
+Q125829829,Alloschizidium mateui,1616565,Alloschizidium mateui,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q125829829,Alloschizidium mateui,1616566,Alloschizidium mateui,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q125829829,Alloschizidium mateui,1455947,Alloschizidium remyi,species,trigram,0.7619047619047619,0,True,
+Q125829829,Alloschizidium mateui,1616570,Alloschizidium edetanum,species,trigram,0.7391304347826086,0,True,
+Q125829829,Alloschizidium mateui,1455944,Alloschizidium campanellii,species,trigram,0.7307692307692308,0,True,
+Q125829829,Alloschizidium mateui,1455945,Alloschizidium pruvoti,species,trigram,0.7272727272727273,0,True,
+Q125829829,Alloschizidium mateui,1455946,Alloschizidium racovitzai,species,trigram,0.72,0,True,
+Q125829829,Alloschizidium mateui,1616569,Alloschizidium jordanai,species,trigram,0.6956521739130435,0,True,
+Q125829829,Alloschizidium mateui,1022665,Alloschizidium,genus,trigram,0.6666666666666667,0,True,
+Q125829829,Alloschizidium mateui,883098,Schizidium,genus,trigram,0.47619047619047616,0,True,
+Q10406112,Alloteratura,767545,Alloteratura,subgenus,exact|trigram,1.0,0,True,
+Q10406112,Alloteratura,766415,Alloteratura,genus,exact|trigram,1.0,1,True,
+Q10406112,Alloteratura,1180428,Alloteratura longa,species,trigram,0.6666666666666667,0,True,
+Q10406112,Alloteratura,1180429,Alloteratura media,species,trigram,0.6666666666666667,0,True,
+Q10406112,Alloteratura,1180423,Alloteratura curta,species,trigram,0.6666666666666667,0,True,
+Q10406112,Alloteratura,1642690,Alloteratura chela,species,trigram,0.6666666666666667,0,True,
+Q10406112,Alloteratura,1157084,Alloteratura bachma,species,trigram,0.631578947368421,0,True,
+Q10406112,Alloteratura,1180445,Alloteratura cervus,species,trigram,0.631578947368421,0,True,
+Q10406112,Alloteratura,1180451,Alloteratura keyica,species,trigram,0.631578947368421,0,True,
+Q10406112,Alloteratura,1180450,Alloteratura karnyi,species,trigram,0.631578947368421,0,True,
+Q17271385,Allotropa,62482,Allotropa,genus,exact|trigram,1.0,0,True,
+Q17271385,Allotropa,1340655,Allotropa,genus,exact|trigram,1.0,1,True,
+Q17271385,Allotropa,1546996,Allotropha,genus,trigram,0.9,0,True,
+Q17271385,Allotropa,172879,Allotria,genus,trigram,0.7777777777777778,0,True,
+Q17271385,Allotropa,251409,Allotriopus,genus,trigram,0.7272727272727273,0,True,
+Q17271385,Allotropa,766774,Allotrella,genus,trigram,0.7,0,True,
+Q17271385,Allotropa,366828,Allotraeus,genus,trigram,0.6,0,True,
+Q17271385,Allotropa,1231122,Allotraeus,subgenus,trigram,0.6,0,True,
+Q17271385,Allotropa,1307394,Allotrifur,genus,trigram,0.6,0,True,
+Q17271385,Allotropa,251322,Allotrimium,genus,trigram,0.5454545454545454,0,True,
+Q15898839,Alluaudia,83774,Alluaudia,genus,exact|trigram,1.0,1,True,
+Q15898839,Alluaudia,83776,Alluaudia,genus,exact|trigram,1.0,0,True,
+Q15898839,Alluaudia,30169,Alluaudina,genus,trigram,0.9,0,True,
+Q15898839,Alluaudia,248039,Alluaudomyia,genus,trigram,0.75,0,True,
+Q15898839,Alluaudia,643919,Alluaudinella,genus,trigram,0.6923076923076923,0,True,
+Q15898839,Alluaudia,1373564,Alluaudellina,genus,trigram,0.6923076923076923,0,True,
+Q15898839,Alluaudia,467894,Alluaudiopsis,genus,trigram,0.6153846153846154,0,True,
+Q15898839,Alluaudia,103744,Labeo alluaudi,species,trigram,0.5,0,True,
+Q15898839,Alluaudia,834126,Olios alluaudi,species,trigram,0.5,0,True,
+Q15898839,Alluaudia,1023238,Alona alluaudi,species,trigram,0.5,0,True,
+Q110901502,Aloconota,172846,Aloconota,genus,exact|trigram,1.0,0,True,
+Q110901502,Aloconota,1496492,Aloconota,subgenus,exact|trigram,1.0,1,True,
+Q110901502,Aloconota,987318,Aloconota currax,species,trigram,0.5625,0,True,
+Q110901502,Aloconota,991068,Aloconota ultima,species,trigram,0.5625,0,True,
+Q110901502,Aloconota,213071,Aloconota insecta,species,trigram,0.5294117647058824,0,True,
+Q110901502,Aloconota,385363,Aloconota plicata,species,trigram,0.5294117647058824,0,True,
+Q110901502,Aloconota,1048624,Aloconota strandi,species,trigram,0.5294117647058824,0,True,
+Q110901502,Aloconota,1127281,Australoconops,genus,trigram,0.5,0,True,
+Q110901502,Aloconota,129949,Petaloconchus,genus,trigram,0.46153846153846156,0,True,
+Q110901502,Aloconota,467225,Cephaloconus,genus,trigram,0.41666666666666663,0,True,
+Q17198593,Alsophila,142347,Alsophila,genus,exact|trigram,1.0,1,True,
+Q17198593,Alsophila,174610,Alsophila,genus,exact|trigram,1.0,0,True,
+Q17198593,Alsophila,34659,Alsophylax,genus,trigram,0.8,0,True,
+Q17198593,Alsophila,30111,Alsophis,genus,trigram,0.7777777777777778,0,True,
+Q17198593,Alsophila,512425,Alsophilini,tribe,trigram,0.7272727272727273,0,True,
+Q17198593,Alsophila,1115346,Falsophilus,genus,trigram,0.7272727272727273,0,True,
+Q17198593,Alsophila,1064130,Alsophila alta,species,trigram,0.6428571428571428,0,True,
+Q17198593,Alsophila,951772,Alsophiloides,genus,trigram,0.6153846153846154,0,True,
+Q17198593,Alsophila,204911,Alsophila firma,species,trigram,0.6,0,True,
+Q17198593,Alsophila,91394,Pseudalsophis,genus,trigram,0.46153846153846156,0,True,
+Q20871877,Alticola,45420,Alticola,genus,exact|trigram,1.0,0,True,
+Q20871877,Alticola,1431466,Alticola,subgenus,exact|trigram,1.0,1,True,
+Q20871877,Alticola,767282,Alticolana,genus,trigram,0.8,0,True,
+Q20871877,Alticola,376533,Halticoperla,genus,trigram,0.6666666666666667,0,True,
+Q20871877,Alticola,211229,Halticotoma,genus,trigram,0.6363636363636364,0,True,
+Q20871877,Alticola,367200,Salticoidea,superfamily,trigram,0.6363636363636364,0,True,
+Q20871877,Alticola,86357,Alticorpus,genus,trigram,0.6,0,True,
+Q20871877,Alticola,250317,Halticoptera,genus,trigram,0.5833333333333333,0,True,
+Q20871877,Alticola,962240,Hyphalticoda,genus,trigram,0.5833333333333333,0,True,
+Q20871877,Alticola,925865,Halticorcus,genus,trigram,0.5454545454545454,0,True,
+Q18289564,Amana,450647,Amana,genus,exact|trigram,1.0,0,True,
+Q18289564,Amana,785496,Amana,genus,exact|trigram,1.0,1,True,
+Q18289564,Amana,482562,Hamana,genus,trigram,0.8333333333333334,0,True,
+Q18289564,Amana,514784,Samana,genus,trigram,0.8333333333333334,0,True,
+Q18289564,Amana,1307004,Zamana,genus,trigram,0.8333333333333334,0,True,
+Q18289564,Amana,509652,Agamana,genus,trigram,0.7142857142857143,0,True,
+Q18289564,Amana,1613420,Radamana,genus,trigram,0.625,0,True,
+Q18289564,Amana,766043,Amanayara,genus,trigram,0.5555555555555556,0,True,
+Q18289564,Amana,1138461,Kulamanamana,genus,trigram,0.41666666666666663,0,True,
+Q18289564,Amana,1138460,Kulamanamana haumeaae,species,trigram,0.23809523809523814,0,True,
+Q81163917,Amanita albogrisescens,1425388,Amanita albogrisescens,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1558535,Amanita albogrisescens,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1132662,Amanita alboflavescens,species,trigram,0.8181818181818181,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1558561,Amanita alseides,species,trigram,0.6363636363636364,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,333584,Amanita albocreata,species,trigram,0.6363636363636364,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1371763,Amanita aliena,species,trigram,0.5909090909090908,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1155964,Amanita altipes,species,trigram,0.5909090909090908,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1074811,Amanita alpinicola,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,550734,Amanita albovolvata,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1558535
+Q81163917,Amanita albogrisescens,1348488,Amanita alliodora,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558535
+Q10407296,Amanita arctica,1558541,Amanita arctica,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,1555623,Amanita arctica,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,550727,Amanita armeniaca,species,trigram,0.7647058823529411,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,738495,Amanita arenicola,species,trigram,0.7647058823529411,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,350029,Amanita argentea,species,trigram,0.6875,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,350030,Amanita arocheae,species,trigram,0.6875,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,961023,Amanita arenaria,species,trigram,0.6875,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,1371046,Amanita areolata,species,trigram,0.6875,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,1558552,Amanita argentea,complex,trigram,0.6875,0,True,Wikidata doesn't seem to have the complex 1558541
+Q10407296,Amanita arctica,465695,Amanita arkansana,species,trigram,0.6470588235294117,0,True,Wikidata doesn't seem to have the complex 1558541
+Q107480580,Amanita basiana,1558569,Amanita basiana,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,1558542,Amanita basiana,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,350031,Amanita basii,species,trigram,0.8,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,499605,Amanita baccata,species,trigram,0.8,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,1108835,Amanita basiorubra,species,trigram,0.7222222222222222,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,363601,Amanita battarrae,species,trigram,0.7058823529411764,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,1228109,Amanita ballerina,species,trigram,0.7058823529411764,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,1389766,Amanita ballerinoides,species,trigram,0.5238095238095238,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,159887,Carex basiantha,species,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558542
+Q107480580,Amanita basiana,1314548,Rita bakalu,species,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558542
+Q81164007,Amanita betulae,1391418,Amanita betulae,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,1558539,Amanita betulae,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,1473995,Amanita beckeri,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,1672314,Amanita bengalensis,species,trigram,0.5789473684210527,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,313849,Perdita beata signata,subspecies,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,313848,Perdita beata beata,subspecies,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,308819,Perdita beata,species,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,1380516,Herbita betzi,species,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,201829,Harita belinda,species,trigram,0.4666666666666667,0,True,Wikidata doesn't seem to have the complex 1558539
+Q81164007,Amanita betulae,49156,Betula,genus,trigram,0.4,0,True,Wikidata doesn't seem to have the complex 1558539
+Q107481226,Amanita verrucosivolva,1558553,Amanita verrucosivolva,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,1558580,Amanita verrucosivolva,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,986093,Amanita lanivolva,species,trigram,0.6363636363636364,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,553394,Amanita flavivolva,species,trigram,0.6363636363636364,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,51314,Amanita velosa,species,trigram,0.5909090909090908,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,58684,Amanita verna,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,1425605,Amanita vestita,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,705894,Amanita veldiei,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,350068,Amanita velatipes,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107481226,Amanita verrucosivolva,1674164,Amanita veneficae,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558553
+Q107596033,Amanita vladimirii,1558543,Amanita vladimirii,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,1558570,Amanita vladimirii,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,865554,Dianthus vladimirii,species,trigram,0.6842105263157895,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,675240,Metallyra wladimirii,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,1601826,Merodon vladimiri,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,875545,Vladimirea,genus,trigram,0.4444444444444444,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,1348476,Cortinarius casimirii,species,trigram,0.4285714285714286,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,1478964,Vladimirobius,genus,trigram,0.33333333333333337,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,846286,Saimiriinae,subfamily,trigram,0.2222222222222222,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107596033,Amanita vladimirii,1650834,Vladimirea magna,species,trigram,0.2222222222222222,0,True,Wikidata doesn't seem to have the complex 1558543
+Q107481276,Amanita zonata,1558551,Amanita zonata,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1558575,Amanita zonata,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1159229,Amanita conara,species,genus_epithet_fuzzy,0.8571428571428572,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1596669,Amanita fuscozonata,species,trigram,0.736842105263158,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1558565,Amanita pallidozonata,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,945064,Alucita zonodactyla,species,trigram,0.5789473684210527,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,227465,Perdita zonalis,species,trigram,0.5333333333333333,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1037548,Perdita zonalis monticola,subspecies,trigram,0.5333333333333333,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,1055853,Perdita zonalis zonalis,subspecies,trigram,0.5333333333333333,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,812022,Anahita zoroides,species,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558551
+Q107481276,Amanita zonata,48419,Amanita,genus,trigram,0.5,0,True,Wikidata doesn't seem to have the complex 1558551
+Q4033867,Amara,130434,Amara,genus,exact|trigram,1.0,0,True,
+Q4033867,Amara,539019,Amara,subgenus,exact|trigram,1.0,1,True,
+Q4033867,Amara,418877,Jamara,genus,trigram,0.8333333333333334,0,True,
+Q4033867,Amara,86367,Amaralia,genus,trigram,0.625,0,True,
+Q4033867,Amara,125229,Zamarada,genus,trigram,0.625,0,True,
+Q4033867,Amara,252404,Amaradix,genus,trigram,0.625,0,True,
+Q4033867,Amara,474091,Orgamara,genus,trigram,0.625,0,True,
+Q4033867,Amara,535930,Camarana,genus,trigram,0.625,0,True,
+Q4033867,Amara,767454,Balamara,subgenus,trigram,0.625,0,True,
+Q4033867,Amara,1433214,Gamarada,genus,trigram,0.625,0,True,
+Q21440556,Amaryllidinae,897755,Amaryllidinae,subfamily,exact|trigram,1.0,1,True,
+Q21440556,Amaryllidinae,924715,Amaryllidinae,subtribe,exact|trigram,1.0,0,True,
+Q21440556,Amaryllidinae,870470,Amaryllididae,family,trigram,0.9230769230769231,0,True,
+Q21440556,Amaryllidinae,924713,Amaryllideae,tribe,trigram,0.8461538461538461,0,True,
+Q21440556,Amaryllidinae,61828,Amaryllis,genus,trigram,0.6153846153846154,0,True,
+Q21440556,Amaryllidinae,897762,Amaryllis,genus,trigram,0.6153846153846154,0,True,
+Q21440556,Amaryllidinae,646034,Syllidia,genus,trigram,0.5384615384615384,0,True,
+Q21440556,Amaryllidinae,49738,Phyllidia,genus,trigram,0.5384615384615384,0,True,
+Q21440556,Amaryllidinae,585520,Eucomis amaryllidifolia,species,trigram,0.4347826086956522,0,True,
+Q21440556,Amaryllidinae,199279,Vryburgia amaryllidis,species,trigram,0.38095238095238093,0,True,
+Q21445788,Amaryllidinae,897755,Amaryllidinae,subfamily,exact|trigram,1.0,0,True,
+Q21445788,Amaryllidinae,924715,Amaryllidinae,subtribe,exact|trigram,1.0,1,True,
+Q21445788,Amaryllidinae,870470,Amaryllididae,family,trigram,0.9230769230769231,0,True,
+Q21445788,Amaryllidinae,924713,Amaryllideae,tribe,trigram,0.8461538461538461,0,True,
+Q21445788,Amaryllidinae,61828,Amaryllis,genus,trigram,0.6153846153846154,0,True,
+Q21445788,Amaryllidinae,897762,Amaryllis,genus,trigram,0.6153846153846154,0,True,
+Q21445788,Amaryllidinae,646034,Syllidia,genus,trigram,0.5384615384615384,0,True,
+Q21445788,Amaryllidinae,49738,Phyllidia,genus,trigram,0.5384615384615384,0,True,
+Q21445788,Amaryllidinae,585520,Eucomis amaryllidifolia,species,trigram,0.4347826086956522,0,True,
+Q21445788,Amaryllidinae,199279,Vryburgia amaryllidis,species,trigram,0.38095238095238093,0,True,
+Q119166652,Amaryllis,61828,Amaryllis,genus,exact|trigram,1.0,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,897762,Amaryllis,genus,exact|trigram,1.0,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,924713,Amaryllideae,tribe,trigram,0.6666666666666667,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,897759,Bathyamaryllis,genus,trigram,0.6428571428571428,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,897760,Pseudamaryllis,genus,trigram,0.6428571428571428,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,870470,Amaryllididae,family,trigram,0.6153846153846154,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,897755,Amaryllidinae,subfamily,trigram,0.6153846153846154,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,924715,Amaryllidinae,subtribe,trigram,0.6153846153846154,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,55849,Amaryllidaceae,family,trigram,0.5714285714285714,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q119166652,Amaryllis,924654,Amaryllidoideae,subfamily,trigram,0.5333333333333333,0,True,this is weird and seems to be a mistake -- there is no actual difference between this and Q15305080 besides the hayvan (turkish for animal) in parenthesis. Both items should be merged probably
+Q130404467,Amatodes,1486119,Amatodes,genus,exact|trigram,1.0,1,True,
+Q130404467,Amatodes,1486132,Amatodes,subgenus,exact|trigram,1.0,0,True,
+Q130404467,Amatodes,211968,Psamatodes,genus,trigram,0.8,0,True,
+Q130404467,Amatodes,1486451,Amatodes ertli,species,trigram,0.5714285714285714,0,True,
+Q130404467,Amatodes,1486441,Amatodes kochi,species,trigram,0.5714285714285714,0,True,
+Q130404467,Amatodes,1486453,Amatodes jubae,species,trigram,0.5714285714285714,0,True,
+Q130404467,Amatodes,1486454,Amatodes merkli,species,trigram,0.5333333333333333,0,True,
+Q130404467,Amatodes,1486433,Amatodes gebieni,species,trigram,0.5,0,True,
+Q130404467,Amatodes,1486423,Amatodes werneri,species,trigram,0.5,0,True,
+Q130404467,Amatodes,1486440,Amatodes jocquei,species,trigram,0.5,0,True,
+Q135340633,Amatodes,1486119,Amatodes,genus,exact|trigram,1.0,0,True,
+Q135340633,Amatodes,1486132,Amatodes,subgenus,exact|trigram,1.0,1,True,
+Q135340633,Amatodes,211968,Psamatodes,genus,trigram,0.8,0,True,
+Q135340633,Amatodes,1486451,Amatodes ertli,species,trigram,0.5714285714285714,0,True,
+Q135340633,Amatodes,1486441,Amatodes kochi,species,trigram,0.5714285714285714,0,True,
+Q135340633,Amatodes,1486453,Amatodes jubae,species,trigram,0.5714285714285714,0,True,
+Q135340633,Amatodes,1486454,Amatodes merkli,species,trigram,0.5333333333333333,0,True,
+Q135340633,Amatodes,1486433,Amatodes gebieni,species,trigram,0.5,0,True,
+Q135340633,Amatodes,1486423,Amatodes werneri,species,trigram,0.5,0,True,
+Q135340633,Amatodes,1486440,Amatodes jocquei,species,trigram,0.5,0,True,
+Q14871139,Amaurina,857272,Amaurina,genus,exact|trigram,1.0,1,True,
+Q14871139,Amaurina,967574,Amaurina,subtribe,exact|trigram,1.0,0,True,
+Q14871139,Amaurina,528019,Amauridia,genus,trigram,0.7777777777777778,0,True,
+Q14871139,Amaurina,86372,Amauris,genus,trigram,0.75,0,True,
+Q14871139,Amaurina,967581,Amauris,subgenus,trigram,0.75,0,True,
+Q14871139,Amaurina,967968,Amauris lygia,species,trigram,0.5384615384615384,0,True,
+Q14871139,Amaurina,339500,Amauris ochlea,species,trigram,0.5,0,True,
+Q14871139,Amaurina,357670,Amauris hecate,species,trigram,0.5,0,True,
+Q14871139,Amaurina,648985,Amauris ochlea ochlea,subspecies,trigram,0.5,0,True,
+Q14871139,Amaurina,884624,Amauris vashti,species,trigram,0.5,0,True,
+Q55394769,Amaurina,857272,Amaurina,genus,exact|trigram,1.0,0,True,
+Q55394769,Amaurina,967574,Amaurina,subtribe,exact|trigram,1.0,1,True,
+Q55394769,Amaurina,528019,Amauridia,genus,trigram,0.7777777777777778,0,True,
+Q55394769,Amaurina,86372,Amauris,genus,trigram,0.75,0,True,
+Q55394769,Amaurina,967581,Amauris,subgenus,trigram,0.75,0,True,
+Q55394769,Amaurina,967968,Amauris lygia,species,trigram,0.5384615384615384,0,True,
+Q55394769,Amaurina,339500,Amauris ochlea,species,trigram,0.5,0,True,
+Q55394769,Amaurina,357670,Amauris hecate,species,trigram,0.5,0,True,
+Q55394769,Amaurina,648985,Amauris ochlea ochlea,subspecies,trigram,0.5,0,True,
+Q55394769,Amaurina,884624,Amauris vashti,species,trigram,0.5,0,True,
+Q21441011,Amauris,86372,Amauris,genus,exact|trigram,1.0,0,True,
+Q21441011,Amauris,967581,Amauris,subgenus,exact|trigram,1.0,1,True,
+Q21441011,Amauris,857272,Amaurina,genus,trigram,0.75,0,True,
+Q21441011,Amauris,967574,Amaurina,subtribe,trigram,0.75,0,True,
+Q21441011,Amauris,528019,Amauridia,genus,trigram,0.6666666666666667,0,True,
+Q21441011,Amauris,967968,Amauris lygia,species,trigram,0.5384615384615384,0,True,
+Q21441011,Amauris,339500,Amauris ochlea,species,trigram,0.5,0,True,
+Q21441011,Amauris,357670,Amauris hecate,species,trigram,0.5,0,True,
+Q21441011,Amauris,648985,Amauris ochlea ochlea,subspecies,trigram,0.5,0,True,
+Q21441011,Amauris,884624,Amauris vashti,species,trigram,0.5,0,True,
+Q4740884,Amazonia,932446,Amazonia,genus,exact|trigram,1.0,1,True,
+Q4740884,Amazonia,1647656,Amazonia,section,exact|trigram,1.0,0,True,
+Q4740884,Amazonia,876381,Amazonina,genus,trigram,0.8888888888888888,0,True,
+Q4740884,Amazonia,18975,Amazona,genus,trigram,0.875,0,True,
+Q4740884,Amazonia,1376556,Amazonius,genus,trigram,0.7777777777777778,0,True,
+Q4740884,Amazonia,7181,Amazonetta,genus,trigram,0.7,0,True,
+Q4740884,Amazonia,18982,Amazona amazonica,species,trigram,0.47058823529411764,0,True,
+Q4740884,Amazonia,630222,Amazona amazonica tobagensis,subspecies,trigram,0.47058823529411764,0,True,
+Q4740884,Amazonia,630221,Amazona amazonica amazonica,subspecies,trigram,0.47058823529411764,0,True,
+Q4740884,Amazonia,1685803,Amazona amazonica × viridigenalis,hybrid,trigram,0.47058823529411764,0,True,
+Q14528472,Amblypsilopus anomalicornis,1293737,Amblypsilopus anomalicornis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293821,Amblypsilopus anomalicornis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293732,Amblypsilopus pallidicornis,complex,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293833,Amblypsilopus pallidicornis,species,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293826,Amblypsilopus cooki,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293728,Amblypsilopus alter,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,649042,Amblypsilopus munroi,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293792,Amblypsilopus bimus,species,trigram,0.5925925925925926,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1293745,Amblypsilopus donhi,species,trigram,0.5925925925925926,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528472,Amblypsilopus anomalicornis,1677012,Amblypsilopus exul,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293737
+Q14528549,Amblypsilopus argyrodendron,1293735,Amblypsilopus argyrodendron,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293816,Amblypsilopus argyrodendron,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293728,Amblypsilopus alter,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,649042,Amblypsilopus munroi,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293745,Amblypsilopus donhi,species,trigram,0.5925925925925926,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1677012,Amblypsilopus exul,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293826,Amblypsilopus cooki,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293708,Amblypsilopus bevisi,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,1293792,Amblypsilopus bimus,species,trigram,0.5185185185185186,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528549,Amblypsilopus argyrodendron,785265,Amblypsilopus fustis,species,trigram,0.5185185185185186,0,True,Wikidata doesn't seem to have the complex 1293735
+Q14528535,Amblypsilopus bertiensis,1293738,Amblypsilopus bertiensis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293770,Amblypsilopus bertiensis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293708,Amblypsilopus bevisi,species,trigram,0.7916666666666666,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293792,Amblypsilopus bimus,species,trigram,0.7083333333333333,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,785265,Amblypsilopus fustis,species,trigram,0.7083333333333333,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293745,Amblypsilopus donhi,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293728,Amblypsilopus alter,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1677012,Amblypsilopus exul,species,trigram,0.625,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,1293826,Amblypsilopus cooki,species,trigram,0.625,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528535,Amblypsilopus bertiensis,649042,Amblypsilopus munroi,species,trigram,0.625,0,True,Wikidata doesn't seem to have the complex 1293738
+Q14528517,Amblypsilopus cyplus,1293743,Amblypsilopus cyplus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293747,Amblypsilopus cyplus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293792,Amblypsilopus bimus,species,trigram,0.8,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1677012,Amblypsilopus exul,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293826,Amblypsilopus cooki,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,785265,Amblypsilopus fustis,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293745,Amblypsilopus donhi,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293728,Amblypsilopus alter,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,649042,Amblypsilopus munroi,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293743
+Q14528517,Amblypsilopus cyplus,1293708,Amblypsilopus bevisi,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293743
+Q110833051,Amblypsilopus flaviappendiculatus,1293740,Amblypsilopus flaviappendiculatus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293762,Amblypsilopus flaviappendiculatus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,785265,Amblypsilopus fustis,species,trigram,0.5454545454545454,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1677012,Amblypsilopus exul,species,trigram,0.5151515151515151,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293792,Amblypsilopus bimus,species,trigram,0.5151515151515151,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293728,Amblypsilopus alter,species,trigram,0.5151515151515151,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293708,Amblypsilopus bevisi,species,trigram,0.5151515151515151,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293745,Amblypsilopus donhi,species,trigram,0.48484848484848486,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,1293826,Amblypsilopus cooki,species,trigram,0.4545454545454546,0,True,Wikidata doesn't seem to have the complex 1293740
+Q110833051,Amblypsilopus flaviappendiculatus,649042,Amblypsilopus munroi,species,trigram,0.4545454545454546,0,True,Wikidata doesn't seem to have the complex 1293740
+Q14528546,Amblypsilopus glaciunguis,1293736,Amblypsilopus glaciunguis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293818,Amblypsilopus glaciunguis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293792,Amblypsilopus bimus,species,trigram,0.6799999999999999,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,649042,Amblypsilopus munroi,species,trigram,0.6799999999999999,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,785265,Amblypsilopus fustis,species,trigram,0.6799999999999999,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293826,Amblypsilopus cooki,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293745,Amblypsilopus donhi,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293708,Amblypsilopus bevisi,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1677012,Amblypsilopus exul,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528546,Amblypsilopus glaciunguis,1293728,Amblypsilopus alter,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293736
+Q14528443,Amblypsilopus neoplatypus,1293715,Amblypsilopus neoplatypus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293730,Amblypsilopus neoplatypus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1677012,Amblypsilopus exul,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293792,Amblypsilopus bimus,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293728,Amblypsilopus alter,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,785265,Amblypsilopus fustis,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293826,Amblypsilopus cooki,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293745,Amblypsilopus donhi,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,1293708,Amblypsilopus bevisi,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14528443,Amblypsilopus neoplatypus,649042,Amblypsilopus munroi,species,trigram,0.56,0,True,Wikidata doesn't seem to have the complex 1293715
+Q14527495,Amblypsilopus pallidicornis,1293732,Amblypsilopus pallidicornis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293833,Amblypsilopus pallidicornis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293737,Amblypsilopus anomalicornis,complex,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293821,Amblypsilopus anomalicornis,species,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293826,Amblypsilopus cooki,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293745,Amblypsilopus donhi,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293728,Amblypsilopus alter,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1293792,Amblypsilopus bimus,species,trigram,0.5925925925925926,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,649042,Amblypsilopus munroi,species,trigram,0.5925925925925926,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14527495,Amblypsilopus pallidicornis,1677012,Amblypsilopus exul,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293732
+Q14528522,Amblypsilopus rimbija,1293742,Amblypsilopus rimbija,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293750,Amblypsilopus rimbija,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293792,Amblypsilopus bimus,species,trigram,0.7619047619047619,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293826,Amblypsilopus cooki,species,trigram,0.7142857142857143,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293745,Amblypsilopus donhi,species,trigram,0.7142857142857143,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,785265,Amblypsilopus fustis,species,trigram,0.7142857142857143,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293708,Amblypsilopus bevisi,species,trigram,0.7142857142857143,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1677012,Amblypsilopus exul,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,1293728,Amblypsilopus alter,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528522,Amblypsilopus rimbija,649042,Amblypsilopus munroi,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293742
+Q14528524,Amblypsilopus topendensis,1293741,Amblypsilopus topendensis,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293756,Amblypsilopus topendensis,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293745,Amblypsilopus donhi,species,trigram,0.6799999999999999,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293708,Amblypsilopus bevisi,species,trigram,0.6799999999999999,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293826,Amblypsilopus cooki,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,649042,Amblypsilopus munroi,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,785265,Amblypsilopus fustis,species,trigram,0.64,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1677012,Amblypsilopus exul,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293792,Amblypsilopus bimus,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528524,Amblypsilopus topendensis,1293728,Amblypsilopus alter,species,trigram,0.6,0,True,Wikidata doesn't seem to have the complex 1293741
+Q14528446,Amblypsilopus triscuticatus,1293731,Amblypsilopus triscuticatus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293796,Amblypsilopus triscuticatus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293847,Amblypsilopus trisetosus,species,trigram,0.7777777777777778,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,785265,Amblypsilopus fustis,species,trigram,0.6666666666666667,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293792,Amblypsilopus bimus,species,trigram,0.6296296296296297,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1677012,Amblypsilopus exul,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293826,Amblypsilopus cooki,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293745,Amblypsilopus donhi,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,1293728,Amblypsilopus alter,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528446,Amblypsilopus triscuticatus,649042,Amblypsilopus munroi,species,trigram,0.5555555555555556,0,True,Wikidata doesn't seem to have the complex 1293731
+Q14528533,Amblypsilopus trogon,1293739,Amblypsilopus trogon,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293765,Amblypsilopus trogon,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293766,Amblypsilopus eotrogon,species,genus_epithet_fuzzy,0.9090909090909091,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293826,Amblypsilopus cooki,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293745,Amblypsilopus donhi,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,649042,Amblypsilopus munroi,species,trigram,0.75,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1677012,Amblypsilopus exul,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293792,Amblypsilopus bimus,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293728,Amblypsilopus alter,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,785265,Amblypsilopus fustis,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293739
+Q14528533,Amblypsilopus trogon,1293708,Amblypsilopus bevisi,species,trigram,0.7,0,True,Wikidata doesn't seem to have the complex 1293739
+Q107278071,Americana,1479826,Americana,section,exact|trigram,1.0,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,1609626,Americana,section,exact|trigram,1.0,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,1567538,Americanae,section,trigram,0.9,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,1576504,Americanae,subgenus,trigram,0.9,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,1676366,Americanae,section,trigram,0.9,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,748433,Americina,genus,trigram,0.8888888888888888,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,249105,Americanura,genus,trigram,0.8181818181818181,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,1114590,America,genus,trigram,0.7777777777777778,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,249131,Americabrya,genus,trigram,0.7272727272727273,0,True,wikidata item is animalia both inat entries are plantae
+Q107278071,Americana,295768,Americhelidium americanum,species,trigram,0.31999999999999995,0,True,wikidata item is animalia both inat entries are plantae
+Q103995714,Ammatho,985363,Ammatho,genus,exact|trigram,1.0,0,True,
+Q103995714,Ammatho,1364465,Ammatho,subgenus,exact|trigram,1.0,1,True,
+Q103995714,Ammatho,1631906,Ammatho chi,species,trigram,0.6363636363636364,0,True,
+Q103995714,Ammatho,1631917,Ammatho cao,species,trigram,0.6363636363636364,0,True,
+Q103995714,Ammatho,1631897,Ammatho eos,species,trigram,0.6363636363636364,0,True,
+Q103995714,Ammatho,1397928,Ammathella,genus,trigram,0.6,0,True,
+Q103995714,Ammatho,1631885,Ammatho mene,species,trigram,0.5833333333333333,0,True,
+Q103995714,Ammatho,871671,Psammathodoxa,genus,trigram,0.5384615384615384,0,True,
+Q103995714,Ammatho,985697,Ammatho ovale,species,trigram,0.5384615384615384,0,True,
+Q103995714,Ammatho,1631899,Ammatho nemea,species,trigram,0.5384615384615384,0,True,
+Q29922240,Ammatho,985363,Ammatho,genus,exact|trigram,1.0,1,True,
+Q29922240,Ammatho,1364465,Ammatho,subgenus,exact|trigram,1.0,0,True,
+Q29922240,Ammatho,1631906,Ammatho chi,species,trigram,0.6363636363636364,0,True,
+Q29922240,Ammatho,1631917,Ammatho cao,species,trigram,0.6363636363636364,0,True,
+Q29922240,Ammatho,1631897,Ammatho eos,species,trigram,0.6363636363636364,0,True,
+Q29922240,Ammatho,1397928,Ammathella,genus,trigram,0.6,0,True,
+Q29922240,Ammatho,1631885,Ammatho mene,species,trigram,0.5833333333333333,0,True,
+Q29922240,Ammatho,871671,Psammathodoxa,genus,trigram,0.5384615384615384,0,True,
+Q29922240,Ammatho,985697,Ammatho ovale,species,trigram,0.5384615384615384,0,True,
+Q29922240,Ammatho,1631899,Ammatho nemea,species,trigram,0.5384615384615384,0,True,
+Q110901510,Amphibolia,183378,Amphibolia,genus,exact|trigram,1.0,0,True,
+Q110901510,Amphibolia,184736,Amphibolia,genus,exact|trigram,1.0,0,True,
+Q110901510,Amphibolia,966028,Amphibolia,subgenus,exact|trigram,1.0,1,True,
+Q110901510,Amphibolia,1123054,Euamphibolia,subgenus,trigram,0.8333333333333334,0,True,
+Q110901510,Amphibolia,903518,Paramphibolia,subgenus,trigram,0.7692307692307692,0,True,
+Q110901510,Amphibolia,623362,Amphibolia vidua,species,trigram,0.625,0,True,
+Q110901510,Amphibolia,579721,Amphibolia laevis,species,trigram,0.5882352941176471,0,True,
+Q110901510,Amphibolia,189213,Amphibolia obscura,species,trigram,0.5555555555555556,0,True,
+Q110901510,Amphibolia,622613,Amphibolia wilsoni,species,trigram,0.5555555555555556,0,True,
+Q110901510,Amphibolia,966034,Amphibolia commoni,species,trigram,0.5555555555555556,0,True,
+Q135901817,Amphicosmus,248118,Amphicosmus,genus,exact|trigram,1.0,0,True,
+Q135901817,Amphicosmus,1693604,Amphicosmus,subgenus,exact|trigram,1.0,1,True,
+Q135901817,Amphicosmus,349658,Pericosmus,genus,trigram,0.6363636363636364,0,True,
+Q135901817,Amphicosmus,1430667,Amphicosmus elegans,species,trigram,0.5789473684210527,0,True,
+Q135901817,Amphicosmus,259551,Amphicosmus cincturus,species,trigram,0.5238095238095238,0,True,
+Q135901817,Amphicosmus,1254710,Amphicosmus vanduzeei,species,trigram,0.5238095238095238,0,True,
+Q135901817,Amphicosmus,1361055,Amphicosmus arizonicus,species,trigram,0.5,0,True,
+Q135901817,Amphicosmus,1163079,Pericosmus tenuis,species,trigram,0.3529411764705882,0,True,
+Q135901817,Amphicosmus,1163083,Pericosmus bidens,species,trigram,0.3529411764705882,0,True,
+Q135901817,Amphicosmus,349659,Pericosmus cordatus,species,trigram,0.3157894736842105,0,True,
+Q20087854,Amphipogon,577086,Amphipogon,genus,exact|trigram,1.0,0,True,
+Q20087854,Amphipogon,997047,Amphipogon,genus,exact|trigram,1.0,1,True,
+Q20087854,Amphipogon,997052,Amphipogon flavus,species,trigram,0.5882352941176471,0,True,
+Q20087854,Amphipogon,1305601,Amphipogon debilis,species,trigram,0.5555555555555556,0,True,
+Q20087854,Amphipogon,1040816,Amphipogon sericeus,species,trigram,0.5263157894736843,0,True,
+Q20087854,Amphipogon,1158180,Amphipogon strictus,species,trigram,0.5263157894736843,0,True,
+Q20087854,Amphipogon,1689029,Amphipogon setaceus,species,trigram,0.5263157894736843,0,True,
+Q20087854,Amphipogon,1305603,Amphipogon avenaceus,species,trigram,0.5,0,True,
+Q20087854,Amphipogon,1305602,Amphipogon caricinus,species,trigram,0.5,0,True,
+Q20087854,Amphipogon,1305604,Amphipogon amphipogonoides,species,trigram,0.3846153846153846,0,True,
+Q64711470,Amphitrite,194006,Amphitrite,genus,exact|trigram,1.0,0,True,
+Q64711470,Amphitrite,1223034,Amphitrite,genus,exact|trigram,1.0,1,True,
+Q64711470,Amphitrite,343268,Neoamphitrite,genus,trigram,0.7692307692307692,0,True,
+Q64711470,Amphitrite,1331966,Tinea amphitrite,species,trigram,0.625,0,True,
+Q64711470,Amphitrite,1578371,Amphitrite rubra,species,trigram,0.625,0,True,
+Q64711470,Amphitrite,193998,Amphitrite ornata,species,trigram,0.5882352941176471,0,True,
+Q64711470,Amphitrite,1424373,Amphitritecandona,genus,trigram,0.5882352941176471,0,True,
+Q64711470,Amphitrite,649290,Amphitrite cirrata,species,trigram,0.5555555555555556,0,True,
+Q64711470,Amphitrite,887845,Amphitrite figulus,species,trigram,0.5555555555555556,0,True,
+Q64711470,Amphitrite,1172116,Ophiura amphitrites,species,trigram,0.5263157894736843,0,True,
+Q25368624,Amphitrite,194006,Amphitrite,genus,exact|trigram,1.0,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,1223034,Amphitrite,genus,exact|trigram,1.0,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,343268,Neoamphitrite,genus,trigram,0.7692307692307692,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,1331966,Tinea amphitrite,species,trigram,0.625,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,1578371,Amphitrite rubra,species,trigram,0.625,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,193998,Amphitrite ornata,species,trigram,0.5882352941176471,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,1424373,Amphitritecandona,genus,trigram,0.5882352941176471,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,649290,Amphitrite cirrata,species,trigram,0.5555555555555556,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,887845,Amphitrite figulus,species,trigram,0.5555555555555556,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q25368624,Amphitrite,1172116,Ophiura amphitrites,species,trigram,0.5263157894736843,0,True,The genus od algae doesn't seem to exist in inat -- only the fungi (1223034) and the animalia (194006)
+Q110589315,Amphylaeus,574418,Amphylaeus,genus,exact|trigram,1.0,0,True,
+Q110589315,Amphylaeus,602804,Amphylaeus,subgenus,exact|trigram,1.0,1,True,
+Q110589315,Amphylaeus,127812,Hylaeus,genus,trigram,0.7,0,True,
+Q110589315,Amphylaeus,602834,Hylaeus,subgenus,trigram,0.7,0,True,
+Q110589315,Amphylaeus,883950,Amphylaeus morosus,species,trigram,0.5555555555555556,0,True,
+Q110589315,Amphylaeus,1276394,Amphylaeus flavicans,species,trigram,0.5,0,True,
+Q110589315,Amphylaeus,892283,Amphylaeus obscuriceps,species,trigram,0.4545454545454546,0,True,
+Q110589315,Amphylaeus,1276393,Amphylaeus nubilosellus,species,trigram,0.4347826086956522,0,True,
+Q110589315,Amphylaeus,507747,Iris pamphylica,species,trigram,0.33333333333333337,0,True,
+Q110589315,Amphylaeus,1371888,Virbia pamphylia,species,trigram,0.25,0,True,
+Q15960490,Aphanosperma,273514,Aphanosperma,genus,exact|trigram,1.0,1,True,
+Q15960490,Aphanosperma,1169039,Aphanosperma,genus,exact|trigram,1.0,0,True,
+Q15960490,Aphanosperma,354538,Aphanopora,genus,trigram,0.75,0,True,
+Q15960490,Aphanosperma,1090285,Inosperma,genus,trigram,0.6666666666666667,0,True,
+Q15960490,Aphanosperma,86526,Aphanopus,genus,trigram,0.5833333333333333,0,True,
+Q15960490,Aphanosperma,935222,Aphanosperma orientalis,species,trigram,0.5217391304347826,0,True,
+Q15960490,Aphanosperma,1355837,Aphanosperma sinaloense,species,trigram,0.5217391304347826,0,True,
+Q15960490,Aphanosperma,1383548,Aphanonyx,genus,trigram,0.5,0,True,
+Q15960490,Aphanosperma,935221,Aphanosperma occidentalis,species,trigram,0.48,0,True,
+Q15960490,Aphanosperma,626270,Diaphanos,genus,trigram,0.41666666666666663,0,True,
+Q110901536,Apis,47220,Apis,genus,exact|trigram,1.0,0,True,
+Q110901536,Apis,578086,Apis,subgenus,exact|trigram,1.0,1,True,
+Q110901536,Apis,174503,Capis,genus,trigram,0.8,0,True,
+Q110901536,Apis,640142,Apisa,genus,trigram,0.8,0,True,
+Q110901536,Apis,1551869,Dapis,genus,trigram,0.8,0,True,
+Q110901536,Apis,247800,Isapis,genus,trigram,0.6666666666666667,0,True,
+Q110901536,Apis,250086,Anapis,genus,trigram,0.6666666666666667,0,True,
+Q110901536,Apis,272942,Rhapis,genus,trigram,0.6666666666666667,0,True,
+Q110901536,Apis,53265,Sinapis,genus,trigram,0.5714285714285714,0,True,
+Q110901536,Apis,86548,Apistus,genus,trigram,0.5714285714285714,0,True,
+Q10420017,Aspergillus leucocarpus,1408981,Aspergillus leucocarpus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q10420017,Aspergillus leucocarpus,1408980,Aspergillus leucocarpus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q10420017,Aspergillus leucocarpus,1408969,Aspergillus levisporus,species,trigram,0.7391304347826086,0,True,
+Q10420017,Aspergillus leucocarpus,1430810,Aspergillus lebretii,species,trigram,0.6086956521739131,0,True,
+Q10420017,Aspergillus leucocarpus,1554715,Aspergillus lentisci,species,trigram,0.6086956521739131,0,True,
+Q10420017,Aspergillus leucocarpus,550305,Aspergillus sojae,species,trigram,0.6086956521739131,0,True,
+Q10420017,Aspergillus leucocarpus,350138,Aspergillus niger,species,trigram,0.5652173913043479,0,True,
+Q10420017,Aspergillus leucocarpus,155033,Aspergillus,genus,trigram,0.4782608695652174,0,True,
+Q10420017,Aspergillus leucocarpus,1148123,Aspergillus,subgenus,trigram,0.4782608695652174,0,True,
+Q10420017,Aspergillus leucocarpus,1148135,Aspergillus,section,trigram,0.4782608695652174,0,True,
+Q61466676,Asteriscus,71115,Asteriscus,genus,exact|trigram,1.0,0,True,
+Q61466676,Asteriscus,1297070,Asteriscus,genus,exact|trigram,1.0,1,True,
+Q61466676,Asteriscus,1476097,Dacus asteriscus,species,trigram,0.625,0,True,
+Q61466676,Asteriscus,605697,Asteriscus smithii,species,trigram,0.5555555555555556,0,True,
+Q61466676,Asteriscus,130741,Silphium asteriscus,species,trigram,0.5263157894736843,0,True,
+Q61466676,Asteriscus,242906,Silphium asteriscus asteriscus,variety,trigram,0.5263157894736843,0,True,
+Q61466676,Asteriscus,214226,Arthonia asteriscus,species,trigram,0.5263157894736843,0,True,
+Q61466676,Asteriscus,463049,Gyalidea asteriscus,species,trigram,0.5263157894736843,0,True,
+Q61466676,Asteriscus,430700,Asteriscus sericeus,species,trigram,0.5263157894736843,0,True,
+Q61466676,Asteriscus,471845,Silphium asteriscus trifoliatum,variety,trigram,0.5263157894736843,0,True,
+Q10420741,Asterococcus schimae,1662248,Asterococcus schimae,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q10420741,Asterococcus schimae,1661602,Asterococcus schimae,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q10420741,Asterococcus schimae,1503825,Atrococcus suaedae,species,trigram,0.7,0,True,
+Q10420741,Asterococcus schimae,1284655,Asperococcus scaber,species,trigram,0.7,0,True,
+Q10420741,Asterococcus schimae,493956,Asterococcus superbus,species,trigram,0.6666666666666667,0,True,
+Q10420741,Asterococcus schimae,968573,Asterococcus spinosus,species,trigram,0.6666666666666667,0,True,
+Q10420741,Asterococcus schimae,1148088,Aerococcus suis,species,trigram,0.65,0,True,
+Q10420741,Asterococcus schimae,493958,Asterococcus,genus,trigram,0.6,0,True,
+Q10420741,Asterococcus schimae,507882,Asterococcus,genus,trigram,0.6,0,True,
+Q10420741,Asterococcus schimae,687179,Rastrococcus spinosus,species,trigram,0.5714285714285714,0,True,
+Q110901556,Astraeus,48774,Astraeus,genus,exact|trigram,1.0,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,334065,Astraeus,genus,exact|trigram,1.0,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,86695,Astraea,genus,trigram,0.75,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,83247,Astraea,genus,trigram,0.75,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,976567,Astraeodes,genus,trigram,0.7,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,1192205,Astraeini,tribe,trigram,0.6666666666666667,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,51803,Tubastraea,genus,trigram,0.5,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,121179,Megastraea,genus,trigram,0.5,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,90031,Montastraea,genus,trigram,0.4545454545454546,0,True,but seems to be a subgenus of 334065
+Q110901556,Astraeus,174300,Clypastraea,genus,trigram,0.4545454545454546,0,True,but seems to be a subgenus of 334065
+Q119571391,Asura,124525,Asura,genus,exact|trigram,1.0,0,True,
+Q119571391,Asura,1364879,Asura,subgenus,exact|trigram,1.0,1,True,
+Q119571391,Asura,1178861,Lasura,genus,trigram,0.8333333333333334,0,True,
+Q119571391,Asura,245758,Neasura,genus,trigram,0.7142857142857143,0,True,
+Q119571391,Asura,1359751,Brasura,genus,trigram,0.7142857142857143,0,True,
+Q119571391,Asura,446921,Afrasura,genus,trigram,0.625,0,True,
+Q119571391,Asura,605740,Mimasura,genus,trigram,0.625,0,True,
+Q119571391,Asura,993646,Esmasura,genus,trigram,0.625,0,True,
+Q119571391,Asura,1001376,Wittasura,genus,trigram,0.5555555555555556,0,True,
+Q119571391,Asura,1001384,Moorasura,genus,trigram,0.5555555555555556,0,True,
+Q8208374,Atkinsonia,848827,Atkinsonia,genus,exact|trigram,1.0,1,True,
+Q8208374,Atkinsonia,1133662,Atkinsonia,genus,exact|trigram,1.0,0,True,
+Q8208374,Atkinsonia,1592832,Atkinsonianus,genus,trigram,0.7692307692307692,0,True,
+Q8208374,Atkinsonia,1468852,Lethe atkinsonia,species,trigram,0.625,0,True,
+Q8208374,Atkinsonia,1225944,Atkinsonia furcata,species,trigram,0.5555555555555556,0,True,
+Q8208374,Atkinsonia,570899,Mycena atkinsoniana,species,trigram,0.5263157894736843,0,True,
+Q8208374,Atkinsonia,334648,Amanita atkinsoniana,species,trigram,0.5,0,True,
+Q8208374,Atkinsonia,1225947,Atkinsonia swetlanae,species,trigram,0.5,0,True,
+Q8208374,Atkinsonia,1225945,Atkinsonia ignipicta,species,trigram,0.5,0,True,
+Q8208374,Atkinsonia,1404670,Euglesa atkinsoniana,species,trigram,0.5,0,True,
+Q50693439,Augustia,1010723,Augustia,section,exact|trigram,1.0,0,True,
+Q50693439,Augustia,1191462,Augustia,genus,exact|trigram,1.0,1,True,
+Q50693439,Augustia,273134,Augusta,genus,trigram,0.875,0,True,
+Q50693439,Augustia,418944,Augusta,genus,trigram,0.875,0,True,
+Q50693439,Augustia,1070226,Augustea,genus,trigram,0.875,0,True,
+Q50693439,Augustia,86749,Augustula,genus,trigram,0.7777777777777778,0,True,
+Q50693439,Augustia,420269,Augustaea,genus,trigram,0.7777777777777778,0,True,
+Q50693439,Augustia,788095,Augusteae,tribe,trigram,0.7777777777777778,0,True,
+Q50693439,Augustia,1013204,Peltaugustia,section,trigram,0.6666666666666667,0,True,
+Q50693439,Augustia,193798,Inga augusti,species,trigram,0.5,0,True,
+Q67002933,Auricula,742765,Auricula,section,exact|trigram,1.0,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1269419,Auricula,genus,exact|trigram,1.0,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1442226,Auriculata,section,trigram,0.8,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1459474,Auriculata,subsection,trigram,0.8,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,50817,Auricularia,genus,trigram,0.7272727272727273,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,86763,Auriculella,genus,trigram,0.7272727272727273,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1395972,Auriculatae,section,trigram,0.7272727272727273,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1645358,Auriculatum,section,trigram,0.7272727272727273,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,1692495,Auriculatae,section,trigram,0.7272727272727273,0,True,wikidata is a genus - inat a section (742765)
+Q67002933,Auricula,214644,Auriculella auricula,species,trigram,0.4,0,True,wikidata is a genus - inat a section (742765)
+Q116236536,Auricula,742765,Auricula,section,exact|trigram,1.0,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1269419,Auricula,genus,exact|trigram,1.0,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1442226,Auriculata,section,trigram,0.8,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1459474,Auriculata,subsection,trigram,0.8,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,50817,Auricularia,genus,trigram,0.7272727272727273,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,86763,Auriculella,genus,trigram,0.7272727272727273,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1395972,Auriculatae,section,trigram,0.7272727272727273,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1645358,Auriculatum,section,trigram,0.7272727272727273,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,1692495,Auriculatae,section,trigram,0.7272727272727273,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q116236536,Auricula,214644,Auriculella auricula,species,trigram,0.4,0,True,new taxon (discovered in 2022) probably not yet on inat
+Q29388149,Auricula,742765,Auricula,section,exact|trigram,1.0,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1269419,Auricula,genus,exact|trigram,1.0,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1442226,Auriculata,section,trigram,0.8,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1459474,Auriculata,subsection,trigram,0.8,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,50817,Auricularia,genus,trigram,0.7272727272727273,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,86763,Auriculella,genus,trigram,0.7272727272727273,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1395972,Auriculatae,section,trigram,0.7272727272727273,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1645358,Auriculatum,section,trigram,0.7272727272727273,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,1692495,Auriculatae,section,trigram,0.7272727272727273,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q29388149,Auricula,214644,Auriculella auricula,species,trigram,0.4,0,True,not accepted according to https://www.marinespecies.org/aphia.php?p=taxdetails&id=206435
+Q25661362,Auricula,742765,Auricula,section,exact|trigram,1.0,0,True,
+Q25661362,Auricula,1269419,Auricula,genus,exact|trigram,1.0,1,True,
+Q25661362,Auricula,1442226,Auriculata,section,trigram,0.8,0,True,
+Q25661362,Auricula,1459474,Auriculata,subsection,trigram,0.8,0,True,
+Q25661362,Auricula,50817,Auricularia,genus,trigram,0.7272727272727273,0,True,
+Q25661362,Auricula,86763,Auriculella,genus,trigram,0.7272727272727273,0,True,
+Q25661362,Auricula,1395972,Auriculatae,section,trigram,0.7272727272727273,0,True,
+Q25661362,Auricula,1645358,Auriculatum,section,trigram,0.7272727272727273,0,True,
+Q25661362,Auricula,1692495,Auriculatae,section,trigram,0.7272727272727273,0,True,
+Q25661362,Auricula,214644,Auriculella auricula,species,trigram,0.4,0,True,
+Q10423428,Autonoe,644103,Autonoe,genus,exact|trigram,1.0,1,True,
+Q10423428,Autonoe,1584270,Autonoe,genus,exact|trigram,1.0,0,True,
+Q10423428,Autonoe,924587,Autonopis,genus,trigram,0.6666666666666667,0,True,
+Q10423428,Autonoe,1114427,Autonoe seurati,species,trigram,0.4666666666666667,0,True,
+Q10423428,Autonoe,1114424,Mutilla autonoe,species,trigram,0.4666666666666667,0,True,
+Q10423428,Autonoe,1114425,Autonoe karamani,species,trigram,0.4375,0,True,
+Q10423428,Autonoe,1402481,Autonoe longipes,species,trigram,0.4375,0,True,
+Q10423428,Autonoe,1584274,Autonoe latifolia,species,trigram,0.4117647058823529,0,True,
+Q10423428,Autonoe,1666231,Autonopis lineata,species,trigram,0.4117647058823529,0,True,
+Q10423428,Autonoe,1336653,Epinotia autonoma,species,trigram,0.3529411764705882,0,True,
+Q4034791,Bacteria,47319,Bacteria,genus,exact|trigram,1.0,1,True,
+Q4034791,Bacteria,67333,Bacteria,kingdom,exact|trigram,1.0,0,True,
+Q4034791,Bacteria,356867,Geobacter,genus,trigram,0.4444444444444444,0,True,
+Q4034791,Bacteria,356702,Pedobacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,356969,Arcobacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,356838,Lysobacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,356703,Pelobacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,941632,Solibacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,941738,Bryobacter,genus,trigram,0.4,0,True,
+Q4034791,Bacteria,941748,Koribacter,genus,trigram,0.4,0,True,
+Q66821463,Bactridium,174607,Bactridium,genus,exact|trigram,1.0,0,True,seems outdated
+Q66821463,Bactridium,174597,Bactridium,genus,exact|trigram,1.0,0,True,seems outdated
+Q66821463,Bactridium,711704,Bactridium,section,exact|trigram,1.0,0,True,seems outdated
+Q66821463,Bactridium,742363,Parabactridium,genus,trigram,0.7142857142857143,0,True,seems outdated
+Q66821463,Bactridium,774574,Bactridium flavum,species,trigram,0.5882352941176471,0,True,seems outdated
+Q66821463,Bactridium,1025212,Bactridium minutum,species,trigram,0.5555555555555556,0,True,seems outdated
+Q66821463,Bactridium,1143122,Bactridium ellisii,species,trigram,0.5555555555555556,0,True,seems outdated
+Q66821463,Bactridium,381363,Bactridium clavatum,species,trigram,0.5263157894736843,0,True,seems outdated
+Q66821463,Bactridium,331773,Bactridium insularis,species,trigram,0.5,0,True,seems outdated
+Q66821463,Bactridium,744314,Parabactridium mirum,species,trigram,0.5,0,True,seems outdated
+Q66821463,Bactridium,700500,Heteronemia,genus,synonym_exact,0.09090909090909094,0,True,seems outdated
+Q105134192,Bactridium,174607,Bactridium,genus,exact|trigram,1.0,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,174597,Bactridium,genus,exact|trigram,1.0,1,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,711704,Bactridium,section,exact|trigram,1.0,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,742363,Parabactridium,genus,trigram,0.7142857142857143,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,774574,Bactridium flavum,species,trigram,0.5882352941176471,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,1025212,Bactridium minutum,species,trigram,0.5555555555555556,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,1143122,Bactridium ellisii,species,trigram,0.5555555555555556,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,381363,Bactridium clavatum,species,trigram,0.5263157894736843,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,331773,Bactridium insularis,species,trigram,0.5,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q105134192,Bactridium,744314,Parabactridium mirum,species,trigram,0.5,0,True,inat has a more complete taxon tree than ncbi and gbif -- it is probably the same but it seems a bit off
+Q23048251,Balladyna,487295,Balladyna,genus,exact|trigram,1.0,1,True,
+Q23048251,Balladyna,1258959,Balladyna,genus,exact|trigram,1.0,0,True,
+Q23048251,Balladyna,1414270,Balladonia,genus,trigram,0.8,0,True,
+Q23048251,Balladyna,791809,Balladynaceae,family,trigram,0.6923076923076923,0,True,
+Q23048251,Balladyna,1258960,Balladyna gardeniae,species,trigram,0.4736842105263158,0,True,
+Q23048251,Balladyna,1506578,Oxytricha balladyna,species,trigram,0.4736842105263158,0,True,
+Q23048251,Balladyna,1250765,Euhesma balladonia,species,trigram,0.4444444444444444,0,True,
+Q23048251,Balladyna,1414271,Balladonia aervoides,species,trigram,0.4,0,True,
+Q23048251,Balladyna,1414272,Balladonia multiceps,species,trigram,0.4,0,True,
+Q23048251,Balladyna,428354,Turneromyia balladonia,species,trigram,0.36363636363636365,0,True,
+Q64755616,Bambusicola,1205,Bambusicola,genus,exact|trigram,1.0,0,True,
+Q64755616,Bambusicola,1258308,Bambusicola,genus,exact|trigram,1.0,1,True,
+Q64755616,Bambusicola,791636,Bambusicolaceae,family,trigram,0.7333333333333334,0,True,
+Q64755616,Bambusicola,1258403,Parabambusicola,genus,trigram,0.7333333333333334,0,True,
+Q64755616,Bambusicola,820688,Zoica bambusicola,species,trigram,0.6470588235294117,0,True,
+Q64755616,Bambusicola,1206,Bambusicola fytchii,species,trigram,0.5789473684210527,0,True,
+Q64755616,Bambusicola,719938,Bambusicola fytchii hopkinsoni,subspecies,trigram,0.5789473684210527,0,True,
+Q64755616,Bambusicola,719937,Bambusicola fytchii fytchii,subspecies,trigram,0.5789473684210527,0,True,
+Q64755616,Bambusicola,1018247,Bambusaspis bambusicola,species,trigram,0.4782608695652174,0,True,
+Q64755616,Bambusicola,1258402,Parabambusicola bambusina,species,trigram,0.43999999999999995,0,True,
+Q3773609,Bambusinae,1136658,Bambusinae,subtribe,exact|trigram,1.0,1,True,
+Q3773609,Bambusinae,1509000,Bambusinae,section,exact|trigram,1.0,0,True,
+Q3773609,Bambusinae,768431,Blaudusinae,subfamily,trigram,0.7272727272727273,0,True,
+Q3773609,Bambusinae,524379,Hybusinae,subfamily,trigram,0.7,0,True,
+Q3773609,Bambusinae,569974,Empusinae,subfamily,trigram,0.7,0,True,
+Q3773609,Bambusinae,882646,Phaedusinae,subfamily,trigram,0.6363636363636364,0,True,
+Q3773609,Bambusinae,1096977,Drusinae,subfamily,trigram,0.6,0,True,
+Q3773609,Bambusinae,122434,Dudusinae,subfamily,trigram,0.6,0,True,
+Q3773609,Bambusinae,458022,Lypusinae,subfamily,trigram,0.6,0,True,
+Q3773609,Bambusinae,790384,Arethusinae,subtribe,trigram,0.5454545454545454,0,True,
+Q106131678,Basedowia,634525,Basedowia,genus,exact|trigram,1.0,0,True,
+Q106131678,Basedowia,1485628,Basedowia,genus,exact|trigram,1.0,1,True,
+Q106131678,Basedowia,878698,Basedowena,genus,trigram,0.8,0,True,
+Q106131678,Basedowia,1650315,Basedowena elfina,species,trigram,0.5294117647058824,0,True,
+Q106131678,Basedowia,139907,Acacia basedowii,species,trigram,0.5,0,True,
+Q106131678,Basedowia,1030928,Triodia basedowii,species,trigram,0.47058823529411764,0,True,
+Q106131678,Basedowia,857928,Pandanus basedowii,species,trigram,0.4444444444444444,0,True,
+Q106131678,Basedowia,878697,Basedowena hinsbyi,species,trigram,0.4444444444444444,0,True,
+Q106131678,Basedowia,914044,Cenchrus basedowii,species,trigram,0.4444444444444444,0,True,
+Q106131678,Basedowia,1030910,Scaevola basedowii,species,trigram,0.4444444444444444,0,True,
+Q4868755,Batella,875696,Batella,genus,exact|trigram,1.0,1,True,
+Q4868755,Batella,1298237,Batella,genus,exact|trigram,1.0,0,True,
+Q4868755,Batella,249700,Oribatella,genus,trigram,0.7,0,True,
+Q4868755,Batella,858144,Pilobatella,genus,trigram,0.6363636363636364,0,True,
+Q4868755,Batella,1299551,Parabatella,genus,trigram,0.6363636363636364,0,True,
+Q4868755,Batella,245228,Oribatellidae,family,trigram,0.5384615384615384,0,True,
+Q4868755,Batella,1299245,Batella parva,species,trigram,0.5384615384615384,0,True,
+Q4868755,Batella,245250,Oribatelloidea,superfamily,trigram,0.5,0,True,
+Q4868755,Batella,378648,Zelandobatella,genus,trigram,0.5,0,True,
+Q4868755,Batella,1301899,Batella lampra,species,trigram,0.5,0,True,
+Q4868757,Batella,875696,Batella,genus,exact|trigram,1.0,0,True,
+Q4868757,Batella,1298237,Batella,genus,exact|trigram,1.0,1,True,
+Q4868757,Batella,249700,Oribatella,genus,trigram,0.7,0,True,
+Q4868757,Batella,858144,Pilobatella,genus,trigram,0.6363636363636364,0,True,
+Q4868757,Batella,1299551,Parabatella,genus,trigram,0.6363636363636364,0,True,
+Q4868757,Batella,245228,Oribatellidae,family,trigram,0.5384615384615384,0,True,
+Q4868757,Batella,1299245,Batella parva,species,trigram,0.5384615384615384,0,True,
+Q4868757,Batella,245250,Oribatelloidea,superfamily,trigram,0.5,0,True,
+Q4868757,Batella,378648,Zelandobatella,genus,trigram,0.5,0,True,
+Q4868757,Batella,1301899,Batella lampra,species,trigram,0.5,0,True,
+Q124433997,Benjaminia,272841,Benjaminia,genus,exact|trigram,1.0,0,True,
+Q124433997,Benjaminia,638719,Benjaminia,genus,exact|trigram,1.0,0,True,
+Q124433997,Benjaminia,1043864,Benjaminia,section,exact|trigram,1.0,0,True,
+Q124433997,Benjaminia,452621,Benjaminiola,genus,trigram,0.8333333333333334,0,True,
+Q124433997,Benjaminia,89174,Jaminia,genus,trigram,0.7,0,True,
+Q124433997,Benjaminia,1517134,Pseudojaminia,genus,trigram,0.6153846153846154,0,True,
+Q124433997,Benjaminia,517900,Flaminia,genus,trigram,0.6,0,True,
+Q124433997,Benjaminia,518097,Flaminia,genus,trigram,0.6,0,True,
+Q124433997,Benjaminia,282868,Benjaminia reflexa,species,trigram,0.5555555555555556,0,True,
+Q124433997,Benjaminia,595930,Utricularia benjaminiana,species,trigram,0.41666666666666663,0,True,
+Q124433987,Benjaminia,272841,Benjaminia,genus,exact|trigram,1.0,0,True,
+Q124433987,Benjaminia,638719,Benjaminia,genus,exact|trigram,1.0,0,True,
+Q124433987,Benjaminia,1043864,Benjaminia,section,exact|trigram,1.0,0,True,
+Q124433987,Benjaminia,452621,Benjaminiola,genus,trigram,0.8333333333333334,0,True,
+Q124433987,Benjaminia,89174,Jaminia,genus,trigram,0.7,0,True,
+Q124433987,Benjaminia,1517134,Pseudojaminia,genus,trigram,0.6153846153846154,0,True,
+Q124433987,Benjaminia,517900,Flaminia,genus,trigram,0.6,0,True,
+Q124433987,Benjaminia,518097,Flaminia,genus,trigram,0.6,0,True,
+Q124433987,Benjaminia,282868,Benjaminia reflexa,species,trigram,0.5555555555555556,0,True,
+Q124433987,Benjaminia,595930,Utricularia benjaminiana,species,trigram,0.41666666666666663,0,True,
+Q123250962,Benna,1179235,Benna,genus,exact|trigram,1.0,0,True,
+Q123250962,Benna,1545971,Benna,genus,exact|trigram,1.0,1,True,
+Q123250962,Benna,178953,Tebenna,genus,trigram,0.7142857142857143,0,True,
+Q123250962,Benna,850407,Gebenna,genus,trigram,0.7142857142857143,0,True,
+Q123250962,Benna,889297,Bennaria,genus,trigram,0.625,0,True,
+Q123250962,Benna,871883,Canobenna,genus,trigram,0.5555555555555556,0,True,
+Q123250962,Benna,1141268,Romabenna,genus,trigram,0.5555555555555556,0,True,
+Q123250962,Benna,1179236,Celebenna,genus,trigram,0.5555555555555556,0,True,
+Q123250962,Benna,1179248,Minabenna,genus,trigram,0.5555555555555556,0,True,
+Q123250962,Benna,1179251,Rhyobenna,genus,trigram,0.5555555555555556,0,True,
+Q14746842,Benna,1179235,Benna,genus,exact|trigram,1.0,1,True,
+Q14746842,Benna,1545971,Benna,genus,exact|trigram,1.0,0,True,
+Q14746842,Benna,178953,Tebenna,genus,trigram,0.7142857142857143,0,True,
+Q14746842,Benna,850407,Gebenna,genus,trigram,0.7142857142857143,0,True,
+Q14746842,Benna,889297,Bennaria,genus,trigram,0.625,0,True,
+Q14746842,Benna,871883,Canobenna,genus,trigram,0.5555555555555556,0,True,
+Q14746842,Benna,1141268,Romabenna,genus,trigram,0.5555555555555556,0,True,
+Q14746842,Benna,1179236,Celebenna,genus,trigram,0.5555555555555556,0,True,
+Q14746842,Benna,1179248,Minabenna,genus,trigram,0.5555555555555556,0,True,
+Q14746842,Benna,1179251,Rhyobenna,genus,trigram,0.5555555555555556,0,True,
+Q61669200,Bergia,72005,Bergia,genus,exact|trigram,1.0,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,1005154,Bergia,genus,exact|trigram,1.0,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,175538,Mobergia,genus,trigram,0.75,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,768276,Eubergia,genus,trigram,0.75,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,68655,Dalbergia,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,86956,Bergiaria,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,506955,Ekebergia,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,633074,Mjobergia,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,703785,Ahlbergia,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q61669200,Bergia,784706,Hedbergia,genus,trigram,0.6666666666666667,0,True,this worm taxon was removed from the Catalogue of Life https://www.catalogueoflife.org/data/taxon/84LT2
+Q22979470,Bergia,72005,Bergia,genus,exact|trigram,1.0,0,True,
+Q22979470,Bergia,1005154,Bergia,genus,exact|trigram,1.0,1,True,
+Q22979470,Bergia,175538,Mobergia,genus,trigram,0.75,0,True,
+Q22979470,Bergia,768276,Eubergia,genus,trigram,0.75,0,True,
+Q22979470,Bergia,68655,Dalbergia,genus,trigram,0.6666666666666667,0,True,
+Q22979470,Bergia,86956,Bergiaria,genus,trigram,0.6666666666666667,0,True,
+Q22979470,Bergia,506955,Ekebergia,genus,trigram,0.6666666666666667,0,True,
+Q22979470,Bergia,633074,Mjobergia,genus,trigram,0.6666666666666667,0,True,
+Q22979470,Bergia,703785,Ahlbergia,genus,trigram,0.6666666666666667,0,True,
+Q22979470,Bergia,784706,Hedbergia,genus,trigram,0.6666666666666667,0,True,
+Q50747730,Bombylius,51559,Bombylius,genus,exact|trigram,1.0,0,True,
+Q50747730,Bombylius,1367215,Bombylius,subgenus,exact|trigram,1.0,1,True,
+Q50747730,Bombylius,294505,Bombylius io,species,trigram,0.75,0,True,
+Q50747730,Bombylius,415425,Bombyliini,tribe,trigram,0.7,0,True,
+Q50747730,Bombylius,51558,Bombyliidae,family,trigram,0.6363636363636364,0,True,
+Q50747730,Bombylius,415424,Bombyliinae,subfamily,trigram,0.6363636363636364,0,True,
+Q50747730,Bombylius,466633,Bombylisoma,genus,trigram,0.6363636363636364,0,True,
+Q50747730,Bombylius,366999,Bombylella,genus,trigram,0.6,0,True,
+Q50747730,Bombylius,470529,Bombyliomyia,genus,trigram,0.5833333333333333,0,True,
+Q50747730,Bombylius,896341,Bombyliflorae,section,trigram,0.5384615384615384,0,True,
+Q19596172,Brachynema,576353,Brachynema,genus,exact|trigram,1.0,0,True,
+Q19596172,Brachynema,574100,Brachynema,genus,exact|trigram,1.0,0,True,
+Q19596172,Brachynema,574103,Brachynema,genus,exact|trigram,1.0,1,True,
+Q19596172,Brachynema,556751,Brachynemata,genus,trigram,0.8333333333333334,0,True,
+Q19596172,Brachynema,903676,Crinum brachynema,species,trigram,0.5882352941176471,0,True,
+Q19596172,Brachynema,574099,Brachynema cinctum,species,trigram,0.5555555555555556,0,True,
+Q19596172,Brachynema,778498,Brachynema germarii,species,trigram,0.5263157894736843,0,True,
+Q19596172,Brachynema,1149472,Brachynema signatum,species,trigram,0.5263157894736843,0,True,
+Q19596172,Brachynema,1548563,Brachynemata mimopa,species,trigram,0.5263157894736843,0,True,
+Q19596172,Brachynema,564644,Brachynemata diantha,species,trigram,0.5,0,True,
+Q8251477,Brachynema,576353,Brachynema,genus,exact|trigram,1.0,1,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,574100,Brachynema,genus,exact|trigram,1.0,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,574103,Brachynema,genus,exact|trigram,1.0,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,556751,Brachynemata,genus,trigram,0.8333333333333334,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,903676,Crinum brachynema,species,trigram,0.5882352941176471,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,574099,Brachynema cinctum,species,trigram,0.5555555555555556,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,778498,Brachynema germarii,species,trigram,0.5263157894736843,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,1149472,Brachynema signatum,species,trigram,0.5263157894736843,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,1548563,Brachynemata mimopa,species,trigram,0.5263157894736843,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q8251477,Brachynema,564644,Brachynemata diantha,species,trigram,0.5,0,True,here is something wrong both the taxon tree(s) -- but it should be this one
+Q28873384,Brachypus,906185,Brachypus,section,exact|trigram,1.0,0,True,
+Q28873384,Brachypus,1069959,Brachypus,genus,exact,1.0,1,True,
+Q28873384,Brachypus,173294,Brachys,genus,trigram,0.7777777777777778,0,True,
+Q28873384,Brachypus,457625,Brachyusa,genus,trigram,0.7777777777777778,0,True,
+Q28873384,Brachypus,559235,Brachytes,genus,trigram,0.7777777777777778,0,True,
+Q28873384,Brachypus,375544,Brachyia,genus,trigram,0.6666666666666667,0,True,
+Q28873384,Brachypus,455413,Brachyta,genus,trigram,0.6666666666666667,0,True,
+Q28873384,Brachypus,121639,Brachyura,infraorder,trigram,0.6666666666666667,0,True,
+Q28873384,Brachypus,486805,Brachyopa,genus,trigram,0.6666666666666667,0,True,
+Q28873384,Brachypus,642137,Brachylia,genus,trigram,0.6666666666666667,0,True,
+Q28873384,Brachypus,250297,Dibrachys,genus,trigram,0.5555555555555556,0,True,
+Q45890862,Brachythrix,248148,Brachythrix,genus,exact|trigram,1.0,1,True,
+Q45890862,Brachythrix,575621,Brachythrix,genus,exact|trigram,1.0,0,True,
+Q45890862,Brachythrix,1021885,Brachythrips,genus,trigram,0.8333333333333334,0,True,
+Q45890862,Brachythrix,443049,Rinorea brachythrix,species,trigram,0.5789473684210527,0,True,
+Q45890862,Brachythrix,939417,Brachythrix stolzii,species,trigram,0.5789473684210527,0,True,
+Q45890862,Brachythrix,1597805,Euploca brachythrix,species,trigram,0.5789473684210527,0,True,
+Q45890862,Brachythrix,939419,Brachythrix pawekiae,species,trigram,0.55,0,True,
+Q45890862,Brachythrix,1554741,Chelaner brachythrix,species,trigram,0.55,0,True,
+Q45890862,Brachythrix,939426,Brachythrix glomerata,species,trigram,0.5238095238095238,0,True,
+Q45890862,Brachythrix,1021754,Brachythrips russelli,species,trigram,0.47619047619047616,0,True,
+Q13444847,Bradyporus dilatatus,1511690,Bradyporus dilatatus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q13444847,Bradyporus dilatatus,1558934,Bradyporus dilatatus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q13444847,Bradyporus dilatatus,475588,Bradyporus dasypus,species,trigram,0.75,0,True,
+Q13444847,Bradyporus dilatatus,1425676,Bradyporus avanos,species,trigram,0.7,0,True,
+Q13444847,Bradyporus dilatatus,1558943,Bradyporus toros,species,trigram,0.65,0,True,
+Q13444847,Bradyporus dilatatus,545323,Aegus dilatatus,species,trigram,0.65,0,True,
+Q13444847,Bradyporus dilatatus,1084625,Agabus dilatatus,species,trigram,0.65,0,True,
+Q13444847,Bradyporus dilatatus,1354732,Abedus dilatatus,species,trigram,0.65,0,True,
+Q13444847,Bradyporus dilatatus,433306,Bradyporus,genus,trigram,0.5,0,True,
+Q13444847,Bradyporus dilatatus,767497,Bradyporus,subgenus,trigram,0.5,0,True,
+Q21367358,Braunsia,568497,Braunsia,genus,exact|trigram,1.0,0,True,
+Q21367358,Braunsia,796482,Braunsia,genus,exact|trigram,1.0,1,True,
+Q21367358,Braunsia,644196,Braunsina,genus,trigram,0.8888888888888888,0,True,
+Q21367358,Braunsia,640582,Braunsiella,genus,trigram,0.7272727272727273,0,True,
+Q21367358,Braunsia,500771,Braunsapis,genus,trigram,0.7,0,True,
+Q21367358,Braunsia,644198,Braunsomeria,genus,trigram,0.6666666666666667,0,True,
+Q21367358,Braunsia,644197,Braunsiomyia,genus,trigram,0.6666666666666667,0,True,
+Q21367358,Braunsia,644199,Braunsophila,genus,trigram,0.6666666666666667,0,True,
+Q21367358,Braunsia,651252,Arge braunsi,species,trigram,0.5,0,True,
+Q21367358,Braunsia,673678,Lule braunsi,species,trigram,0.5,0,True,
+Q4972610,Brocchinia,142335,Brocchinia,genus,exact|trigram,1.0,0,True,
+Q4972610,Brocchinia,845538,Brocchinia,genus,exact|trigram,1.0,1,True,
+Q4972610,Brocchinia,596524,Brocchinia tatei,species,trigram,0.625,0,True,
+Q4972610,Brocchinia,597454,Brocchinia reducta,species,trigram,0.5555555555555556,0,True,
+Q4972610,Brocchinia,845648,Brocchinia cowanii,species,trigram,0.5555555555555556,0,True,
+Q4972610,Brocchinia,845699,Brocchinia vestita,species,trigram,0.5555555555555556,0,True,
+Q4972610,Brocchinia,845671,Brocchinia maguirei,species,trigram,0.5263157894736843,0,True,
+Q4972610,Brocchinia,635815,Brocchinia micrantha,species,trigram,0.5,0,True,
+Q4972610,Brocchinia,845634,Brocchinia amazonica,species,trigram,0.5,0,True,
+Q4972610,Brocchinia,845677,Brocchinia melanacra,species,trigram,0.5,0,True,
+Q25661614,Brunia,125961,Brunia,genus,exact|trigram,1.0,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,126027,Brunia,genus,exact|trigram,1.0,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,735028,Brunia,subgenus,exact|trigram,1.0,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,324167,Lebrunia,genus,trigram,0.75,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,1069536,Lebrunia,genus,trigram,0.75,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,71276,Bruniales,order,trigram,0.6666666666666667,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,71461,Bruniaceae,family,trigram,0.6,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,472270,Maltebrunia,genus,trigram,0.5454545454545454,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,776347,Rochebrunia,genus,trigram,0.5454545454545454,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q25661614,Brunia,126028,Brunia antica,species,trigram,0.46153846153846156,0,True,algae with this name doesn't seem to be on inat -- removed according to https://www.gbif.org/species/7638480
+Q137885663,Brunia,125961,Brunia,genus,exact|trigram,1.0,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,126027,Brunia,genus,exact|trigram,1.0,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,735028,Brunia,subgenus,exact|trigram,1.0,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,324167,Lebrunia,genus,trigram,0.75,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,1069536,Lebrunia,genus,trigram,0.75,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,71276,Bruniales,order,trigram,0.6666666666666667,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,71461,Bruniaceae,family,trigram,0.6,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,472270,Maltebrunia,genus,trigram,0.5454545454545454,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,776347,Rochebrunia,genus,trigram,0.5454545454545454,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q137885663,Brunia,126028,Brunia antica,species,trigram,0.46153846153846156,0,True,wikidata is the sugebus of 125961 -- subgenus seems to be missing on inat
+Q50813202,Bulgariella,379498,Bulgariella,genus,exact|trigram,1.0,0,True,
+Q50813202,Bulgariella,1191482,Bulgariella,genus,exact|trigram,1.0,1,True,
+Q50813202,Bulgariella,83421,Bulgaria,genus,trigram,0.7272727272727273,0,True,
+Q50813202,Bulgariella,776026,Bulgarica,genus,trigram,0.7272727272727273,0,True,
+Q50813202,Bulgariella,381439,Bulgariella pulla,species,trigram,0.6470588235294117,0,True,
+Q50813202,Bulgariella,1191480,Bulgariella nigrita,species,trigram,0.5789473684210527,0,True,
+Q50813202,Bulgariella,766738,Umbulgaria,genus,trigram,0.5454545454545454,0,True,
+Q50813202,Bulgariella,1191478,Bulgariella tranteevi,species,trigram,0.5238095238095238,0,True,
+Q50813202,Bulgariella,1191479,Bulgariella sphaerospora,species,trigram,0.45833333333333337,0,True,
+Q50813202,Bulgariella,1191477,Bulgariella argentinensis,species,trigram,0.43999999999999995,0,True,
+Q107307702,Burnettia,324016,Burnettia,genus,exact|trigram,1.0,0,True,
+Q107307702,Burnettia,865262,Burnettia,genus,exact|trigram,1.0,1,True,
+Q107307702,Burnettia,1260096,Burnettweldia,genus,trigram,0.6923076923076923,0,True,
+Q107307702,Burnettia,323896,Burnettia cuneata,species,trigram,0.5294117647058824,0,True,
+Q107307702,Burnettia,1042617,Andricus burnetti,species,trigram,0.4117647058823529,0,True,
+Q107307702,Burnettia,1064870,Anotia burnetii,species,trigram,0.4,0,True,
+Q107307702,Burnettia,170987,Quercus × burnetensis,hybrid,trigram,0.368421052631579,0,True,
+Q107307702,Burnettia,223445,Leptogium burnetiae,species,trigram,0.368421052631579,0,True,
+Q107307702,Burnettia,771951,Erythranthe × burnetii,hybrid,trigram,0.30000000000000004,0,True,
+Q107307702,Burnettia,563958,Tellidora burneti,species,trigram,0.2941176470588235,0,True,
+Q46674974,Bursaria,83575,Bursaria,genus,exact|trigram,1.0,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,1051126,Bursaria,genus,exact|trigram,1.0,1,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,746774,Bursariidae,family,trigram,0.7272727272727273,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,962670,Bursaridium,genus,trigram,0.6363636363636364,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,962671,Bursaridiidae,family,trigram,0.6153846153846154,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,1060896,Bursaria ovata,species,trigram,0.5714285714285714,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,369894,Bursaria incana,species,trigram,0.5333333333333333,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,1555072,Bursaria incana × tenuifolia,hybrid,trigram,0.5333333333333333,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,44059,Geomys bursarius,species,trigram,0.4375,0,True,taxon tree seems to be lacking information
+Q46674974,Bursaria,1060769,Bursaridium pseudobursaria,species,trigram,0.3076923076923077,0,True,taxon tree seems to be lacking information
+Q11962637,Butleria,468490,Butleria,genus,exact|trigram,1.0,0,True,
+Q11962637,Butleria,468489,Butleria,genus,exact|trigram,1.0,1,True,
+Q11962637,Butleria,1005564,Butleriana,genus,trigram,0.8,0,True,
+Q11962637,Butleria,1296210,Butleronea,genus,trigram,0.7,0,True,
+Q11962637,Butleria,1458452,Butleriini,tribe,trigram,0.7,0,True,
+Q11962637,Butleria,1290946,Idia butleri,species,trigram,0.5,0,True,
+Q11962637,Butleria,36942,Delma butleri,species,trigram,0.46153846153846156,0,True,
+Q11962637,Butleria,507359,Strix butleri,species,trigram,0.46153846153846156,0,True,
+Q11962637,Butleria,567925,Lethe butleri,species,trigram,0.46153846153846156,0,True,
+Q11962637,Butleria,768730,Kybos butleri,species,trigram,0.46153846153846156,0,True,
+Q21441050,Butleria,468490,Butleria,genus,exact|trigram,1.0,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,468489,Butleria,genus,exact|trigram,1.0,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,1005564,Butleriana,genus,trigram,0.8,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,1296210,Butleronea,genus,trigram,0.7,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,1458452,Butleriini,tribe,trigram,0.7,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,1290946,Idia butleri,species,trigram,0.5,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,36942,Delma butleri,species,trigram,0.46153846153846156,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,507359,Strix butleri,species,trigram,0.46153846153846156,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,567925,Lethe butleri,species,trigram,0.46153846153846156,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q21441050,Butleria,768730,Kybos butleri,species,trigram,0.46153846153846156,0,True,wikidata is the sugebus of 468489 -- subgenus seems to be missing on inat
+Q29727585,Byzantorhopalum,997435,Byzantorhopalum,genus,exact|trigram,1.0,1,True,
+Q29727585,Byzantorhopalum,1296987,Byzantorhopalum,subgenus,exact|trigram,1.0,0,True,
+Q29727585,Byzantorhopalum,1296963,Byzantorhopalum sapphicum,species,trigram,0.6,0,True,
+Q29727585,Byzantorhopalum,635490,Odontorhopala,genus,trigram,0.6,0,True,
+Q29727585,Byzantorhopalum,340932,Rhopalum,genus,trigram,0.5333333333333333,0,True,
+Q29727585,Byzantorhopalum,1342832,Rhopalum,subgenus,trigram,0.5333333333333333,0,True,
+Q29727585,Byzantorhopalum,327209,Rhopalus,genus,trigram,0.4666666666666667,0,True,
+Q29727585,Byzantorhopalum,1389193,Rhopalus,subgenus,trigram,0.4666666666666667,0,True,
+Q29727585,Byzantorhopalum,362658,Avena byzantina,species,trigram,0.06666666666666665,0,True,
+Q29727585,Byzantorhopalum,127480,Stachys byzantina,species,trigram,0.05882352941176472,0,True,
+Q27895194,Caesia,324014,Caesia,genus,exact|trigram,1.0,0,True,
+Q27895194,Caesia,1456350,Caesia,genus,exact|trigram,1.0,1,True,
+Q27895194,Caesia,1305472,Caesiae,section,trigram,0.8571428571428572,0,True,
+Q27895194,Caesia,362832,Rosa caesia,species,trigram,0.5454545454545454,0,True,
+Q27895194,Caesia,487628,Salix caesia,species,trigram,0.5,0,True,
+Q27895194,Caesia,899547,Lispe caesia,species,trigram,0.5,0,True,
+Q27895194,Caesia,1623136,Poria caesia,species,trigram,0.5,0,True,
+Q27895194,Caesia,1671397,Senna caesia,species,trigram,0.5,0,True,
+Q27895194,Caesia,463921,Puttea caesia,species,trigram,0.46153846153846156,0,True,
+Q27895194,Caesia,484912,Silene caesia,species,trigram,0.46153846153846156,0,True,
+Q25398745,Calantica,429489,Calantica,genus,exact|trigram,1.0,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,576576,Calantica,genus,exact|trigram,1.0,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,348907,Eucalantica,genus,trigram,0.8181818181818181,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,1347192,Calanthea,section,trigram,0.7777777777777778,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,83467,Calanthe,genus,trigram,0.6666666666666667,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,1603410,Calanthe,subgenus,trigram,0.6666666666666667,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,1644712,Calanthe,section,trigram,0.6666666666666667,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,1032453,Acalanthis,genus,trigram,0.6,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,1270081,Escalantiana escalantei,species,trigram,0.3913043478260869,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q25398745,Calantica,276516,Calanthe calanthoides,species,trigram,0.38095238095238093,0,True,doesn't have a match on inat -- taxon seems outdated and was probably replaced by Niphonympha (Q10336998) 
+Q21440084,Calcarobiotus,644236,Calcarobiotus,genus,exact|trigram,1.0,0,True,
+Q21440084,Calcarobiotus,1478965,Calcarobiotus,subgenus,exact|trigram,1.0,1,True,
+Q21440084,Calcarobiotus,15681,Calcarius,genus,trigram,0.6923076923076923,0,True,
+Q21440084,Calcarobiotus,654792,Calcarobiotus filmeri,species,trigram,0.6190476190476191,0,True,
+Q21440084,Calcarobiotus,654794,Calcarobiotus occultus,species,trigram,0.5909090909090908,0,True,
+Q21440084,Calcarobiotus,1645211,Calcares,section,trigram,0.5384615384615384,0,True,
+Q21440084,Calcarobiotus,462203,Calcarina,genus,trigram,0.5384615384615384,0,True,
+Q21440084,Calcarobiotus,60583,Calcarea,class,trigram,0.46153846153846156,0,True,
+Q21440084,Calcarobiotus,536239,Calcarogyndes calcar,species,trigram,0.4,0,True,
+Q21440084,Calcarobiotus,1397429,Calcarina calcar,species,trigram,0.375,0,True,
+Q18600167,Calliderma,349543,Calliderma,genus,exact|trigram,1.0,1,True,
+Q18600167,Calliderma,1424667,Calliderma,section,exact|trigram,1.0,0,True,
+Q18600167,Calliderma,92485,Theliderma,genus,trigram,0.7,0,True,
+Q18600167,Calliderma,1174361,Claviderma,genus,trigram,0.7,0,True,
+Q18600167,Calliderma,349544,Calliderma emma,species,trigram,0.6666666666666667,0,True,
+Q18600167,Calliderma,126174,Diderma,genus,trigram,0.6,0,True,
+Q18600167,Calliderma,340039,Ophiderma,genus,trigram,0.6,0,True,
+Q18600167,Calliderma,501718,Meriderma,genus,trigram,0.6,0,True,
+Q18600167,Calliderma,1198060,Rutiderma,genus,trigram,0.6,0,True,
+Q18600167,Calliderma,645007,Ixodiderma,genus,trigram,0.6,0,True,
+Q111270149,Callista,246380,Callista,genus,exact|trigram,1.0,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,711814,Callista,section,exact|trigram,1.0,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,126336,Callisia,genus,trigram,0.875,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,174563,Callisto,genus,trigram,0.875,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,640495,Callispa,genus,trigram,0.875,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,422313,Callistus,genus,trigram,0.7777777777777778,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,936999,Callisema,genus,trigram,0.7777777777777778,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,212120,Acallis,genus,trigram,0.625,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,124697,Crocallis,genus,trigram,0.4444444444444444,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q111270149,Callista,1214630,Callistele calliston,species,trigram,0.4,0,True,wikidata is the sugebus of 246380 -- subgenus seems to be missing on inat
+Q14622950,Calopsyra,766924,Calopsyra,genus,exact|trigram,1.0,1,True,
+Q14622950,Calopsyra,1560025,Calopsyra,subgenus,exact|trigram,1.0,0,True,
+Q14622950,Calopsyra,714964,Calopsis,subgenus,trigram,0.6666666666666667,0,True,
+Q14622950,Calopsyra,644246,Calopsaltria,genus,trigram,0.6666666666666667,0,True,
+Q14622950,Calopsyra,1069016,Calopsocus,genus,trigram,0.6,0,True,
+Q14622950,Calopsyra,550064,Calopsallus,subgenus,trigram,0.5454545454545454,0,True,
+Q14622950,Calopsyra,1178043,Calopsephus,genus,trigram,0.5454545454545454,0,True,
+Q14622950,Calopsyra,47048,Parascalops,genus,trigram,0.2727272727272727,0,True,
+Q14622950,Calopsyra,644475,Ctenocalops,genus,trigram,0.2727272727272727,0,True,
+Q14622950,Calopsyra,1431399,Asioscalops,subgenus,trigram,0.2727272727272727,0,True,
+Q50740963,Calosoma,82765,Calosoma,genus,exact|trigram,1.0,0,True,
+Q50740963,Calosoma,827209,Calosoma,subgenus,exact|trigram,1.0,1,True,
+Q50740963,Calosoma,538202,Calosota,genus,trigram,0.875,0,True,
+Q50740963,Calosoma,642215,Calosotis,genus,trigram,0.6666666666666667,0,True,
+Q50740963,Calosoma,519556,Calosotinae,subfamily,trigram,0.6363636363636364,0,True,
+Q50740963,Calosoma,244519,Calosoma sayi,species,trigram,0.6153846153846154,0,True,
+Q50740963,Calosoma,303201,Calosoma laeve,species,trigram,0.5714285714285714,0,True,
+Q50740963,Calosoma,268307,Calosoma macrum,species,trigram,0.5333333333333333,0,True,
+Q50740963,Calosoma,377216,Neocalosoter,genus,trigram,0.5,0,True,
+Q50740963,Calosoma,1083510,Calosota acron,species,trigram,0.5,0,True,
+Q107274447,Campanella,353183,Campanella,genus,exact|trigram,1.0,0,True,no genus on inat does match
+Q107274447,Campanella,855910,Campanella,genus,exact|trigram,1.0,0,True,no genus on inat does match
+Q107274447,Campanella,1536546,Metacampanella,genus,trigram,0.7142857142857143,0,True,no genus on inat does match
+Q107274447,Campanella,1565336,Campanellaceae,family,trigram,0.7142857142857143,0,True,no genus on inat does match
+Q107274447,Campanella,1674123,Allocampanella,genus,trigram,0.7142857142857143,0,True,no genus on inat does match
+Q107274447,Campanella,1455580,Campanella bonii,species,trigram,0.625,0,True,no genus on inat does match
+Q107274447,Campanella,672377,Lensia campanella,species,trigram,0.5882352941176471,0,True,no genus on inat does match
+Q107274447,Campanella,1469978,Campanella sinica,species,trigram,0.5882352941176471,0,True,no genus on inat does match
+Q107274447,Campanella,410316,Campanella tristis,species,trigram,0.5555555555555556,0,True,no genus on inat does match
+Q107274447,Campanella,855907,Fayodia campanella,species,trigram,0.5555555555555556,0,True,no genus on inat does match
+Q87184023,Campylia,374433,Campylia,genus,exact|trigram,1.0,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,719779,Campylia,section,exact|trigram,1.0,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,1004928,Campylocia,genus,trigram,0.8,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,156958,Campylium,genus,trigram,0.7777777777777778,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,776151,Campylaea,genus,trigram,0.7777777777777778,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,330932,Campylomma,genus,trigram,0.7,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,942663,Eucampyla,genus,trigram,0.6666666666666667,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,124692,Campylotes,genus,trigram,0.6,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,127425,Campylopus,genus,trigram,0.6,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q87184023,Campylia,1526634,Campylopus,section,trigram,0.6,0,True,genus doesn't seem to exist on inat but the section (719779) seems similar 
+Q21440681,Campylotropis,139511,Campylotropis,genus,exact|trigram,1.0,0,True,
+Q21440681,Campylotropis,1564310,Campylotropis,genus,exact|trigram,1.0,1,True,
+Q21440681,Campylotropis,1133648,Campylotropis bonii,species,trigram,0.6842105263157895,0,True,
+Q21440681,Campylotropis,1392193,Campylotropis decora,species,trigram,0.65,0,True,
+Q21440681,Campylotropis,1392189,Campylotropis sulcata,species,trigram,0.6190476190476191,0,True,
+Q21440681,Campylotropis,1392192,Campylotropis harmsii,species,trigram,0.6190476190476191,0,True,
+Q21440681,Campylotropis,139502,Campylotropis argentea,species,trigram,0.5909090909090908,0,True,
+Q21440681,Campylotropis,788938,Campylotropis speciosa,species,trigram,0.5909090909090908,0,True,
+Q21440681,Campylotropis,1275997,Campylotropis hirtella,species,trigram,0.5909090909090908,0,True,
+Q21440681,Campylotropis,565871,Campylotropis pinetorum,species,trigram,0.5652173913043479,0,True,
+Q106876880,Candelabrum,353385,Candelabrum,genus,exact|trigram,1.0,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,374569,Candelabrum,genus,exact|trigram,1.0,1,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,451343,Phaeocandelabrum,genus,trigram,0.6875,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,579597,Aloe candelabrum,species,trigram,0.6875,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,513840,Salvia candelabrum,species,trigram,0.6111111111111112,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,1543183,Tripos candelabrum,species,trigram,0.6111111111111112,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,76728,Dudleya candelabrum,species,trigram,0.5789473684210527,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,472200,Cirsium candelabrum,species,trigram,0.5789473684210527,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,934873,Swertia candelabrum,species,trigram,0.5789473684210527,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q106876880,Candelabrum,949669,Candelabrum cocksii,species,trigram,0.5789473684210527,0,True,taxon ancestry seems to be missing for the large part in inat -- it would be defensible if the model couldn't match it
+Q20987202,Cannonia,417410,Cannonia,genus,exact|trigram,1.0,0,True,
+Q20987202,Cannonia,1081682,Cannonia,genus,exact|trigram,1.0,1,True,
+Q20987202,Cannonia,1081681,Cannonia sagonai,species,trigram,0.5,0,True,
+Q20987202,Cannonia,1081680,Cannonia petersi,species,trigram,0.5,0,True,
+Q20987202,Cannonia,832130,Krukt cannoni,species,trigram,0.46153846153846156,0,True,
+Q20987202,Cannonia,417409,Cannonia australis,species,trigram,0.4444444444444444,0,True,
+Q20987202,Cannonia,1125245,Maireana cannonii,species,trigram,0.4117647058823529,0,True,
+Q20987202,Cannonia,1291665,Stamnodes cannonaria,species,trigram,0.4,0,True,
+Q20987202,Cannonia,881861,Syndesmis cannoni,species,trigram,0.3529411764705882,0,True,
+Q20987202,Cannonia,1098421,Crenostrea cannoni,species,trigram,0.33333333333333337,0,True,
+Q2936584,Cantharellus,47348,Cantharellus,genus,exact|trigram,1.0,0,True,
+Q2936584,Cantharellus,892745,Cantharellus,genus,exact|trigram,1.0,1,True,
+Q2936584,Cantharellus,1374657,Cantharellus,subgenus,exact|trigram,1.0,0,True,
+Q2936584,Cantharellus,84487,Cantharellula,genus,trigram,0.8461538461538461,0,True,
+Q2936584,Cantharellus,47350,Cantharellales,order,trigram,0.7857142857142857,0,True,
+Q2936584,Cantharellus,823451,Afrocantharellus,subgenus,trigram,0.75,0,True,
+Q2936584,Cantharellus,1135222,Cantharelluleae,tribe,trigram,0.7333333333333334,0,True,
+Q2936584,Cantharellus,1218691,Cantharellopsis,genus,trigram,0.7333333333333334,0,True,
+Q2936584,Cantharellus,416427,Gloeocantharellus,genus,trigram,0.7058823529411764,0,True,
+Q2936584,Cantharellus,1366558,Parvocantharellus,subgenus,trigram,0.7058823529411764,0,True,
+Q146580,Capitata,813988,Capitata,suborder,exact|trigram,1.0,1,True,
+Q146580,Capitata,1531069,Capitata,section,exact|trigram,1.0,0,True,
+Q146580,Capitata,1633252,Capitata,section,exact|trigram,1.0,0,True,
+Q146580,Capitata,742889,Capitatae,section,trigram,0.8888888888888888,0,True,
+Q146580,Capitata,868291,Capitatae,section,trigram,0.8888888888888888,0,True,
+Q146580,Capitata,1581142,Capitamon,genus,trigram,0.6666666666666667,0,True,
+Q146580,Capitata,138451,Inga capitata,species,trigram,0.6153846153846154,0,True,
+Q146580,Capitata,363188,Aloe capitata,species,trigram,0.6153846153846154,0,True,
+Q146580,Capitata,919168,Capitanopsis,genus,trigram,0.5,0,True,
+Q146580,Capitata,1581186,Capitamon capitatum,species,trigram,0.42105263157894735,0,True,
+Q19806047,Caprini,846307,Caprini,tribe,exact|trigram,1.0,1,True,
+Q19806047,Caprini,1460275,Caprini,section,exact|trigram,1.0,0,True,
+Q19806047,Caprini,701309,Caprinia,genus,trigram,0.875,0,True,
+Q19806047,Caprini,260912,Olbia caprina,species,trigram,0.46153846153846156,0,True,
+Q19806047,Caprini,584725,Erica caprina,species,trigram,0.46153846153846156,0,True,
+Q19806047,Caprini,701308,Caprinia felderi,species,trigram,0.4375,0,True,
+Q19806047,Caprini,361074,Oxalis caprina,species,trigram,0.4285714285714286,0,True,
+Q19806047,Caprini,835787,Olios caprinus,species,trigram,0.4285714285714286,0,True,
+Q19806047,Caprini,1535789,Norape caprina,species,trigram,0.4285714285714286,0,True,
+Q19806047,Caprini,585880,Festuca caprina,species,trigram,0.4,0,True,
+Q64755645,Carbonicola,464928,Carbonicola,genus,exact|trigram,1.0,1,True,
+Q64755645,Carbonicola,1433660,Carbonicola,section,exact|trigram,1.0,0,True,
+Q64755645,Carbonicola,464943,Carbonicolaceae,family,trigram,0.7333333333333334,0,True,
+Q64755645,Carbonicola,880834,Carbonicola foveata,species,trigram,0.5789473684210527,0,True,
+Q64755645,Carbonicola,893860,Sphex carbonicolor,species,trigram,0.5555555555555556,0,True,
+Q64755645,Carbonicola,1050727,Galerina carbonicola,species,trigram,0.55,0,True,
+Q64755645,Carbonicola,1305411,Carabus carbonicolor callosus,subspecies,trigram,0.5,0,True,
+Q64755645,Carbonicola,1305409,Carabus carbonicolor carbonicolor,subspecies,trigram,0.5,0,True,
+Q64755645,Carbonicola,1305408,Carabus carbonicolor,species,trigram,0.5,0,True,
+Q64755645,Carbonicola,1305410,Carabus carbonicolor korolkowi,subspecies,trigram,0.5,0,True,
+Q5045294,Carolus,1069974,Carolus,genus,exact|trigram,1.0,1,True,
+Q5045294,Carolus,1179300,Carolus,genus,exact|trigram,1.0,0,True,
+Q5045294,Carolus,561842,Argia carolus,species,trigram,0.5384615384615384,0,True,
+Q5045294,Carolus,380516,Ruapukea carolus,species,trigram,0.4375,0,True,
+Q5045294,Carolus,1410407,Oeclidius carolus,species,trigram,0.4117647058823529,0,True,
+Q5045294,Carolus,321244,Heliolonche carolus,species,trigram,0.368421052631579,0,True,
+Q5045294,Carolus,494979,Dolichopeza carolus,species,trigram,0.368421052631579,0,True,
+Q5045294,Carolus,1395439,Carolus anderssonii,species,trigram,0.368421052631579,0,True,
+Q5045294,Carolus,107653,Ophiogomphus carolus,species,trigram,0.35,0,True,
+Q5045294,Carolus,223183,Lepidostoma acarolum,species,trigram,0.30000000000000004,0,True,
+Q111049444,Carolus,1069974,Carolus,genus,exact|trigram,1.0,0,True,
+Q111049444,Carolus,1179300,Carolus,genus,exact|trigram,1.0,1,True,
+Q111049444,Carolus,561842,Argia carolus,species,trigram,0.5384615384615384,0,True,
+Q111049444,Carolus,380516,Ruapukea carolus,species,trigram,0.4375,0,True,
+Q111049444,Carolus,1410407,Oeclidius carolus,species,trigram,0.4117647058823529,0,True,
+Q111049444,Carolus,321244,Heliolonche carolus,species,trigram,0.368421052631579,0,True,
+Q111049444,Carolus,494979,Dolichopeza carolus,species,trigram,0.368421052631579,0,True,
+Q111049444,Carolus,1395439,Carolus anderssonii,species,trigram,0.368421052631579,0,True,
+Q111049444,Carolus,107653,Ophiogomphus carolus,species,trigram,0.35,0,True,
+Q111049444,Carolus,223183,Lepidostoma acarolum,species,trigram,0.30000000000000004,0,True,
+Q14883235,Carpelimus despectus,1631046,Carpelimus despectus,complex,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,0,True,
+Q14883235,Carpelimus despectus,1631032,Carpelimus despectus,species,epithet_genus_fuzzy|exact|genus_epithet_fuzzy|trigram,1.0,1,True,
+Q14883235,Carpelimus despectus,1631264,Carpelimus desertus,species,genus_epithet_fuzzy|trigram,0.9,0,True,
+Q14883235,Carpelimus despectus,1631029,Carpelimus aceus,species,trigram,0.7,0,True,
+Q14883235,Carpelimus despectus,1110652,Carpelimus tener,species,trigram,0.65,0,True,
+Q14883235,Carpelimus despectus,1268277,Carpelimus vagus,species,trigram,0.65,0,True,
+Q14883235,Carpelimus despectus,1630999,Carpelimus rivus,species,trigram,0.65,0,True,
+Q14883235,Carpelimus despectus,1631030,Carpelimus boops,species,trigram,0.65,0,True,
+Q14883235,Carpelimus despectus,131013,Carpelimus,genus,trigram,0.5,0,True,
+Q14883235,Carpelimus despectus,1630949,Carpelimus,subgenus,trigram,0.5,0,True,
+Q5047738,Caryospora,1025187,Caryospora,genus,exact|trigram,1.0,0,True,
+Q5047738,Caryospora,1414885,Caryospora,genus,exact|trigram,1.0,1,True,
+Q5047738,Caryospora,353348,Caryosporella,genus,trigram,0.7692307692307692,0,True,
+Q5047738,Caryospora,1414864,Caryosporinae,subfamily,trigram,0.7692307692307692,0,True,
+Q5047738,Caryospora,791640,Caryosporaceae,family,trigram,0.7142857142857143,0,True,
+Q5047738,Caryospora,1011694,Caryoscapha,genus,trigram,0.6363636363636364,0,True,
+Q5047738,Caryospora,1075362,Caryospora minima,species,trigram,0.5882352941176471,0,True,
+Q5047738,Caryospora,1025186,Caryospora putaminum,species,trigram,0.5,0,True,
+Q5047738,Caryospora,1547723,Opogona caryospila,species,trigram,0.4444444444444444,0,True,
+Q5047738,Caryospora,1223331,Caryospora australiensis,species,trigram,0.41666666666666663,0,True,
+Q16852604,Caryospora,1025187,Caryospora,genus,exact|trigram,1.0,1,True,
+Q16852604,Caryospora,1414885,Caryospora,genus,exact|trigram,1.0,0,True,
+Q16852604,Caryospora,353348,Caryosporella,genus,trigram,0.7692307692307692,0,True,
+Q16852604,Caryospora,1414864,Caryosporinae,subfamily,trigram,0.7692307692307692,0,True,
+Q16852604,Caryospora,791640,Caryosporaceae,family,trigram,0.7142857142857143,0,True,
+Q16852604,Caryospora,1011694,Caryoscapha,genus,trigram,0.6363636363636364,0,True,
+Q16852604,Caryospora,1075362,Caryospora minima,species,trigram,0.5882352941176471,0,True,
+Q16852604,Caryospora,1025186,Caryospora putaminum,species,trigram,0.5,0,True,
+Q16852604,Caryospora,1547723,Opogona caryospila,species,trigram,0.4444444444444444,0,True,
+Q16852604,Caryospora,1223331,Caryospora australiensis,species,trigram,0.41666666666666663,0,True,
+Q5049369,Cassidulina,814176,Cassidulina,superfamily,exact|trigram,1.0,0,True,
+Q5049369,Cassidulina,1350401,Cassidulina,genus,exact|trigram,1.0,1,True,
+Q5049369,Cassidulina,1349901,Cassidulinidae,family,trigram,0.7857142857142857,0,True,
+Q5049369,Cassidulina,1425029,Cassidulininae,subfamily,trigram,0.7857142857142857,0,True,
+Q5049369,Cassidulina,960812,Cassidulinoidea,superfamily,trigram,0.7333333333333334,0,True,
+Q5049369,Cassidulina,1667723,Globocassidulina,genus,trigram,0.6875,0,True,
+Q5049369,Cassidulina,1360982,Cassidulinoides,genus,trigram,0.6666666666666667,0,True,
+Q5049369,Cassidulina,1515230,Cassidulina laevigata,species,trigram,0.5238095238095238,0,True,
+Q5049369,Cassidulina,1667724,Globocassidulina crassa,species,trigram,0.4782608695652174,0,True,
+Q5049369,Cassidulina,1667732,Globocassidulina subglobosa,species,trigram,0.40740740740740744,0,True,
+Q23766759,Cassidulina,814176,Cassidulina,superfamily,exact|trigram,1.0,1,True,
+Q23766759,Cassidulina,1350401,Cassidulina,genus,exact|trigram,1.0,0,True,
+Q23766759,Cassidulina,1349901,Cassidulinidae,family,trigram,0.7857142857142857,0,True,
+Q23766759,Cassidulina,1425029,Cassidulininae,subfamily,trigram,0.7857142857142857,0,True,
+Q23766759,Cassidulina,960812,Cassidulinoidea,superfamily,trigram,0.7333333333333334,0,True,
+Q23766759,Cassidulina,1667723,Globocassidulina,genus,trigram,0.6875,0,True,
+Q23766759,Cassidulina,1360982,Cassidulinoides,genus,trigram,0.6666666666666667,0,True,
+Q23766759,Cassidulina,1515230,Cassidulina laevigata,species,trigram,0.5238095238095238,0,True,
+Q23766759,Cassidulina,1667724,Globocassidulina crassa,species,trigram,0.4782608695652174,0,True,
+Q23766759,Cassidulina,1667732,Globocassidulina subglobosa,species,trigram,0.40740740740740744,0,True,
+Q116877957,Cathedra,541509,Cathedra,genus,exact|trigram,1.0,1,True,
+Q116877957,Cathedra,703114,Cathedra,genus,exact|trigram,1.0,0,True,
+Q116877957,Cathedra,641159,Cathedrana,genus,trigram,0.8,0,True,
+Q116877957,Cathedra,541508,Cathedra serrata,species,trigram,0.5,0,True,
+Q116877957,Cathedra,703116,Lobesia cathedra,species,trigram,0.5,0,True,
+Q116877957,Cathedra,703113,Cathedra bahiensis,species,trigram,0.4444444444444444,0,True,
+Q116877957,Cathedra,700680,Cathedra acuminata,species,trigram,0.4444444444444444,0,True,
+Q116877957,Cathedra,837863,Dipoena cathedralis,species,trigram,0.42105263157894735,0,True,
+Q116877957,Cathedra,1122597,Holcocera cathedrae,species,trigram,0.42105263157894735,0,True,
+Q116877957,Cathedra,703117,Cathedra grandiflora,species,trigram,0.4,0,True,

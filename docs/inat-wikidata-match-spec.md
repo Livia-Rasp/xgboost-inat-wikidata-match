@@ -239,10 +239,36 @@ Each with an acceptance check, so progress is verifiable.
 5. **Baseline.** Exact-match rule scored on the same folds.
 6. **Model + threshold selection.** *Check:* precision-at-threshold table reproduces.
 7. **Gold set** hand-labelled and scored.
-8. **README** with the results table, the negative-sampling story, the label-noise
-   disclosure, and a short model card.
-9. *(Optional)* `score_ambiguous.py` that reads `links-ambiguous.html` rows and emits
-   accept/review/reject — closing the loop back into the Node tool.
+8. **Balance the gold sample across the alphabet.** The initial 476-item ambiguous sample turned
+   out to cover only names starting A-C (root cause: `wikidata-inat-checker`'s `allNames()` runs
+   an unordered `SELECT DISTINCT` that happens to come out alphabetically sorted, and `--limit`
+   caps collected candidates before the scan ever reaches past the C's — see `gold/README.md`).
+   Come up with a way to pull ambiguous candidates spanning the rest of the alphabet too. Doesn't
+   need to be exhaustive or proportional per letter — a modest number from each of the letters
+   currently missing is enough to stop the gold set being systematically skewed toward an
+   arbitrary alphabetic slice. *Check:* the gold sample's first-letter distribution covers
+   materially more than A-C (not necessarily uniform, just not concentrated in one narrow range).
+9. **Discuss and finetune the results.** Review every gold-set top-1 miss individually against
+   its full feature/score breakdown, not just the aggregate accuracy/MRR — this is how labeling
+   errors get caught (a mislabel surfaced and got corrected this way on the very first partial
+   run) and how genuine model gaps get told apart from labeling noise, iNat-side data issues, or
+   evaluation-methodology artifacts. Any resulting model change (e.g. an extended monotone
+   constraint) needs a fair before/after comparison across the whole gold set, not a decision
+   made off a single anecdote — and should wait until enough gold labels exist for that
+   comparison to be meaningful. *Check:* every miss on the final gold run has a written
+   characterization (close call / labeling error / model gap / other), and any adopted model
+   change shows an improvement on the full gold set, not just the case that motivated it.
+10. **QuickStatements export.** A script that reads `gold/hard_cases.csv`'s confirmed matches
+    (`label == 1`) and writes one `{qid}\tP3151\t"{inatId}"` line each to a `.qs` file, ready to
+    paste into [QuickStatements](https://quickstatements.toolforge.org/) as a single batch import
+    — this project's actual real-world deliverable, not just an evaluation artifact; hand-labeling
+    the gold set already resolves taxa an automated match couldn't, so the resolved links should
+    go back into Wikidata rather than sitting unused in a CSV. *Check:* line count matches the
+    confirmed-match row count in `gold/hard_cases.csv`.
+11. **README** with the results table, the negative-sampling story, the label-noise
+    disclosure, and a short model card.
+12. *(Optional)* `score_ambiguous.py` that reads `links-ambiguous.html` rows and emits
+    accept/review/reject — closing the loop back into the Node tool.
 
 ---
 

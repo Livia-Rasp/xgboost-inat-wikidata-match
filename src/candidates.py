@@ -21,6 +21,17 @@ from .normalize import normalize_name
 DEFAULT_TAXA_DB_PATH = Path.home() / ".cache" / "wikidata-inat-checker" / "taxa.db"
 DEFAULT_CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "lookup.sqlite"
 
+# Every strategy tag generate_candidates() can attach to a candidate — the fixed source of truth
+# for features.py's one-hot strategy_* columns. Must stay a *fixed* list, not derived from
+# whatever tags happen to appear in a given candidate set: a small subset (e.g. a partial gold
+# sample) can easily go a whole run without ever hitting synonym/basionym matches, and deriving
+# columns from what's present would silently produce fewer columns than FEATURE_COLUMNS expects.
+STRATEGY_TAGS = (
+    "exact", "genus_epithet_fuzzy", "epithet_genus_fuzzy", "trigram",
+    "synonym_exact", "synonym_genus_epithet_fuzzy", "synonym_epithet_genus_fuzzy",
+    "basionym_exact", "basionym_genus_epithet_fuzzy", "basionym_epithet_genus_fuzzy",
+)
+
 # Ranks at or below species level. A row at one of these ranks whose name normalize_name()
 # can't parse a specific_epithet out of is a provisional/unresolved iNat name (e.g. "Cortinarius
 # sp. 'AZ19'") with no stable identity to match a Wikidata species against — excluded below.

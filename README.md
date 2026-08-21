@@ -6,11 +6,41 @@ on the data already indexed by
 [wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker), with the goal of
 shrinking the manual review queue its `npm run links` command produces.
 
+**Why this matters, concretely**: iNaturalist's taxon pages resolve their Wikipedia "About"
+summary by first trying `hub.toolforge.org/P3151:{taxon_id}?lang=en` — a redirect service that
+follows the iNat ID to its Wikidata item, then to *that item's* Wikipedia sitelink (confirmed in
+iNat's own source:
+[`taxon_describers/wikipedia.rb`](https://github.com/inaturalist/inaturalist/commit/29ec770e47dec9de4b9e65e1293cb4c1e49ab7de),
+live since 2020). Only when that lookup fails does it fall back to naive name-string matching
+against Wikipedia article titles, with no kingdom/rank disambiguation — which is how
+[`Subgenus Absidia`](https://www.inaturalist.org/taxa/552989-Absidia), an animal subgenus under
+genus *Podistra*, ends up displaying the Wikipedia summary for an unrelated fungal genus of the
+same name.
+
+Checking the live Wikidata data behind that specific case turned up something more interesting
+than a missing link: the correctly disambiguated Wikidata item (`Q18510042`) already carries a
+P3151 statement for this exact taxon, but has zero Wikipedia sitelinks — nothing for the redirect
+to land on. A second Wikidata item for the same real-world taxon (`Q50746010`, description:
+"subgenus of Podistra") has no P3151 yet, which is why it's one of the ambiguous cases in this
+project's own gold set — its two candidates are exactly the fungus (iNat `552980`) and the
+correct animal subgenus (iNat `552989`). Resolving it wouldn't fix that particular page, since
+the actual gap there is a Wikidata duplicate-item merge and a missing English article, not a
+missing link.
+
+What the source dive did confirm, rather than assume: the P3151-driven redirect is live and works
+today wherever the correctly disambiguated Wikidata item has a Wikipedia sitelink waiting on it.
+Producing exactly that — correct, disambiguated P3151 links for the ambiguous-name-collision
+cases naive matching gets wrong — is this project's whole point.
+
 Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-match-spec.md).
 
 ## Status
 
-Milestones 1–6 of the spec's §7 list are done.
+Milestones 1–6 of the spec's §7 list are done. Milestone 7 (gold set) has **preliminary
+results**: 192 of 476 sampled ambiguous items are hand-labelled so far (see
+[`gold/README.md`](gold/README.md) for the full workflow) and scored below — not final, since
+milestones 8 (balance the sample across the alphabet — currently A-C only) and 9 (discuss and
+finetune) are still open.
 
 - **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
   and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
@@ -61,11 +91,24 @@ Milestones 1–6 of the spec's §7 list are done.
   signal (`name_exact_raw`, `jaro_winkler_full`, and `sim_margin_to_runner_up` dominate; the
   `Prunella` bird candidate is correctly rejected despite a raw name match, driven by
   `kingdom_match=0` and `shared_ancestor_depth=0`).
+- **Gold set — preliminary** (`src/evaluate.py --gold`, spec §6/§7 milestone 7): scored on 192
+  hand-labelled items (of 476 sampled ambiguous, no-P3151 Wikidata taxa — see
+  [`gold/README.md`](gold/README.md)). **Top-1 accuracy 98.2%/85.9%, MRR 0.989/0.928** for
+  `binary:logistic`/`rank:map`, both comfortably beating the 20.8% baseline. **Directly tests
+  milestone 6's label-noise hypothesis**: the same raw-score band that sat at 83.9% precision on
+  OOF/P3151 data reads **97.6% precision on gold** (n=123) — hand-verified labels P3151 never
+  touched — supporting the hypothesis that gap was bot-added label noise, not a model or feature
+  gap. Recall ceiling **99.41%** (one genuine candidate-generation miss among 170 confirmed
+  matches), cross-validating milestone 3's number independently. **Preliminary in two respects,
+  both still open**: the sample only covers taxon names A-C so far (milestone 8), and the
+  binary-vs-rank gap widened rather than narrowed as more labels came in — plausibly partly a
+  calibrated-vs-raw-score ranking-metric artifact rather than a fully genuine model difference,
+  not yet checked (milestone 9). No winner has been picked yet.
 
 Full breakdowns and plots for every milestone in
 [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
 
-No other milestone is implemented yet.
+Milestones 8-11 haven't started.
 
 ## Install / run
 
@@ -246,4 +289,40 @@ zero (10 of 590,671 rows); `rank:map` doesn't clear the 99.5% precision bar at a
 See the Status section above and the notebook for the full three-band breakdown and why it's
 this small.)
 
-No other commands exist yet — this section grows as the remaining milestones (§7) land.
+**Gold set (milestone 7).** Full generate → label → evaluate workflow documented in
+[`gold/README.md`](gold/README.md); summary:
+
+```sh
+# 1. In the sibling repo — generates output/links-ambiguous.html (~5 min, read-only)
+cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
+
+# 2. Back here — samples up to 500 items, writes gold/links-ambiguous-sample.html + labeling_template.csv
+.venv/bin/python build_gold_labeling_kit.py
+
+# 3. You hand-label gold/labeling_template.csv (see gold/README.md), save as labeling_filled.csv
+
+# 4. Turns your answers into gold/hard_cases.csv (committed) + scores it
+.venv/bin/python build_gold_set.py
+.venv/bin/python -m src.evaluate --gold
+```
+
+Gold-set items are Wikidata taxa that **don't** have P3151 (that's the whole point — the only
+evaluation not contaminated by bot-added labels), so steps 2 and 4 pull their attributes fresh
+via `wikidata.py`'s existing functions rather than reusing `data/wikidata_taxa.parquet`, which
+only covers items that already have P3151.
+
+Step 3 doubles as this project's actual end goal, not just an evaluation-data exercise: the
+labeling page's QuickStatements copy button is meant to be used to submit the resolved P3151
+links back to Wikidata by hand. Everything automated here stays strictly read-only; that one
+step is a deliberate, human-initiated exception — see `gold/README.md` for what that implies for
+future runs (resolved items drop out of the pool this workflow samples from).
+
+`--gold` also reports accuracy split by whether an item is **trivial by rank** — a species
+complex or section sharing its name string with its own representative species, where only one
+candidate's iNat rank actually matches the Wikidata item's stated rank, so no similarity judgment
+is needed to resolve it. Near-100% accuracy there is a sanity floor, not a headline result; the
+number that matters is how much accuracy drops on the genuinely ambiguous remainder. The report
+notebook's milestone 7 section carries this as its own subset breakdown, not folded into the
+pooled top-1/MRR numbers.
+
+Milestones 8-11 haven't started — this section grows as they land.

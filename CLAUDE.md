@@ -152,6 +152,212 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   disclosed concern) capping what any feature set could achieve, not a deficiency in this model.
   Full investigation in the notebook.
 
+- **Gold set (milestone 7, in progress)** — `build_gold_labeling_kit.py` and `build_gold_set.py`
+  at the repo root (not `src/` — one-off tooling that drives the pipeline for a specific task,
+  matching the convention spec's own milestone 12 implies for `score_ambiguous.py`), plus a
+  `--gold` path added to `src/evaluate.py`'s `__main__`. Full workflow in `gold/README.md`.
+
+  Gold-set items are Wikidata taxa **without** P3151 by construction (that's the checker's whole
+  purpose, and spec's whole reason for using it — the only evaluation not contaminated by
+  bot-added labels) — a disjoint population from every other cache in this project, all of which
+  are keyed on items that *already have* P3151. `data/wikidata_taxa.parquet` and everything built
+  from it are useless here. `wikidata.py` gained `fetch_attributes_batch_no_p3151()` +
+  `build_gold_attribute_pull()` for this — the regular attribute pull's `?item p:P3151 ...`
+  triple is mandatory and returns zero rows for these items, so this is a genuinely separate
+  query, not a parameter flip, dropping the `inatId`/`p3151_has_reference` fields that don't
+  apply and making everything else `OPTIONAL` as before. Cached to
+  `data/gold_wikidata_attributes.parquet` (fingerprinted on the QID set, same pattern as the
+  ancestor-chain cache). `build_ancestor_chains()` needed no changes — it never depended on
+  P3151 in the first place.
+
+  `gold/hard_cases.csv` is deliberately *not* the minimal schema the milestone-0 scaffold
+  shipped with (`wikidata_qid,wikidata_name,inat_taxon_id,inat_name,label,notes`) — nothing
+  there was ever set in stone. It now carries every column `features.build_features()` needs
+  from a candidates.parquet-shaped frame (`inat_rank`, `strategies`, `similarity`) plus
+  `found_by_generation` (did our own `candidates.py` actually surface the item's stated correct
+  match, or did `build_gold_set.py` have to add it as an explicit extra row — a live
+  recall-ceiling check on data candidate generation never saw during development, milestone 3's
+  number cross-validated independently) — so the committed file is fully self-sufficient for
+  `evaluate.py --gold` to score, no candidate regeneration needed at evaluation time.
+
+  `evaluate.py --gold`'s headline analysis directly tests milestone 6's label-noise hypothesis:
+  same raw-score band (`binary_raw_score >= 0.95`) that sat at 83.9% precision on OOF/P3151 data
+  (`gold_band_comparison()`), now measured on hand-verified labels P3151 never touched. Also
+  re-applies milestone 6's *exact* OOF-selected auto-accept threshold rather than sweeping a
+  fresh one (`gold_threshold_check()`) — sweeping on ~300-500 gold rows would be circular/noisy,
+  the point is whether a threshold chosen *without* seeing gold data still holds up.
+
+  **Preliminary results are now in `README.md`'s Status section and the report notebook's own
+  milestone 7 section**, both explicitly marked preliminary (192/476 labelled, A-C only). Adding
+  the notebook section surfaced a real risk worth remembering: a full `jupyter nbconvert
+  --execute` re-runs *every* cell, including milestones 1-6's, and milestone 1 reads
+  `~/.cache/wikidata-inat-checker/taxa.db` live — which had refreshed since the notebook was
+  first populated, silently changing milestone 1's `cortinarius` example (the taxon rows behind
+  it had changed) and breaking that section's own written narrative. Caught before committing by
+  diffing against the last commit's cell outputs; fixed by restoring cells 0-64 from git and
+  keeping only the new milestone 7 cells from the fresh run. **Takeaway: never blanket
+  re-execute this notebook** — earlier milestones' numbers are meant to be frozen at whatever
+  `data/*.parquet` state they were built against, not re-derived from live external state on
+  every append. Add new cells, execute only those (or the new range), and diff before saving.
+
+  **Rank-trivial stratification.** While hand-labeling, Livia noticed a lot of "ambiguous" WD
+  items are only a name collision, not a genuine judgment call — a species complex or section
+  sharing its name string with its own representative species, where the WD item's stated rank
+  (P105) matches exactly one candidate's `inat_rank` and not the other. `load_gold_features()`
+  now flags these (`rank_trivial` column: exactly one candidate in the group has `rank_equal ==
+  True`, group size ≥2) and `gold_rank_trivial_breakdown()` reports top-1 accuracy/MRR for that
+  bucket separately from the genuine remainder. Trivial-bucket accuracy is a sanity floor, not a
+  headline number — near-100% there is expected and not itself evidence of model quality; the
+  informative number is how much accuracy drops on the non-trivial remainder, which is where the
+  model's actual judgment gets tested. The report notebook's milestone 7 section carries this as
+  its own subset breakdown, not folded into the pooled top-1/MRR numbers.
+  ```sh
+  cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
+  .venv/bin/python build_gold_labeling_kit.py       # samples up to 500, writes the labeling kit
+  # (hand-label gold/labeling_template.csv -> save as gold/labeling_filled.csv)
+  .venv/bin/python build_gold_set.py                # writes gold/hard_cases.csv
+  .venv/bin/python -m src.evaluate --gold           # scores it
+  ```
+  The `npm run links` step turned out to be genuinely fragile against real-world WDQS load, and
+  took four attempts and two upstream fixes (both in the sibling repo, also owned by Livia Rasp)
+  before it ran clean — worth recording in full since the failure modes recurred across separate
+  runs and weren't obvious from a single crash:
+
+  1. A live `--limit 150000` run took 66 minutes, got all the way through the main scan and
+     P3151 cross-check, then crashed with a JSON parse `SyntaxError` inside the checker's own
+     ancestor-chain fetch (`fetchWdAncestorChains` in `lib/utils.js`) — no mid-run checkpoint
+     (`cache/cache-links.json` only skips *already-collected* QIDs on a *future* run). Retried
+     smaller, at `--limit 80000` (still comfortably clears 300+ ambiguous rows at the observed
+     rate: 863/150,000 = 0.575%, matching the checker's own documented ~0.57% baseline).
+  2. That retry failed faster and differently: `Fatal error: [DOMException [TimeoutError]]`
+     3m45s in. Root cause: the checker's `fetchWithRetry()` only retried on the HTTP status codes
+     in `RETRYABLE_STATUS` (429/502/503/504) — a *rejected* `fetch()`, which is exactly what
+     `AbortSignal.timeout(90_000)` produces on a hung connection, was never caught anywhere in
+     that function and propagated straight up uncaught. **Fixed upstream**: `fetchWithRetry()`
+     now catches `TimeoutError`/`AbortError` rejections and retries them with the same backoff as
+     a 502.
+  3. With that fix, the next run got much further (main scan + P3151 cross-check both completed,
+     476 ambiguous items found) but crashed again in the *same* `fetchWdAncestorChains` call as
+     attempt 1, this time `SyntaxError: Unterminated string in JSON` — a different offset, so not
+     a fixed truncation point. Root cause: `sparql()` (`lib/utils.js`) had no protection at all
+     against WDQS returning an HTTP 200 with a body truncated mid-stream under load — valid HTTP,
+     invalid JSON, and `JSON.parse` was called with no `try`/`catch` around it. This is the exact
+     same "silently incomplete WDQS response" failure mode this project's own
+     `build_ancestor_chains()` already had to guard against (`ANCESTOR_MIN_COVERAGE`, milestone
+     4's errors list above) — just surfacing as a hard parse crash here instead of a row
+     undercount. **Fixed upstream**: `sparql()` now retries on a JSON parse failure with the same
+     backoff as a bad status, instead of throwing immediately.
+  4. Retried again with both fixes in place — they worked (log shows a caught timeout and three
+     escalating parse-failure retries recovering) — but then hit *four* consecutive truncated
+     responses for one single ancestor-chain batch and exhausted the default retry budget (3).
+     49m25s in, ~2.5 hours cumulative across all four attempts.
+  5. Rather than raise the retry budget and keep re-fighting WDQS on the same expensive code path
+     indefinitely, stepped back and noticed the actual problem: `fetchWdAncestorChains` was being
+     called on **all ~78,600 P3151-matched (non-ambiguous) items** — that data only feeds
+     `output/links.html`'s auto-approve tree comparison, which this project never uses at all.
+     The much smaller ambiguous-only ancestor fetch (~475 items) that `output/links-ambiguous.html`
+     actually needs is a separate call a few dozen lines later in `checkLinks.js`, and was never
+     itself the problem. **Added upstream**: a `checkLinks.js --ambiguous-only` flag that skips
+     the P3151 cross-check, the large ancestor-chain fetch, and `links.html` generation entirely,
+     going straight to the small ambiguous-only fetch + `links-ambiguous.html`. Documented in that
+     repo's `docs/links.md`.
+
+  With `--ambiguous-only`, `--limit 80000` completed in 5m36s — down from 45-90+ minutes and four
+  failed attempts — and found 476 ambiguous items (well past the 300+ target). Sibling repo's own
+  test suite (213 tests) passed after every change above.
+
+  **The milestone 6/7 models are frozen as the report's fixed reference point.**
+  `train.build_final_models()` already only (re)trains a variant when its `data/models/*.json`
+  is missing or `force_refresh=True` is passed — otherwise it loads the existing file — so as
+  long as `data/models/` isn't deleted and nothing calls it with `force_refresh=True`, the exact
+  binaries behind every milestone 7 gold-set number stay fixed regardless of what else changes
+  upstream. That matters concretely here: labeling the gold set has you submitting confirmed
+  matches to Wikidata by hand (see below and `gold/README.md`), which is itself new P3151 data —
+  a future from-scratch `wikidata.py` re-pull would see a different population than milestone
+  2-6 trained on. Freezing the model means that drift can't silently change the report.
+  `data/` stays gitignored as before (spec §0) — this is a documented policy, not a new
+  committed-artifact convention; reproducing the frozen numbers from scratch means re-running the
+  exact command sequence in this file in order, not deleting and regenerating `data/models/`.
+
+  Found and fixed one real bug while making this freeze meaningful: `build_final_models()`'s
+  `force_refresh`/exists check only gated whether the *model* was retrained — the calibrator was
+  unconditionally recomputed and overwritten on every call, `fit()` against whatever `oof` was
+  passed that call. A stale, frozen model could silently end up paired with a calibrator fit
+  against different (e.g. re-pulled) OOF data — the exact drift this freeze is meant to prevent,
+  just one file later. Fixed: the calibrator now only (re)fits in the same branch as the model,
+  and is loaded from `data/models/*_calibrator.pkl` alongside the model otherwise.
+
+- **Balance the gold sample across the alphabet (milestone 8, not started)** — the 476-item
+  ambiguous sample generated so far covers only names from "Abietinella" to "Cattleya" (confirmed:
+  296/92/88 split across A/B/C, nothing D-Z). Root cause traced to `wikidata-inat-checker`:
+  `allNames()` (`lib/getInatTaxaDb.js`) runs `SELECT DISTINCT name FROM taxa` with no `ORDER BY`,
+  but SQLite's `DISTINCT` implementation happens to produce alphabetically-sorted output as a side
+  effect; `checkLinks.js` scans names in that incidental order, and `--limit 80000` caps collected
+  candidates before the scan ever reaches past the C's — not sampling noise, a systematic
+  artifact. Doesn't need to be exhaustive or proportional per letter, just not concentrated in one
+  narrow alphabetic slice. Options not yet decided between: raise `--limit` further (more WDQS
+  exposure, the exact failure mode `--ambiguous-only` was built to reduce), randomize the scan
+  order before applying `--limit` (smaller, more surgical change), or run separate bucketed scans
+  per alphabet range. Whichever approach, new items need to be sampled into
+  `gold/labeling_filled.csv` alongside (not replacing) the existing 476 A-C answers — same
+  "reorder without overwriting edits" concern already solved once for the alphabetical-sort fix.
+  See `gold/README.md`'s "Known limitation" note.
+
+- **Discuss and finetune the results (milestone 9, ongoing alongside labeling)** — spec gained
+  this milestone this session, formalizing a practice that started informally: after every
+  partial `--gold` run, review every top-1 miss individually against its full feature/score
+  breakdown rather than trusting the aggregate accuracy/MRR, especially at small sample sizes
+  where one row can swing the percentage. On the first 50-item test run this caught a real
+  labeling error (`Q21438872` — a WD item whose stated rank matched a subgenus, but the true
+  answer was the nominotypical genus of the same name; Livia corrected it directly), and
+  surfaced — but did **not** yet act on — two real findings worth revisiting once more gold
+  labels exist:
+  1. `sim_rank_in_group`/`family_match` are currently unconstrained in `MONOTONE_UP`, and a case
+     was found where the unconstrained interaction let a candidate with strictly worse taxonomic
+     agreement (`kingdom_match`/`family_match`/`shared_ancestor_depth` all worse) outscore one
+     with better agreement, for `rank:map` specifically (`binary:logistic` got the same case
+     right). Extending monotone constraints to cover this was tested and does fix that raw-score
+     ordering — but reverted rather than adopted, since a real before/after call needs more than
+     one gold example to judge fairly.
+  2. `top1_accuracy_and_mrr()`/`gold_top1_and_mrr()` rank candidates within a group by
+     *calibrated* probability, but isotonic calibration is a step function that can map a wide
+     range of distinct raw scores to the same output ("plateaus") — discarding real relative-
+     ordering information. Negligible on the full 590k-row OOF population (~0.02pp difference
+     between raw- and calibrated-score top1/MRR) but large on the small gold set: in one test,
+     calibrated-based `rank:map` top-1 accuracy read 43.5% while the *same* model's raw-score
+     top-1 accuracy was 95.65%, identical to `binary`. This bug already affects gold-set
+     reporting today, independent of finding 1 — calibrated probability is still correct for
+     anything needing cross-group comparability (auto-accept/reject thresholds, Brier score),
+     just not for within-group ranking metrics.
+
+  Both findings are parked, not implemented — `src/train.py` and `data/models/`/
+  `data/oof_predictions.parquet` were restored to their pre-experiment state after testing
+  finding 1. Revisit both together once labeling is further along than the initial 50 items;
+  finding 2 first, since it's a low-risk metric-computation fix that doesn't need retraining and
+  makes any future finding-1-style comparison honest in the first place.
+
+  **At n=192** (up from 50; 192/476 sampled items answered, still A-C only per milestone 8):
+  `top1_accuracy`/MRR are binary 98.2%/0.989, rank 85.9%/0.928, baseline 20.8% — the binary-vs-
+  rank gap *widened* rather than narrowed (was 95.7%/93.5% at n=50), including on the non-trivial-
+  by-rank bucket specifically (98.5% vs. 82.3%). Not yet investigated whether finding 2 above
+  explains part of this — noted for when milestone 8 work resumes, per Livia's call. Recall
+  ceiling corrected to 99.41% (one genuine candidate-generation miss, `Q4694188`) after fixing a
+  second bug this run: `score_gold_set()`'s recall-ceiling calc took an arbitrary first row per
+  item via `drop_duplicates`, which happened to mask that exact miss (reported 100%). Fixed by
+  filtering to `label==1` rows before averaging `found_by_generation`. Also fixed
+  `build_gold_set.py`'s `load_answers()`: default `pd.read_csv` NA parsing treats the literal
+  string `"None"` as null, silently blanking and dropping Livia's `Q111270149` answer (she wrote
+  "None," not the documented "NONE" — same intent, but the loader used `keep_default_na`'s
+  default and lost the row entirely rather than reading it as a no-match answer). Fixed with
+  `keep_default_na=False`.
+
+- **QuickStatements export (milestone 10, not started)** — spec gained this milestone earlier
+  this session: labeling the gold set already resolves ambiguous taxa an automated match
+  couldn't, so those resolved links should go back into Wikidata as a batch, not just via the
+  labeling HTML's per-row copy button (easy to miss rows, no consolidated record of what was
+  submitted). Will read `gold/hard_cases.csv`'s confirmed matches (`label == 1`) and write one
+  `{qid}\tP3151 "{inatId}"` line each to a `.qs` file for a single QuickStatements paste.
+
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 

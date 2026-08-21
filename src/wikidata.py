@@ -219,6 +219,34 @@ def _fetch_attributes_batch(qids: list[str]) -> list[dict]:
     return _sparql_post_tsv(query)
 
 
+def fetch_attributes_batch_no_p3151(qids: list[str]) -> list[dict]:
+    """Like _fetch_attributes_batch, but for items that don't have P3151 at all — the gold set's
+    whole reason to exist (spec §6: it has to be items P3151 never touched, or it's not an
+    independent test). The regular pull's `?item p:P3151 ...` triple is mandatory, so it returns
+    zero rows for these; this drops that triple (and the fields that only make sense with it:
+    inatId, p3151_has_reference) and makes everything else OPTIONAL, same as before.
+    Reuses _aggregate_batch_rows() for parsing — inat_id/p3151_has_reference just come back
+    None/False for every row here, which is correct (there's nothing to report)."""
+    values = " ".join(f"wd:{q}" for q in qids)
+    query = f"""SELECT ?item ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements ?commonsSitelink ?synonymName ?basionymName WHERE {{
+  VALUES ?item {{ {values} }}
+  OPTIONAL {{ ?item wdt:P225 ?name . }}
+  OPTIONAL {{ ?item wdt:P105 ?rank . }}
+  OPTIONAL {{ ?item wdt:P171 ?parent . OPTIONAL {{ ?parent wdt:P225 ?parentName . }} }}
+  OPTIONAL {{ ?item wdt:P141 ?iucn . }}
+  ?item wikibase:sitelinks ?sitelinks .
+  ?item wikibase:statements ?statements .
+  OPTIONAL {{
+    ?commonsSitelink schema:about ?item ; schema:isPartOf <https://commons.wikimedia.org/> .
+    FILTER(CONTAINS(STR(?commonsSitelink), "/wiki/Category:"))
+  }}
+  OPTIONAL {{ ?item wdt:P1420 ?synonym . OPTIONAL {{ ?synonym wdt:P225 ?synonymName . }} }}
+  OPTIONAL {{ ?item wdt:P566 ?basionym . OPTIONAL {{ ?basionym wdt:P225 ?basionymName . }} }}
+}}"""
+    _ATTRIBUTE_RATE_LIMITER.wait()
+    return _sparql_post_tsv(query)
+
+
 def _aggregate_batch_rows(rows: list[dict]) -> list[dict]:
     """Group a batch's raw TSV rows by item, since multi-valued P171/P1420/P566 OPTIONALs can
     produce several rows per item. Scalar fields take the first non-null value seen; synonym and
@@ -313,6 +341,68 @@ def build_pull_cache(
         )
     )
     return PullResult(df, cache_hit=False)
+
+
+GOLD_COLUMNS = [
+    "qid",
+    "name",
+    "rank_qid",
+    "parent_qid",
+    "parent_name",
+    "iucn_qid",
+    "sitelinks",
+    "statements",
+    "has_commons_cat",
+    "synonym_names",
+    "basionym_names",
+]
+
+DEFAULT_GOLD_ATTRIBUTES_PATH = Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_attributes.parquet"
+DEFAULT_GOLD_ATTRIBUTES_MANIFEST_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_attributes.manifest.json"
+)
+
+
+def build_gold_attribute_pull(
+    qids: list[str],
+    cache_path: Path = DEFAULT_GOLD_ATTRIBUTES_PATH,
+    manifest_path: Path = DEFAULT_GOLD_ATTRIBUTES_MANIFEST_PATH,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Wikidata attributes for gold-set items — same shape as build_pull_cache()'s output minus
+    inat_id/p3151_has_reference (meaningless here, these items don't have P3151). No Phase 1:
+    the QIDs are already known (parsed from links-ambiguous.html / your labeling answers), not
+    discovered via a P3151 filter query. Cached the same way as every other pull in this
+    project — fingerprinted on the QID set, not time-based."""
+    if not force_refresh and cache_path.exists() and _ancestors_manifest_matches(manifest_path, qids):
+        return pd.read_parquet(cache_path)
+
+    records: list[dict] = []
+    seen: set[str] = set()
+    for batch in _chunked(qids, ATTRIBUTE_BATCH_SIZE):
+        for record in _aggregate_batch_rows(fetch_attributes_batch_no_p3151(batch)):
+            qid = record["qid"]
+            if qid and qid not in seen:
+                seen.add(qid)
+                record.pop("inat_id", None)
+                record.pop("p3151_has_reference", None)
+                records.append(record)
+
+    df = pd.DataFrame.from_records(records, columns=GOLD_COLUMNS)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(cache_path, index=False)
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "pulled_at": datetime.now(timezone.utc).isoformat(),
+                "qid_count": len(qids),
+                "qid_fingerprint": _qid_set_fingerprint(qids),
+                "endpoint": SPARQL_ENDPOINT,
+            },
+            indent=2,
+        )
+    )
+    return df
 
 
 # ---- Ancestor chains (milestone 4: kingdom_match, family_match, order_match, ---------------
