@@ -45,8 +45,8 @@ HARD_CASES_COLUMNS = [
 def load_answers(path: Path) -> pd.DataFrame:
     if not path.exists():
         raise SystemExit(
-            f"{path} not found — see gold/README.md: label gold/labeling_template.csv and "
-            f"save it as {path.name}."
+            f"{path} not found — see gold/README.md: run build_gold_labeling_kit.py, then "
+            f"label the new rows it appends to {path.name}."
         )
     # keep_default_na=False: pandas' default NA-token list includes "None"/"NA"/"NULL" etc, so a
     # labeler writing "None" instead of the documented "NONE" would otherwise get silently

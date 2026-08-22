@@ -296,10 +296,10 @@ this small.)
 # 1. In the sibling repo — generates output/links-ambiguous.html (~5 min, read-only)
 cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
 
-# 2. Back here — samples up to 500 items, writes gold/links-ambiguous-sample.html + labeling_template.csv
+# 2. Back here — appends new items straight onto gold/labeling_filled.csv, writes gold/links-ambiguous-sample*.html
 .venv/bin/python build_gold_labeling_kit.py
 
-# 3. You hand-label gold/labeling_template.csv (see gold/README.md), save as labeling_filled.csv
+# 3. You hand-label the new rows in gold/labeling_filled.csv directly (see gold/README.md)
 
 # 4. Turns your answers into gold/hard_cases.csv (committed) + scores it
 .venv/bin/python build_gold_set.py

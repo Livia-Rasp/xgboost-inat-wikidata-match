@@ -213,8 +213,9 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   its own subset breakdown, not folded into the pooled top-1/MRR numbers.
   ```sh
   cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
-  .venv/bin/python build_gold_labeling_kit.py       # samples up to 500, writes the labeling kit
-  # (hand-label gold/labeling_template.csv -> save as gold/labeling_filled.csv)
+  cd - && .venv/bin/python build_gold_labeling_kit.py   # appends new items onto gold/labeling_filled.csv
+  # (hand-label the new rows directly in gold/labeling_filled.csv — see gold/README.md; milestone 8
+  # replaced the original separate labeling_template.csv "save as" step with this in-place append)
   .venv/bin/python build_gold_set.py                # writes gold/hard_cases.csv
   .venv/bin/python -m src.evaluate --gold           # scores it
   ```
@@ -287,21 +288,75 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   just one file later. Fixed: the calibrator now only (re)fits in the same branch as the model,
   and is loaded from `data/models/*_calibrator.pkl` alongside the model otherwise.
 
-- **Balance the gold sample across the alphabet (milestone 8, not started)** — the 476-item
-  ambiguous sample generated so far covers only names from "Abietinella" to "Cattleya" (confirmed:
-  296/92/88 split across A/B/C, nothing D-Z). Root cause traced to `wikidata-inat-checker`:
-  `allNames()` (`lib/getInatTaxaDb.js`) runs `SELECT DISTINCT name FROM taxa` with no `ORDER BY`,
-  but SQLite's `DISTINCT` implementation happens to produce alphabetically-sorted output as a side
-  effect; `checkLinks.js` scans names in that incidental order, and `--limit 80000` caps collected
-  candidates before the scan ever reaches past the C's — not sampling noise, a systematic
-  artifact. Doesn't need to be exhaustive or proportional per letter, just not concentrated in one
-  narrow alphabetic slice. Options not yet decided between: raise `--limit` further (more WDQS
-  exposure, the exact failure mode `--ambiguous-only` was built to reduce), randomize the scan
-  order before applying `--limit` (smaller, more surgical change), or run separate bucketed scans
-  per alphabet range. Whichever approach, new items need to be sampled into
-  `gold/labeling_filled.csv` alongside (not replacing) the existing 476 A-C answers — same
-  "reorder without overwriting edits" concern already solved once for the alphabetical-sort fix.
-  See `gold/README.md`'s "Known limitation" note.
+- **Balance the gold sample across the alphabet (milestone 8, done)** — the 476-item ambiguous
+  sample generated in milestone 7 covered only names from "Abietinella" to "Cattleya" (296/92/88
+  split across A/B/C, nothing D-Z). Root cause: `allNames()` (`lib/getInatTaxaDb.js` in
+  `wikidata-inat-checker`) runs `SELECT DISTINCT name FROM taxa` with no `ORDER BY`, but SQLite's
+  `DISTINCT` implementation happens to produce alphabetically-sorted output as a side effect;
+  `checkLinks.js` scanned names in that incidental order, so `--limit 80000` capped collected
+  candidates before the scan ever reached past the C's — a systematic artifact, not sampling
+  noise. Fixed with the smallest of three options considered (raising `--limit` further would
+  reintroduce the WDQS load `--ambiguous-only` was built to reduce; bucketed per-letter scans
+  would multiply that same fragile pipeline): **shuffle the name list before the `--limit`
+  cutoff**, in the sibling repo. `lib/utils.js` gained `shuffle(arr, seed)` (seeded Fisher-Yates,
+  mulberry32 PRNG — no RNG dependency existed in that zero-runtime-dependency repo, so hand-
+  rolled rather than adding a package); `checkLinks.js` applies it to `taxaDb.allNames()` before
+  the by-name path's collection loop (the `--iucn` path is already selective/small and untouched).
+  Default seed `42` (matching `build_gold_labeling_kit.py`'s own `RANDOM_SEED`), overridable with
+  `--seed <n>`. Scoped to that one call site, not inside `allNames()` itself, since
+  `checkLinksStats.js` also calls it and has no reason to want randomized output. Three new tests
+  in `test/utils.test.js` (determinism, permutation, seed-sensitivity); full suite (216 tests)
+  passes. Documented in that repo's `docs/links.md`.
+
+  Re-running `--ambiguous-only` with the fix found 491 ambiguous items spanning the full alphabet
+  (A: 46, B: 19, C: 63, D: 24, ... X: 2, Z: 2 — was 100% A-C before). This repo's
+  `build_gold_labeling_kit.py` became merge-aware to consume that safely: it reads
+  `gold/labeling_filled.csv` first and excludes every QID already there (answered or deliberately
+  left blank) from resampling. Originally capped the new-items pool at `500 - len(existing)` (24,
+  that run) to keep the total near the milestone-7 target, but that meant only 24 of the 407
+  genuinely-new items this scan actually found ever got surfaced — most of the alphabetic
+  diversity the fix produced would have gone unsampled. Dropped the cap entirely on Livia's call:
+  every new item is now included every run (`SAMPLE_SIZE`/`RANDOM_SEED` removed — nothing left to
+  seed once there's no subsampling); leaving CSV rows blank is the intended way to bound labeling
+  effort, not a smaller kit.
+
+  Went a step further on Livia's own observation: the original design wrote a separate
+  `labeling_template.csv` (existing rows carried forward + new blank ones appended) that she'd
+  edit and "save as" `labeling_filled.csv` — but once the script started carrying existing answers
+  forward byte-for-byte, that's *pure duplication*, not a safety boundary; the two files were
+  identical for every already-answered row. Collapsed to one: `append_new_rows()` now appends new
+  rows directly onto `gold/labeling_filled.csv` (creating it with a header on the very first run),
+  never reading or rewriting a row that's already there — exactly as safe as the old carry-forward
+  copy, minus the duplicate file and the manual "save as" step. `labeling_template.csv` is gone
+  (removed from `.gitignore` too; its 407 already-appended rows were folded into
+  `labeling_filled.csv` directly, verified identical before deleting). The sample HTML is
+  unaffected — still scoped to just the new items each run, and still never overwrites a prior
+  batch via `next_sample_html_path()` (`links-ambiguous-sample.html`, then `-2.html`, `-3.html`,
+  etc. — the `.gitignore` pattern is now the glob `gold/links-ambiguous-sample*.html` to cover all
+  of them).
+
+  Found and fixed one real bug while running this for real: `write_trimmed_html()`'s original
+  single-pass loop called `tr.decompose()` on unwanted rows *during* forward iteration over a
+  precomputed `find_all("tr")` list. bs4's `decompose()` clears the whole `next_element` chain
+  from the decomposed tag onward, and this HTML's table markup nests candidate rows deeply enough
+  that the chain reached past the intended subtree into later, not-yet-inspected siblings —
+  corrupting them (`tr.attrs` became `None`) before the loop ever read their `id`/`class`,
+  crashing with `AttributeError: 'NoneType' object has no attribute 'get'` on the live 491-item
+  HTML (not on the smaller/differently-shaped 476-item one, which is why milestone 7 never hit
+  it). Fixed by splitting into two passes: decide what to remove first (reading every row's
+  `id`/`class`/`data-qid` while the tree is still fully intact), then decompose only those rows,
+  in *reverse* document order — later removals can no longer corrupt earlier rows this loop still
+  needs to read.
+
+  New batch (407 items, C through Z) lives at `gold/links-ambiguous-sample-2.html` + the appended
+  tail of `gold/labeling_filled.csv` (rows 477-883), ready for hand-labeling alongside the
+  original 476 — Livia doesn't need to answer all 407, just as many as she chooses.
+  `gold/README.md`'s "Known limitation" note and its §2/§3 workflow description replaced with
+  this fix and the new merge-aware, no-target-size, single-file workflow.
+  ```sh
+  cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
+  cd - && .venv/bin/python build_gold_labeling_kit.py   # merge-aware: appends new rows straight onto gold/labeling_filled.csv
+  ```
 
 - **Discuss and finetune the results (milestone 9, ongoing alongside labeling)** — spec gained
   this milestone this session, formalizing a practice that started informally: after every
@@ -336,11 +391,12 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   finding 2 first, since it's a low-risk metric-computation fix that doesn't need retraining and
   makes any future finding-1-style comparison honest in the first place.
 
-  **At n=192** (up from 50; 192/476 sampled items answered, still A-C only per milestone 8):
-  `top1_accuracy`/MRR are binary 98.2%/0.989, rank 85.9%/0.928, baseline 20.8% — the binary-vs-
-  rank gap *widened* rather than narrowed (was 95.7%/93.5% at n=50), including on the non-trivial-
-  by-rank bucket specifically (98.5% vs. 82.3%). Not yet investigated whether finding 2 above
-  explains part of this — noted for when milestone 8 work resumes, per Livia's call. Recall
+  **At n=192** (up from 50; 192/476 sampled items answered, A-C only — pre-milestone-8, before the
+  alphabetic-bias fix): `top1_accuracy`/MRR are binary 98.2%/0.989, rank 85.9%/0.928, baseline
+  20.8% — the binary-vs-rank gap *widened* rather than narrowed (was 95.7%/93.5% at n=50),
+  including on the non-trivial-by-rank bucket specifically (98.5% vs. 82.3%). Not yet investigated
+  whether finding 2 above explains part of this — revisit once the D-Z batch from milestone 8 is
+  labeled too. Recall
   ceiling corrected to 99.41% (one genuine candidate-generation miss, `Q4694188`) after fixing a
   second bug this run: `score_gold_set()`'s recall-ceiling calc took an arbitrary first row per
   item via `drop_duplicates`, which happened to mask that exact miss (reported 100%). Fixed by
