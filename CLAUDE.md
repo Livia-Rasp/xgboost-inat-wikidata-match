@@ -358,7 +358,7 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   cd - && .venv/bin/python build_gold_labeling_kit.py   # merge-aware: appends new rows straight onto gold/labeling_filled.csv
   ```
 
-- **Discuss and finetune the results (milestone 9, ongoing alongside labeling)** — spec gained
+- **Discuss and finetune the results (milestone 9, done at n=263)** — spec gained
   this milestone this session, formalizing a practice that started informally: after every
   partial `--gold` run, review every top-1 miss individually against its full feature/score
   breakdown rather than trusting the aggregate accuracy/MRR, especially at small sample sizes
@@ -385,19 +385,39 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
      anything needing cross-group comparability (auto-accept/reject thresholds, Brier score),
      just not for within-group ranking metrics.
 
-  Both findings are parked, not implemented — `src/train.py` and `data/models/`/
-  `data/oof_predictions.parquet` were restored to their pre-experiment state after testing
-  finding 1. Revisit both together once labeling is further along than the initial 50 items;
-  finding 2 first, since it's a low-risk metric-computation fix that doesn't need retraining and
-  makes any future finding-1-style comparison honest in the first place.
+  **Finding 2 is now implemented; finding 1 is still parked.** Ranking metrics moved to the raw
+  score (`evaluate.ranking_score_column()`, with the reasoning in its docstring); calibrated
+  probability stays in use for Brier and for both thresholds, where cross-group comparability is
+  the whole point. Confirmed at n=263: `rank:map` reads 86.5% top-1 ranked by calibrated
+  probability and **97.8%** ranked by its own raw scores, identical models and predictions. At OOF
+  scale the same change is worth 0.03pp (99.15% → 99.12%), which is why it hid for so long.
+  `src/train.py`'s `__main__` now prints both so the difference stays auditable. Finding 1
+  (extending `MONOTONE_UP`) stays parked deliberately: adopting it means retraining, which breaks
+  the model freeze every published number is quoted against — moved to `docs/future-work.md` as a
+  fully-rescored comparison rather than a patch.
 
-  **At n=192** (up from 50; 192/476 sampled items answered, A-C only — pre-milestone-8, before the
-  alphabetic-bias fix): `top1_accuracy`/MRR are binary 98.2%/0.989, rank 85.9%/0.928, baseline
-  20.8% — the binary-vs-rank gap *widened* rather than narrowed (was 95.7%/93.5% at n=50),
-  including on the non-trivial-by-rank bucket specifically (98.5% vs. 82.3%). Not yet investigated
-  whether finding 2 above explains part of this — revisit once the D-Z batch from milestone 8 is
-  labeled too. Recall
-  ceiling corrected to 99.41% (one genuine candidate-generation miss, `Q4694188`) after fixing a
+  **Final numbers at n=263** (263/883 sampled items answered, A-Z after milestone 8):
+  binary 98.70%/0.9935 top-1/MRR, rank 97.83%/0.9891, baseline 20.91%; non-trivial-by-rank subset
+  (206 items) binary 98.87% vs rank 97.74%; Brier 0.0130 vs 0.0243; band precision 98.2% on gold
+  vs 83.9% on OOF (n=167); recall ceiling **100%**. **`binary:logistic` is the pick** — leads on
+  every metric, widens on the non-trivial subset, and is the only variant clearing the 99.5%
+  auto-accept bar at all. Rationale written up in `docs/findings.md` §6.
+
+  The per-miss review paid off again: `Q4694188` (*Agrisius japonicus*) was labeled `265680`
+  (*Poecilopompilus algidus*, a spider wasp) — a dropped leading digit from `1265680`, and not
+  among the candidates the kit offered. It was also the *sole* reason the recall ceiling read
+  99.57% rather than 100%, i.e. the "one genuine candidate-generation miss" was never a
+  generation miss at all. Corrected in `gold/labeling_filled.csv` with a note in its `notes`
+  column. The three surviving `binary` misses: one model gap (`Q121887868`, WD phylum vs
+  identically-named iNat genus, where only the true candidate has `rank_equal`) and two iNat-side
+  duplicate records (`Q16760098`, `Q46674974`) where no taxonomic feature can separate the pair.
+  A new honest negative also came out of this run and is in `docs/findings.md` §2: the
+  OOF-derived reject threshold does **not** transfer to the ambiguous population — 99.61% row
+  precision on OOF, 95.7% on gold, and it would hide the true match for 107 of 263 items. That is
+  why the README's headline is ranking quality rather than queue clearance.
+
+  Earlier state, kept because the reasoning matters: recall
+  ceiling corrected to 99.41% (one apparent candidate-generation miss, `Q4694188`) after fixing a
   second bug this run: `score_gold_set()`'s recall-ceiling calc took an arbitrary first row per
   item via `drop_duplicates`, which happened to mask that exact miss (reported 100%). Fixed by
   filtering to `label==1` rows before averaging `found_by_generation`. Also fixed
@@ -413,14 +433,89 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   labeling HTML's per-row copy button (easy to miss rows, no consolidated record of what was
   submitted). Will read `gold/hard_cases.csv`'s confirmed matches (`label == 1`) and write one
   `{qid}\tP3151 "{inatId}"` line each to a `.qs` file for a single QuickStatements paste.
+  Now tracked in `docs/future-work.md` rather than here, since the study itself is closed.
+
+- **README figures (milestone 11)** — `build_figures.py` at the repo root writes six PNGs to
+  `docs/img/` (three figures × light/dark, embedded through `<picture>` so GitHub serves the
+  reader's theme). Reads `data/oof_predictions.parquet`, `data/features.parquet` and
+  `data/models/binary_model.json`; no network.
+  ```
+  .venv/bin/python build_figures.py
+  ```
+  Deterministic on purpose — reruns are byte-identical, so a stale figure shows up as a diff
+  instead of hiding. That needed two things beyond a fixed sample seed: `metadata={"Software":
+  None}` on `savefig` (matplotlib otherwise stamps its own version into the PNG), and seeding
+  numpy's **global** RNG immediately before `shap.plots.beeswarm`, which shuffles tied points
+  through it. Colours come from the `dataviz` skill's validated palette and were re-validated
+  all-pairs in both modes.
+
+- **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
+  `.github/workflows/ci.yml` on Python 3.12 and 3.13 (local is 3.14; the matrix catches skew).
+  ```
+  .venv/bin/python -m pytest
+  .venv/bin/ruff check .
+  ```
+  The suite never touches the network or `data/`. `tests/conftest.py` builds a real throwaway
+  `taxa.db` from the 26 hand-written rows in `tests/fixtures/taxa_mini.csv` and runs the *real*
+  `build_lookup_cache()` over it, so the SQL and the FTS5 trigram query are genuinely exercised
+  rather than mocked. `tests/test_splits.py` is the leakage regression spec §7 milestone 4 asks
+  for — previously only a `print` in `features.py`'s `__main__` — and it was mutation-checked
+  (breaking `verify_no_qid_split_across_folds()` to always return `True` makes it fail).
+  `ruff format` is deliberately **not** enforced: it would rewrite files that have never had a
+  formatter applied and bury real changes in whitespace. `B905` (zip without `strict=`) is
+  ignored in `pyproject.toml`, since every zip in `src/` walks columns of one DataFrame.
+
+  Two things the tests pinned rather than fixed, both deliberate: `rubrum` → `ruber` is
+  Levenshtein distance **3**, so strategy 2 does not reach gender variants (the
+  `epithet_stem_match` feature handles them, and the trigram strategy still surfaces the row);
+  and a ligature (`æ`/`œ`/`ß`) is not decomposed by NFKD, so it fails the genus/epithet character
+  classes and the name parses empty or loses its epithet. There are zero such names in the 1.4M-row
+  iNat index and changing normalisation would invalidate every cached feature the frozen models
+  trained against, so it is recorded in `docs/future-work.md` instead.
+
+- **Fixtures for the five-minute path** — `build_fixtures.py` regenerates
+  `tests/fixtures/gold_*.csv.gz` + `oof_summary.json` from the full caches, so
+  `python -m src.evaluate --gold` runs from a clean clone with no Node, no 189 MB download and no
+  network. Rerun it after anything that changes the gold set.
+  ```
+  .venv/bin/python build_gold_set.py && .venv/bin/python build_fixtures.py
+  ```
+  `src/fixtures.py` holds the fallbacks; `features._load_inat_index()` and
+  `evaluate._load_gold_attributes()`/`_load_gold_ancestors()`/`load_oof_reference()` prefer the
+  real caches and announce which copy they used. Verified bit-for-bit: all 41 feature columns
+  identical between the fixture path and the full path, and the printed metrics match to every
+  decimal.
+
+  **The iNat index fixture is not just the candidate rows.** It also carries every row *sharing a
+  name* with a candidate (otherwise `n_inat_taxa_same_name`, which counts collisions across the
+  whole index, would be silently wrong rather than absent) and every ancestor reachable from a
+  candidate's `ancestry` string. ~4.8k rows of 1.4M.
+
+  **The ancestor fixture is written unsorted, on purpose.** `_wd_ancestor_names_by_rank()`
+  resolves an item's ancestor at each target rank first-wins, so when a transitive P171 chain
+  contains two ancestors at the same rank (real, and not rare) row order decides the answer.
+  Sorting that fixture changed `family_match`/`order_match` on 4 of 2,610 rows and moved
+  `rank:map`'s gold top-1 by half a point. Caught by diffing feature frames between the two
+  paths, which is the check worth repeating if the fixture ever stops matching.
+
+  `.gitignore` gained an exception for `data/models/*.json` and `*_calibrator.pkl` (a directory
+  excluded by `data/` cannot have its contents re-included, hence `data/*`). Those 4.4 MB are the
+  frozen milestone 6/7 models; committing them is what makes the five-minute path real.
 
 This section gets filled in further as the remaining milestones (§7) land, with the exact
 runnable commands and their flags.
 
 ## Conventions
 
-Python, per the spec's §0 repo shape (`src/`, `pyproject.toml`, `data/` gitignored,
-`gold/hard_cases.csv` committed).
+Python, per the spec's §0 repo shape (`src/`, `pyproject.toml`, `data/` gitignored except
+`data/models/`, `gold/hard_cases.csv` committed).
+
+**Where prose goes.** `README.md` is the 90-second read: what the classifier decides, the results
+table, the three figures, the label-noise section, a milestone table, limitations, and the two run
+paths. Reasoning and investigation go to `docs/findings.md`; the motivating Absidia narrative to
+`docs/motivation.md`; anything deliberately not done to `docs/future-work.md`. This file stays the
+engineering log — long is fine here, not there. The README also declares that the code was written
+with Claude Code as a pair programmer; keep that line, it is the honest framing.
 
 **Documentation stays current.** Update `README.md` and this file's Commands section in the same
 commit as the code change they describe, not as a follow-up. A milestone isn't done until its

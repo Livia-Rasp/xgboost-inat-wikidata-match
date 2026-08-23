@@ -1,0 +1,27 @@
+taxon_id,name,rank,ancestry
+1,Animalia,kingdom,
+2,Chordata,phylum,1
+3,Aves,class,1/2
+7251,Passeriformes,order,1/2/3
+71358,Prunellidae,family,1/2/3/7251
+13982,Prunella,genus,1/2/3/7251/71358
+13983,Prunella modularis,species,1/2/3/7251/71358/13982
+100,Plantae,kingdom,
+101,Tracheophyta,phylum,100
+102,Magnoliopsida,class,100/101
+48151,Lamiales,order,100/101/102
+48623,Lamiaceae,family,100/101/102/48151
+52765,Prunella,genus,100/101/102/48151/48623
+52766,Prunella vulgaris,species,100/101/102/48151/48623/52765
+200,Sapindales,order,100/101/102
+201,Sapindaceae,family,100/101/102/200
+202,Acer,genus,100/101/102/200/201
+203,Acer rubrum,species,100/101/102/200/201/202
+204,Acer ruber,species,100/101/102/200/201/202
+205,Acer rubrium,species,100/101/102/200/201/202
+206,Acer saccharum,species,100/101/102/200/201/202
+207,Acor rubrum,species,100/101/102/200/201/202
+208,Acer rubrum var. tomentosum,variety,100/101/102/200/201/202/203
+209,Acer x freemanii,hybrid,100/101/102/200/201/202
+210,Acer sp. 'AZ19',species,100/101/102/200/201/202
+211,Rosa canina,species,100/101/102/200/201
