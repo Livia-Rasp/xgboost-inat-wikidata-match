@@ -204,7 +204,12 @@ def find_auto_accept_threshold(table: pd.DataFrame, target_precision: float = AU
     return eligible.iloc[0] if not eligible.empty else None
 
 
-def find_reject_threshold(probs: np.ndarray, labels: np.ndarray, target_neg_precision: float = REJECT_NEG_PRECISION, n_steps: int = 101) -> float | None:
+def find_reject_threshold(
+    probs: np.ndarray,
+    labels: np.ndarray,
+    target_neg_precision: float = REJECT_NEG_PRECISION,
+    n_steps: int = 101,
+) -> float | None:
     """Highest threshold t such that every row scoring below t is negative at least
     target_neg_precision of the time — the symmetric, reject-side counterpart to the auto-accept
     threshold above."""
@@ -366,18 +371,26 @@ if __name__ == "__main__":
     oof = build_oof_predictions(features)
     labels = oof["label"].to_numpy()
 
-    for variant, prob_col in [("binary:logistic", "binary_calibrated_prob"), ("rank:map", "rank_calibrated_prob")]:
+    for variant, prob_col, raw_col in [
+        ("binary:logistic", "binary_calibrated_prob", "binary_raw_score"),
+        ("rank:map", "rank_calibrated_prob", "rank_raw_score"),
+    ]:
         probs = oof[prob_col].to_numpy()
         table = precision_at_threshold_table(probs, labels)
         auto_accept = find_auto_accept_threshold(table)
         reject = find_reject_threshold(probs, labels)
-        top1, mrr = top1_accuracy_and_mrr(
-            oof[["wikidata_qid", "label", prob_col]], prob_col
-        )
+        # Top-1/MRR rank candidates *within* a group, so they use the raw score: isotonic
+        # calibration is a step function and its plateaus discard within-group ordering. See
+        # evaluate.ranking_score_column(). The calibrated-score numbers are printed alongside so
+        # the difference stays auditable — it is tiny here (a few hundredths of a point at 590k
+        # rows) and large on the small gold set, which is what made the distinction matter.
+        top1, mrr = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", raw_col]], raw_col)
+        top1_cal, mrr_cal = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", prob_col]], prob_col)
         brier = brier_score(probs, labels)
 
         print(f"\n=== {variant} ===")
         print(f"top-1 accuracy: {top1:.4f}   MRR: {mrr:.4f}   Brier: {brier:.4f}")
+        print(f"  (same metrics on calibrated scores, for comparison: {top1_cal:.4f} / {mrr_cal:.4f})")
         if auto_accept is not None:
             print(
                 f"auto-accept @ threshold {auto_accept['threshold']:.2f}: "

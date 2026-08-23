@@ -197,7 +197,8 @@ def _fetch_attributes_batch(qids: list[str]) -> list[dict]:
     synonyms comes back as several rows — resolved by _aggregate_batch_rows(), not here.
     """
     values = " ".join(f"wd:{q}" for q in qids)
-    query = f"""SELECT ?item ?inatId ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements ?commonsSitelink ?p3151Ref ?synonymName ?basionymName WHERE {{
+    query = f"""SELECT ?item ?inatId ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements
+       ?commonsSitelink ?p3151Ref ?synonymName ?basionymName WHERE {{
   VALUES ?item {{ {values} }}
   ?item p:P3151 ?p3151Statement .
   ?p3151Statement a wikibase:BestRank ; ps:P3151 ?inatId .
@@ -228,7 +229,8 @@ def fetch_attributes_batch_no_p3151(qids: list[str]) -> list[dict]:
     Reuses _aggregate_batch_rows() for parsing — inat_id/p3151_has_reference just come back
     None/False for every row here, which is correct (there's nothing to report)."""
     values = " ".join(f"wd:{q}" for q in qids)
-    query = f"""SELECT ?item ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements ?commonsSitelink ?synonymName ?basionymName WHERE {{
+    query = f"""SELECT ?item ?name ?rank ?parent ?parentName ?iucn ?sitelinks ?statements
+       ?commonsSitelink ?synonymName ?basionymName WHERE {{
   VALUES ?item {{ {values} }}
   OPTIONAL {{ ?item wdt:P225 ?name . }}
   OPTIONAL {{ ?item wdt:P105 ?rank . }}

@@ -14,7 +14,13 @@ from sklearn.model_selection import GroupKFold
 
 from .candidates import DEFAULT_CACHE_PATH as LOOKUP_SQLITE_PATH
 from .candidates import STRATEGY_TAGS
-from .labels import RANK_LEVEL, WD_RANK_TO_NAME, apply_synthetic_dropout, build_family_keys, build_labels
+from .labels import (
+    RANK_LEVEL,
+    WD_RANK_TO_NAME,
+    apply_synthetic_dropout,
+    build_family_keys,
+    build_labels,
+)
 from .normalize import normalize_name
 
 N_SPLITS = 5
@@ -29,7 +35,22 @@ DEFAULT_FEATURES_MANIFEST_PATH = (
 )
 
 
+INAT_INDEX_COLUMNS = ["taxon_id", "name", "rank", "ancestry", "genus", "specific_epithet"]
+
+
 def _load_inat_index(lookup_sqlite_path: Path = LOOKUP_SQLITE_PATH) -> pd.DataFrame:
+    """The full 1.4M-row normalised index when data/lookup.sqlite exists, otherwise the committed
+    slice covering just the gold set (see src/fixtures.py). taxon_id stays str either way — it is
+    a SQLite TEXT column and an all-numeric CSV column would otherwise infer int64 and break
+    every downstream merge."""
+    if not lookup_sqlite_path.exists():
+        from .fixtures import GOLD_INAT_INDEX_FIXTURE, announce, read_csv_fixture
+
+        announce("iNat index", GOLD_INAT_INDEX_FIXTURE)
+        return read_csv_fixture(GOLD_INAT_INDEX_FIXTURE, dtype=str).fillna({"ancestry": ""})[
+            INAT_INDEX_COLUMNS
+        ]
+
     conn = sqlite3.connect(f"file:{lookup_sqlite_path}?mode=ro", uri=True)
     try:
         return pd.read_sql_query(
@@ -114,7 +135,9 @@ def build_features(
         how="left",
     ).drop(columns=["taxon_id"])
     df = df.merge(
-        wikidata_taxa[["qid", "name", "rank_qid", "parent_name", "sitelinks", "statements", "iucn_qid", "has_commons_cat"]],
+        wikidata_taxa[
+            ["qid", "name", "rank_qid", "parent_name", "sitelinks", "statements", "iucn_qid", "has_commons_cat"]
+        ],
         left_on="wikidata_qid",
         right_on="qid",
         how="left",
@@ -164,8 +187,11 @@ def build_features(
     wd_ranks = _wd_ancestor_names_by_rank(wikidata_taxa, ancestors)
     inat_ranks = _inat_ancestor_names_by_rank(inat_index, taxon_ids=set(df["inat_taxon_id"]))
     for rank in COMPARISON_RANKS:
-        wd_names = df["wikidata_qid"].map(lambda q: wd_ranks.get(q, {}).get(rank))
-        inat_names = df["inat_taxon_id"].map(lambda t: inat_ranks.get(t, {}).get(rank))
+        # rank is bound as a default argument, not captured: .map() runs immediately so a late
+        # binding would be harmless here, but only by accident, and the accident stops holding the
+        # moment either lambda is stored rather than applied.
+        wd_names = df["wikidata_qid"].map(lambda q, rank=rank: wd_ranks.get(q, {}).get(rank))
+        inat_names = df["inat_taxon_id"].map(lambda t, rank=rank: inat_ranks.get(t, {}).get(rank))
         df[f"{rank}_match"] = [
             (w is not None and w == i) for w, i in zip(wd_names, inat_names)
         ]
@@ -181,7 +207,9 @@ def build_features(
     wd_name_counts = wikidata_taxa["name"].value_counts()
     df["n_wikidata_items_same_name"] = df["name"].map(wd_name_counts).fillna(0).astype(int)
     df["sim_rank_in_group"] = df.groupby("wikidata_qid")["similarity"].rank(ascending=False, method="first")
-    top2 = df.groupby("wikidata_qid")["similarity"].transform(lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0])
+    top2 = df.groupby("wikidata_qid")["similarity"].transform(
+        lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0]
+    )
     df["sim_margin_to_runner_up"] = df["similarity"] - top2
     for tag in STRATEGY_TAGS:
         df[f"strategy_{tag}"] = df["strategies"].str.contains(tag, regex=False)
@@ -195,7 +223,10 @@ def build_features(
     # separate iNat open-data download (observations.csv) this project hasn't pulled.
 
     return df.drop(
-        columns=["name", "rank_qid", "parent_name", "sitelinks", "statements", "iucn_qid", "has_commons_cat", "ancestry", "inat_genus", "inat_epithet"]
+        columns=[
+            "name", "rank_qid", "parent_name", "sitelinks", "statements", "iucn_qid",
+            "has_commons_cat", "ancestry", "inat_genus", "inat_epithet",
+        ]
     )
 
 
@@ -264,7 +295,8 @@ def verify_no_qid_split_across_folds(df: pd.DataFrame) -> bool:
 
 if __name__ == "__main__":
     from .candidates import DEFAULT_CANDIDATES_PATH, build_lookup_cache
-    from .wikidata import DEFAULT_ANCESTORS_CACHE_PATH, DEFAULT_CACHE_PATH as WIKIDATA_TAXA_PATH
+    from .wikidata import DEFAULT_ANCESTORS_CACHE_PATH
+    from .wikidata import DEFAULT_CACHE_PATH as WIKIDATA_TAXA_PATH
 
     wikidata_taxa = pd.read_parquet(WIKIDATA_TAXA_PATH)
     candidates = pd.read_parquet(DEFAULT_CANDIDATES_PATH)

@@ -104,9 +104,14 @@ def baseline_predict(features: pd.DataFrame) -> pd.DataFrame:
     Items with no exact match get no row (abstain). Returns one row per predicted wikidata_qid:
     wikidata_qid, predicted_taxon_id."""
     exact = features[features["strategy_exact"]].copy()
-    tied_ids = exact.loc[exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size") > 1, "inat_taxon_id"].unique().tolist()
+    group_sizes = exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size")
+    tied_ids = exact.loc[group_sizes > 1, "inat_taxon_id"].unique().tolist()
 
-    obs_counts = build_observation_counts(tied_ids) if tied_ids else pd.DataFrame(columns=["taxon_id", "observations_count"])
+    obs_counts = (
+        build_observation_counts(tied_ids)
+        if tied_ids
+        else pd.DataFrame(columns=["taxon_id", "observations_count"])
+    )
     count_by_taxon = obs_counts.set_index("taxon_id")["observations_count"].to_dict()
     exact["observations_count"] = exact["inat_taxon_id"].map(count_by_taxon).fillna(0)
 
@@ -177,6 +182,32 @@ GOLD_HARD_CASES_PATH = GOLD_DIR / "hard_cases.csv"
 GOLD_ANCESTORS_PATH = Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_ancestors.parquet"
 
 
+def _load_gold_attributes() -> pd.DataFrame:
+    """The gold items' Wikidata attributes. The committed fixture drops `synonym_names` and
+    `basionym_names`: those two feed candidate *generation* (build_gold_set.py), which the
+    five-minute path does not run, and list-valued columns do not survive a CSV round-trip
+    cleanly enough to be worth pretending otherwise."""
+    from .wikidata import DEFAULT_GOLD_ATTRIBUTES_PATH
+
+    if DEFAULT_GOLD_ATTRIBUTES_PATH.exists():
+        return pd.read_parquet(DEFAULT_GOLD_ATTRIBUTES_PATH)
+
+    from .fixtures import GOLD_ATTRIBUTES_FIXTURE, announce, read_csv_fixture
+
+    announce("gold Wikidata attributes", GOLD_ATTRIBUTES_FIXTURE)
+    return read_csv_fixture(GOLD_ATTRIBUTES_FIXTURE)
+
+
+def _load_gold_ancestors() -> pd.DataFrame:
+    if GOLD_ANCESTORS_PATH.exists():
+        return pd.read_parquet(GOLD_ANCESTORS_PATH)
+
+    from .fixtures import GOLD_ANCESTORS_FIXTURE, announce, read_csv_fixture
+
+    announce("gold ancestor chains", GOLD_ANCESTORS_FIXTURE)
+    return read_csv_fixture(GOLD_ANCESTORS_FIXTURE)
+
+
 def load_gold_features() -> pd.DataFrame:
     """gold/hard_cases.csv already carries every column build_features() needs from a
     candidates.parquet-shaped frame (build_gold_set.py wrote it that way on purpose) — this just
@@ -191,11 +222,10 @@ def load_gold_features() -> pd.DataFrame:
     # is a SQLite TEXT column) — an all-numeric-looking CSV column would otherwise infer int64
     # and break the later merge in build_features().
     hard_cases = pd.read_csv(GOLD_HARD_CASES_PATH, dtype={"inat_taxon_id": str})
-    from .wikidata import DEFAULT_GOLD_ATTRIBUTES_PATH
 
-    wikidata_taxa = pd.read_parquet(DEFAULT_GOLD_ATTRIBUTES_PATH)
+    wikidata_taxa = _load_gold_attributes()
     wikidata_taxa = wikidata_taxa[wikidata_taxa["qid"].isin(hard_cases["wikidata_qid"])].reset_index(drop=True)
-    ancestors = pd.read_parquet(GOLD_ANCESTORS_PATH)
+    ancestors = _load_gold_ancestors()
     inat_index = _load_inat_index()
 
     candidates = hard_cases[
@@ -231,6 +261,22 @@ def score_gold_with_model(features: pd.DataFrame, objective: str) -> tuple[np.nd
     return raw, calibrator.predict(raw)
 
 
+def ranking_score_column(objective: str) -> str:
+    """Within-group ranking (top-1 accuracy, MRR) must use the *raw* model score, not the
+    calibrated probability.
+
+    Isotonic calibration is a step function: it maps whole ranges of distinct raw scores onto a
+    single output value ("plateaus"). That is exactly right for anything needing cross-group
+    comparability — auto-accept/reject thresholds, Brier score — but it discards the relative
+    ordering *inside* a candidate group, which is the only thing top-1/MRR measure. Ties then
+    break on row order rather than on the model's actual preference.
+
+    Negligible at OOF scale (~0.02pp over 590k rows, where plateaus rarely swallow a whole
+    group), large on the gold set: `rank:map` read 43.5% top-1 on calibrated probabilities and
+    95.65% on its own raw scores for the identical model and identical predictions."""
+    return f"{objective}_raw_score"
+
+
 def gold_top1_and_mrr(features: pd.DataFrame, score_col: str) -> tuple[float, float]:
     from .train import top1_accuracy_and_mrr
 
@@ -255,40 +301,92 @@ def gold_rank_trivial_breakdown(features: pd.DataFrame, score_col: str) -> dict:
     return result
 
 
-def gold_band_comparison(
-    features: pd.DataFrame, oof_predictions: pd.DataFrame, lo: float = 0.95, hi: float = 1.01
-) -> dict:
+BAND_LO, BAND_HI = 0.95, 1.01
+
+
+def oof_reference(oof_predictions: pd.DataFrame, lo: float = BAND_LO, hi: float = BAND_HI) -> dict:
+    """Everything gold-set scoring needs from the 12 MB OOF prediction table, reduced to a
+    handful of numbers.
+
+    Gold scoring never re-derives a threshold — that would be circular on a few hundred rows —
+    it only re-applies the ones chosen on OOF data, and compares one score band. So the whole
+    dependency is four floats and a count, which is why the five-minute path can ship them as a
+    committed JSON file instead of the parquet they came from."""
+    from .train import (
+        find_auto_accept_threshold,
+        find_reject_threshold,
+        precision_at_threshold_table,
+    )
+
+    labels = oof_predictions["label"].to_numpy()
+    mask = (oof_predictions["binary_raw_score"] >= lo) & (oof_predictions["binary_raw_score"] < hi)
+
+    thresholds = {}
+    for objective in ("binary", "rank"):
+        probs = oof_predictions[f"{objective}_calibrated_prob"].to_numpy()
+        accept_row = find_auto_accept_threshold(precision_at_threshold_table(probs, labels))
+        thresholds[objective] = {
+            "accept": float(accept_row["threshold"]) if accept_row is not None else None,
+            "reject": find_reject_threshold(probs, labels),
+        }
+
+    return {
+        "n_rows": int(len(oof_predictions)),
+        "band": [lo, hi],
+        "band_n": int(mask.sum()),
+        "band_precision": float(labels[mask.to_numpy()].mean()) if mask.any() else float("nan"),
+        "thresholds": thresholds,
+    }
+
+
+def load_oof_reference() -> dict:
+    """The real OOF predictions when they exist, else the committed summary of them."""
+    from .train import DEFAULT_OOF_PATH
+
+    if DEFAULT_OOF_PATH.exists():
+        return oof_reference(pd.read_parquet(DEFAULT_OOF_PATH))
+
+    import json
+
+    from .fixtures import OOF_SUMMARY_FIXTURE, announce
+
+    if not OOF_SUMMARY_FIXTURE.exists():
+        raise SystemExit(
+            f"neither {DEFAULT_OOF_PATH} nor {OOF_SUMMARY_FIXTURE} exists — run "
+            f"`python -m src.train` or `python build_fixtures.py`."
+        )
+    announce("OOF reference", OOF_SUMMARY_FIXTURE)
+    return json.loads(OOF_SUMMARY_FIXTURE.read_text())
+
+
+def gold_band_comparison(features: pd.DataFrame, reference: dict) -> dict:
     """The headline check: milestone 6 found raw binary:logistic scores >=0.95 sit at only 83.9%
     precision on OOF/P3151 data and hypothesized that gap was P3151 label noise, not a model
     gap. This is the direct test — same score band, but on hand-verified gold labels the model
     never saw and P3151 never touched. Higher gold precision in this band confirms it."""
-    oof_mask = (oof_predictions["binary_raw_score"] >= lo) & (oof_predictions["binary_raw_score"] < hi)
+    lo, hi = reference["band"]
     gold_mask = (features["binary_raw_score"] >= lo) & (features["binary_raw_score"] < hi)
     return {
         "band": f"[{lo}, {hi})",
-        "oof_n": int(oof_mask.sum()),
-        "oof_precision": float(oof_predictions.loc[oof_mask, "label"].mean()) if oof_mask.any() else float("nan"),
+        "oof_n": reference["band_n"],
+        "oof_precision": reference["band_precision"],
         "gold_n": int(gold_mask.sum()),
         "gold_precision": float(features.loc[gold_mask, "label"].mean()) if gold_mask.any() else float("nan"),
     }
 
 
-def gold_threshold_check(features: pd.DataFrame, oof_predictions: pd.DataFrame, objective: str) -> dict:
+def gold_threshold_check(features: pd.DataFrame, reference: dict, objective: str) -> dict:
     """Re-applies the *exact* OOF-selected auto-accept threshold to gold data — deliberately not
-    a freshly-swept threshold, which would be circular/noisy on only ~300-500 gold rows. Reports
-    whether that threshold, chosen without ever seeing gold data, still clears 99.5% precision
-    independently."""
-    from .train import AUTO_ACCEPT_PRECISION, find_auto_accept_threshold, precision_at_threshold_table
+    a freshly-swept threshold, which would be circular/noisy on only a few hundred gold rows.
+    Reports whether that threshold, chosen without ever seeing gold data, still clears 99.5%
+    precision independently."""
+    from .train import AUTO_ACCEPT_PRECISION
 
-    oof_col = f"{objective}_calibrated_prob"
-    oof_table = precision_at_threshold_table(oof_predictions[oof_col].to_numpy(), oof_predictions["label"].to_numpy())
-    oof_threshold_row = find_auto_accept_threshold(oof_table)
-    if oof_threshold_row is None:
+    threshold = reference["thresholds"][objective]["accept"]
+    if threshold is None:
         return {"objective": objective, "threshold": None, "gold_n": 0, "gold_precision": float("nan"), "holds": None}
 
-    threshold = oof_threshold_row["threshold"]
-    gold_col = f"{objective}_calibrated_prob"
-    mask = features[gold_col] >= threshold
+    mask = features[f"{objective}_calibrated_prob"] >= threshold
     n = int(mask.sum())
     precision = float(features.loc[mask, "label"].mean()) if n else float("nan")
     return {
@@ -297,6 +395,101 @@ def gold_threshold_check(features: pd.DataFrame, oof_predictions: pd.DataFrame, 
         "gold_n": n,
         "gold_precision": precision,
         "holds": (precision >= AUTO_ACCEPT_PRECISION) if n else None,
+    }
+
+
+def gold_top1_misses(features: pd.DataFrame, objective: str) -> pd.DataFrame:
+    """Every item whose top-ranked candidate is not the labelled correct one, with the picked and
+    the true candidate side by side. Spec §7 milestone 9 requires each of these to get a written
+    characterization (close call / labeling error / model gap / other) rather than just being
+    counted, so this returns the rows to review, not a number."""
+    rank_col = ranking_score_column(objective)
+    prob_col = f"{objective}_calibrated_prob"
+    ranked = features.sort_values(["wikidata_qid", rank_col], ascending=[True, False])
+    top = ranked.drop_duplicates("wikidata_qid", keep="first")
+    missed_qids = top.loc[top["label"] != 1, "wikidata_qid"]
+    # Items with no correct answer at all (labelled NONE) have no top-1 to get right; they are
+    # scored by the abstention/reject path instead, not counted as ranking misses here.
+    has_positive = features.groupby("wikidata_qid")["label"].max()
+    missed_qids = [q for q in missed_qids if has_positive.get(q, 0) == 1]
+
+    cols = ["wikidata_qid", "wikidata_name", "inat_taxon_id", "inat_name", "inat_rank", "label",
+            "rank_equal", "kingdom_match", "family_match", "order_match", "shared_ancestor_depth",
+            "similarity", "sim_margin_to_runner_up", "rank_trivial", rank_col, prob_col]
+    cols = [c for c in cols if c in features.columns]
+    out = features[features["wikidata_qid"].isin(missed_qids)][cols]
+    return out.sort_values(["wikidata_qid", rank_col], ascending=[True, False])
+
+
+def review_queue_reduction(features: pd.DataFrame, reference: dict, objective: str) -> dict:
+    """How much human review the model removes, counted in *items* — the unit the review queue is
+    actually measured in (`output/links-ambiguous.html` lists one row per ambiguous Wikidata
+    item, not per candidate pair).
+
+    Both thresholds come from the OOF data, never from the frame being scored, so this stays a
+    genuine out-of-sample number when called on the gold set.
+
+    Three item-level outcomes:
+      auto_accept  the top-ranked candidate clears the 99.5%-precision accept threshold — write
+                   it and move on.
+      auto_reject  every candidate in the group sits below the reject threshold — no match
+                   exists to write, so the item leaves the queue without a human opening it.
+      review       everything else. Still human work, but the candidates that fall under the
+                   reject threshold can be hidden, which is what `candidate_rows_ruled_out`
+                   counts.
+    """
+    prob_col = f"{objective}_calibrated_prob"
+    rank_col = ranking_score_column(objective)
+    accept_threshold = reference["thresholds"][objective]["accept"]
+    reject_threshold = reference["thresholds"][objective]["reject"]
+
+    ranked = features.sort_values(["wikidata_qid", rank_col], ascending=[True, False])
+    top = ranked.drop_duplicates("wikidata_qid", keep="first")
+
+    per_item = pd.DataFrame({
+        "wikidata_qid": top["wikidata_qid"].to_numpy(),
+        "top_prob": top[prob_col].to_numpy(),
+        "top_correct": (top["label"] == 1).to_numpy(),
+    })
+    group_max = features.groupby("wikidata_qid")[prob_col].max()
+    group_has_positive = features.groupby("wikidata_qid")["label"].max()
+    per_item["group_max_prob"] = per_item["wikidata_qid"].map(group_max).to_numpy()
+    per_item["has_positive"] = per_item["wikidata_qid"].map(group_has_positive).to_numpy() == 1
+
+    n_items = len(per_item)
+    no_items = pd.Series(False, index=per_item.index)
+    no_rows = pd.Series(False, index=features.index)
+
+    accepted = (per_item["top_prob"] >= accept_threshold) if accept_threshold is not None else no_items
+    below_reject = (per_item["group_max_prob"] < reject_threshold) if reject_threshold is not None else no_items
+    rejected = below_reject & ~accepted
+
+    # Row-level view of the reject threshold. Its OOF guarantee is that rows below it are negative
+    # at least 99.5% of the time; whether that survives on a harder population has to be measured
+    # rather than assumed, so it is reported here. `items_losing_true_match` is the cost of being
+    # wrong about it: items whose real answer would be hidden from the reviewer.
+    ruled_out = (features[prob_col] < reject_threshold) if reject_threshold is not None else no_rows
+    n_rows_ruled_out = int(ruled_out.sum())
+    lost = per_item["has_positive"] & below_reject
+
+    def share(mask: pd.Series, values: pd.Series) -> float:
+        return float(values[mask].mean()) if mask.any() else float("nan")
+
+    return {
+        "ruled_out_row_precision": share(ruled_out, features["label"] == 0),
+        "items_losing_true_match": int(lost.sum()),
+        "objective": objective,
+        "n_items": n_items,
+        "accept_threshold": accept_threshold,
+        "reject_threshold": reject_threshold,
+        "auto_accept_items": int(accepted.sum()),
+        "auto_accept_precision": share(accepted, per_item["top_correct"]),
+        "auto_reject_items": int(rejected.sum()),
+        # A correct auto-reject means the item really has no match among its candidates.
+        "auto_reject_precision": share(rejected, ~per_item["has_positive"]),
+        "review_items": int(n_items - accepted.sum() - rejected.sum()),
+        "items_removed_from_queue": float((accepted.sum() + rejected.sum()) / n_items) if n_items else float("nan"),
+        "candidate_rows_ruled_out": float(n_rows_ruled_out / len(features)) if len(features) else float("nan"),
     }
 
 
@@ -311,10 +504,12 @@ def score_gold_set(features: pd.DataFrame) -> dict:
         raw, calibrated = score_gold_with_model(features, objective)
         features[f"{objective}_raw_score"] = raw
         features[f"{objective}_calibrated_prob"] = calibrated
-        top1, mrr = gold_top1_and_mrr(features, f"{objective}_calibrated_prob")
+        top1, mrr = gold_top1_and_mrr(features, ranking_score_column(objective))
         metrics[objective] = {
             "top1_accuracy": top1,
             "mrr": mrr,
+            # Brier stays on the calibrated probability — it scores probability quality, which is
+            # what calibration is for, unlike the within-group ranking metrics above.
             "brier": float(np.mean((calibrated - labels) ** 2)),
         }
 
@@ -349,11 +544,9 @@ if __name__ == "__main__":
     import sys
 
     if "--gold" in sys.argv:
-        from .train import DEFAULT_OOF_PATH
-
         features = load_gold_features()
         result = score_gold_set(features)
-        oof = pd.read_parquet(DEFAULT_OOF_PATH)
+        reference = load_oof_reference()
 
         print(f"Gold set: {features['wikidata_qid'].nunique():,} items, {len(features):,} candidate rows")
         print(f"Recall ceiling (found_by_generation rate): {result['recall_ceiling']:.2%}\n")
@@ -362,18 +555,29 @@ if __name__ == "__main__":
         print(pd.DataFrame(result["metrics"]).T.to_string())
 
         print("\nRaw-score band comparison (the milestone 6 label-noise hypothesis test):")
-        print(gold_band_comparison(result["features"], oof))
+        print(gold_band_comparison(result["features"], reference))
 
         print("\nAuto-accept threshold re-applied to gold (not re-swept):")
         for objective in ("binary", "rank"):
-            print(f"  {objective}: {gold_threshold_check(result['features'], oof, objective)}")
+            print(f"  {objective}: {gold_threshold_check(result['features'], reference, objective)}")
+
+        print("\nReview-queue reduction (item-level; thresholds taken from OOF, not re-swept here):")
+        for objective in ("binary", "rank"):
+            print(f"  {objective}: {review_queue_reduction(result['features'], reference, objective)}")
 
         n_trivial = result["features"].loc[result["features"]["rank_trivial"], "wikidata_qid"].nunique()
         print(f"\nTrivial-by-rank vs. other (rank alone disambiguates {n_trivial} of "
               f"{result['features']['wikidata_qid'].nunique()} items):")
         for objective in ("binary", "rank"):
-            breakdown = gold_rank_trivial_breakdown(result["features"], f"{objective}_calibrated_prob")
+            breakdown = gold_rank_trivial_breakdown(result["features"], ranking_score_column(objective))
             print(f"  {objective}: {breakdown}")
+
+        print("\nTop-1 misses, for the milestone 9 per-miss review:")
+        for objective in ("binary", "rank"):
+            misses = gold_top1_misses(result["features"], objective)
+            print(f"\n--- {objective}: {misses['wikidata_qid'].nunique()} item(s) ---")
+            if not misses.empty:
+                print(misses.to_string(index=False))
     else:
         from .features import DEFAULT_FEATURES_PATH
 
@@ -385,3 +589,12 @@ if __name__ == "__main__":
         print(fold_scores.to_string())
         print("\nAbstention accuracy by reason:")
         print(abstention_scores.to_string())
+
+        from .train import DEFAULT_OOF_PATH
+
+        if DEFAULT_OOF_PATH.exists():
+            oof = pd.read_parquet(DEFAULT_OOF_PATH)
+            reference = oof_reference(oof)
+            print("\nReview-queue reduction on the OOF population (item-level):")
+            for objective in ("binary", "rank"):
+                print(f"  {objective}: {review_queue_reduction(oof, reference, objective)}")
