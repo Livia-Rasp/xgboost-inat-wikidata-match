@@ -22,6 +22,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "jupyter>=1.0",
+    "ruff>=0.6",
 ]
 
 [build-system]
@@ -30,3 +31,27 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# The report notebook is a narrative document whose cell outputs are committed and quoted from.
+# Linting it would mean reformatting cells, which means re-executing them, which is exactly the
+# thing that silently rewrote milestone 1's frozen numbers once already.
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    # zip() without strict=. Every zip in src/ walks columns of one DataFrame, which are equal
+    # length by construction, and the alternative is 21 call sites annotated to say so.
+    "B905",
+]
+
+# Formatting is deliberately not enforced. `ruff format` would rewrite files this project has
+# never had a formatter applied to, burying real changes under whitespace churn; the linting
+# above is what actually catches bugs.

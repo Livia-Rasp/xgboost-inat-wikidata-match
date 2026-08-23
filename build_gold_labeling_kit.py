@@ -199,7 +199,10 @@ def main() -> None:
     new_items = [g for g in groups if g["wikidata_qid"] not in existing_qids]
     new_items.sort(key=lambda g: g["wikidata_name"].lower())
     new_qids = {g["wikidata_qid"] for g in new_items}
-    print(f"{len(new_items):,} new items (every ambiguous item not already in {FILLED_CSV_PATH.name}), sorted by wikidata_name")
+    print(
+        f"{len(new_items):,} new items (every ambiguous item not already in "
+        f"{FILLED_CSV_PATH.name}), sorted by wikidata_name"
+    )
 
     if not new_items:
         print("nothing new to add")

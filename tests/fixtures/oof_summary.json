@@ -1,0 +1,19 @@
+{
+  "n_rows": 590671,
+  "band": [
+    0.95,
+    1.01
+  ],
+  "band_n": 50296,
+  "band_precision": 0.8390726896771115,
+  "thresholds": {
+    "binary": {
+      "accept": 0.87,
+      "reject": 0.82
+    },
+    "rank": {
+      "accept": null,
+      "reject": 0.83
+    }
+  }
+}

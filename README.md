@@ -1,328 +1,215 @@
 # xgboost-inat-wikidata-match
 
+[![CI](https://github.com/Livia-Rasp/xgboost-inat-wikidata-match/actions/workflows/ci.yml/badge.svg)](https://github.com/Livia-Rasp/xgboost-inat-wikidata-match/actions/workflows/ci.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 A record-linkage classifier ([XGBoost](https://xgboost.readthedocs.io/en/stable/)) that decides
-whether a Wikidata taxon item and a candidate iNaturalist taxon refer to the same taxon. Built
-on the data already indexed by
-[wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker), with the goal of
-shrinking the manual review queue its `npm run links` command produces.
+which iNaturalist taxon a Wikidata taxon item refers to, when the name alone is ambiguous.
 
-**Why this matters, concretely**: iNaturalist's taxon pages resolve their Wikipedia "About"
-summary by first trying `hub.toolforge.org/P3151:{taxon_id}?lang=en` — a redirect service that
-follows the iNat ID to its Wikidata item, then to *that item's* Wikipedia sitelink (confirmed in
-iNat's own source:
-[`taxon_describers/wikipedia.rb`](https://github.com/inaturalist/inaturalist/commit/29ec770e47dec9de4b9e65e1293cb4c1e49ab7de),
-live since 2020). Only when that lookup fails does it fall back to naive name-string matching
-against Wikipedia article titles, with no kingdom/rank disambiguation — which is how
-[`Subgenus Absidia`](https://www.inaturalist.org/taxa/552989-Absidia), an animal subgenus under
-genus *Podistra*, ends up displaying the Wikipedia summary for an unrelated fungal genus of the
-same name.
+[wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker) scans Wikidata taxa
+against iNaturalist's open-data taxon dump and writes everything it cannot resolve on a unique
+name match to a human review queue. One scan of 80,000 names produces 491 such items. On a
+hand-labelled sample of 263 of them, this model ranks the correct iNat taxon first **98.7%** of
+the time, against **20.9%** for the exact-name-match rule the queue currently relies on. That
+turns a queue item from "search iNaturalist and compare ancestries" into "confirm or reject one
+suggestion".
 
-Checking the live Wikidata data behind that specific case turned up something more interesting
-than a missing link: the correctly disambiguated Wikidata item (`Q18510042`) already carries a
-P3151 statement for this exact taxon, but has zero Wikipedia sitelinks — nothing for the redirect
-to land on. A second Wikidata item for the same real-world taxon (`Q50746010`, description:
-"subgenus of Podistra") has no P3151 yet, which is why it's one of the ambiguous cases in this
-project's own gold set — its two candidates are exactly the fungus (iNat `552980`) and the
-correct animal subgenus (iNat `552989`). Resolving it wouldn't fix that particular page, since
-the actual gap there is a Wikidata duplicate-item merge and a missing English article, not a
-missing link.
+> Built with [Claude Code](https://claude.com/claude-code) as a pair programmer; `CLAUDE.md` is
+> the working log kept for it. The project design, the label-noise hypothesis, the gold-set
+> methodology, and every hand-label in `gold/` are mine.
 
-What the source dive did confirm, rather than assume: the P3151-driven redirect is live and works
-today wherever the correctly disambiguated Wikidata item has a Wikipedia sitelink waiting on it.
-Producing exactly that — correct, disambiguated P3151 links for the ambiguous-name-collision
-cases naive matching gets wrong — is this project's whole point.
+## Results
 
-Full specification: [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-match-spec.md).
+| | Answers without a human¹ | Precision of those answers | Top-1 accuracy² | MRR |
+|---|---|---|---|---|
+| Exact-match baseline (OOF) | 87.0% | 80.3% | 81.2% | — |
+| `binary:logistic` (OOF) | 0.002% | 100% | **99.1%** | 0.995 |
+| `rank:map` (OOF) | none³ | — | 99.0% | 0.994 |
+| Exact-match baseline (gold) | 100% | 20.9% | 20.9% | — |
+| **`binary:logistic` (gold)** | none³ | — | **98.7%** | **0.993** |
+| `rank:map` (gold) | none³ | — | 97.8% | 0.989 |
 
-## Status
+¹ Different units, same question: how often can this run unsupervised, and how often is it right
+when it does. For the baseline it is the share of items where an exact name match exists at all;
+for the models, the share of candidate rows clearing a threshold chosen for ≥99.5% precision. The
+baseline answers far more often and is wrong a fifth of the time.
+² Was the correct candidate ranked first. For the baseline this counts a correct abstention as
+correct too, so it is not deflated by items with no answer.
+³ No threshold reaches 99.5% precision. This is a real result and it is discussed in
+[Limitations](#limitations), not a missing measurement.
 
-Milestones 1–6 of the spec's §7 list are done. Milestone 7 (gold set) has **preliminary
-results**: 192 of 476 sampled ambiguous items are hand-labelled so far (see
-[`gold/README.md`](gold/README.md) for the full workflow) and scored below — not final, since
-milestones 8 (balance the sample across the alphabet — currently A-C only) and 9 (discuss and
-finetune) are still open.
+**OOF** is 5-fold out-of-fold cross-validation over 590,671 candidate rows for 58,842 Wikidata
+items, grouped on family so no item's rows span two folds. **Gold** is 263 ambiguous Wikidata
+items with no P3151 statement, hand-labelled for this project — a population no bot has ever
+touched, and disjoint from everything the model trained on. Candidate generation finds the
+correct taxon for **100%** of the gold items that have one, so nothing above is capped by recall.
 
-- **Ingest** (`src/normalize.py`, `src/candidates.py`): name-normalisation rules from spec §1,
-  and a cached normalised-name + FTS5 trigram lookup table built from the local iNat taxa index,
-  read-only. Also excludes ~4.5k provisional/unresolved iNat names (no parseable epithet) from
-  the candidate index — see milestone 3 below.
-- **Wikidata pull** (`src/wikidata.py`): batched SPARQL, `LIMIT`-capped to 60,000 taxa with
-  P3151 set (of 856,040 that actually have it), plus P1420/P566 synonym and basionym names,
-  cached to parquet.
-- **Candidate generation** (`src/candidates.py`): the five strategies from spec §2, capped at
-  K=20 per item, cached to `data/candidates.parquet`. **Recall @ K=20: 87.01%** raw (spec target
-  ≥97%) — but 12.85% of P3151 links point to iNat taxon_ids that no longer exist as active taxa
-  (stale/deactivated references, a data-quality issue, not a generation gap); recall among the
-  resolvable items is **99.84%**.
-- **Features + splits** (`src/labels.py`, `src/features.py`): all of spec §4's feature groups
-  (string similarity, taxonomic agreement, group context, popularity/quality — `kingdom_match`
-  and `family_match` needed extending `src/wikidata.py` with a full Wikidata ancestor-chain pull,
-  since milestone 2 only had one hop of P171), labels from P3151 with spec §3's 15% synthetic
-  abstention dropout, and `GroupKFold(n_splits=5)` on family. **Check passes: no QID appears in
-  two folds.** Cached to `data/features.parquet` (590,671 rows × 52 columns).
-- **Baseline** (`src/evaluate.py`): the honest exact-match rule, tie-broken by iNat observation
-  count (sourced from the API, scoped to just the ~27.5k taxa actually involved in a tie — the
-  bulk `observations.csv.gz` spec's wording implies is 12.7 GB, disproportionate for that narrow
-  use), scored on the same folds. **87.0% coverage, 80.3% precision, 81.2% accuracy** overall.
-  Correctly resolves `Prunella` (222,630 vs. 55,702 real observations). Abstention accuracy
-  splits sharply by reason — 85.3% for genuinely-unresolvable (`stale_p3151`) items vs. 2.1% for
-  `synthetic_dropout` ones, since the naive rule has no way to tell "no real candidate exists"
-  apart from "the true candidate's label was hidden for this exercise but the candidate itself is
-  still right there" — a naive-rule limitation the real model (milestone 6) should improve on.
-- **Model + threshold selection** (`src/train.py`): two objective variants compared on the same
-  5-fold OOF CV — `binary:logistic` (+ `scale_pos_weight` for the 12.5:1 class imbalance) and
-  `rank:map` (XGBoost's current docs recommend it over the literally-spec'd `rank:pairwise` for
-  binary-relevance labels like ours), both with monotone constraints on `jaro_winkler_full`,
-  `shared_ancestor_depth`, `kingdom_match` (verified: zero violations). Both variants land close
-  together — **top-1 accuracy 99.2%/99.1%, MRR 0.995/0.994** — comfortably beating the milestone
-  5 baseline's 81.2% accuracy. No winner picked yet; that's milestone 7's call, once the gold set
-  can break the tie without bot-added label noise. Training is deterministic (fixed
-  `random_state`) and fully cached, so this table reproduces exactly on rerun.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/calibration-dark.png">
+  <img alt="Reliability diagram: the raw model score sags far below the perfect-calibration diagonal, with 50,296 rows scoring above 0.95 of which only 83.9% are correct; the isotonic-calibrated score sits on the diagonal." src="docs/img/calibration-light.png">
+</picture>
 
-  **The precision-at-threshold table surfaces a real finding**: isotonic calibration
-  reveals the model's raw probabilities are badly overconfident — 50,296 rows score ≥0.95 raw,
-  but only 83.9% are actually correct. After calibration, the strict 99.5%-precision auto-accept
-  band covers only 10 rows for `binary:logistic` (and none at all for `rank:map`); a ≥91.6%
-  reject band (≥99.5% confidence of *no* match) does almost all of the practical work.
-  Investigating *why*: inside that overconfident cluster, right and wrong rows are statistically
-  indistinguishable on every engineered feature, and it's almost never a multi-candidate tie
-  (14/50,282 items) — pointing to label noise in P3151 itself (spec §3's own disclosed concern),
-  not a model or feature deficiency. SHAP confirms the model's *reasoning* is sound where it has
-  signal (`name_exact_raw`, `jaro_winkler_full`, and `sim_margin_to_runner_up` dominate; the
-  `Prunella` bird candidate is correctly rejected despite a raw name match, driven by
-  `kingdom_match=0` and `shared_ancestor_depth=0`).
-- **Gold set — preliminary** (`src/evaluate.py --gold`, spec §6/§7 milestone 7): scored on 192
-  hand-labelled items (of 476 sampled ambiguous, no-P3151 Wikidata taxa — see
-  [`gold/README.md`](gold/README.md)). **Top-1 accuracy 98.2%/85.9%, MRR 0.989/0.928** for
-  `binary:logistic`/`rank:map`, both comfortably beating the 20.8% baseline. **Directly tests
-  milestone 6's label-noise hypothesis**: the same raw-score band that sat at 83.9% precision on
-  OOF/P3151 data reads **97.6% precision on gold** (n=123) — hand-verified labels P3151 never
-  touched — supporting the hypothesis that gap was bot-added label noise, not a model or feature
-  gap. Recall ceiling **99.41%** (one genuine candidate-generation miss among 170 confirmed
-  matches), cross-validating milestone 3's number independently. **Preliminary in two respects,
-  both still open**: the sample only covers taxon names A-C so far (milestone 8), and the
-  binary-vs-rank gap widened rather than narrowed as more labels came in — plausibly partly a
-  calibrated-vs-raw-score ranking-metric artifact rather than a fully genuine model difference,
-  not yet checked (milestone 9). No winner has been picked yet.
+## The label-noise finding
 
-Full breakdowns and plots for every milestone in
+Isotonic calibration surfaced something the accuracy numbers hide. 50,296 candidate rows score
+≥0.95 on the raw model probability, but only **83.9%** of them are correct, which is why the
+strict 99.5%-precision auto-accept band covers just 10 rows out of 590,671. Inside that
+overconfident cluster, correct and incorrect rows are statistically indistinguishable on every
+engineered feature, and it is almost never a genuine tie between two candidates. That pattern
+does not look like a weak model; it looks like wrong labels. Training labels come from Wikidata's
+P3151 statements, most of them added in bulk by bots, so the hypothesis was that the model was
+being marked wrong for getting the answer right.
+
+Testing that needed labels P3151 never touched, which is the reason the gold set exists at all.
+On the gold set, the same raw-score band reads **98.2%** precision instead of 83.9%. The ceiling
+was in the labels.
+
+Full working, including the checks that ruled out a feature gap and a tie-breaking gap, is in
+[`docs/findings.md`](docs/findings.md).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/threshold-bands-dark.png">
+  <img alt="Both 99.5%-precision bands drawn to scale: 91.6% of candidate rows confidently rejected, 8.4% left for human review, and an auto-accept band of 10 rows too small to see." src="docs/img/threshold-bands-light.png">
+</picture>
+
+## How it is evaluated
+
+Three things make these numbers mean what they say:
+
+- **Negatives come from the deployment distribution.** A negative here is another candidate that
+  survived generation for the same Wikidata item, not a taxon drawn at random from the 1.4M-row
+  index. Random negatives are trivially separable and would have inflated every number in the
+  table. This is why the baseline scores 20.9% on gold rather than something respectable.
+- **The metric is a decision under asymmetric cost.** A wrong write to Wikidata is much worse
+  than a deferral to a human, so thresholds target 99.5% precision and the honest answer is
+  sometimes "this system should not act unsupervised". Not AUC.
+- **The label noise is quantified, not assumed away.** See above.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/shap-summary-dark.png">
+  <img alt="SHAP beeswarm: name_exact_raw dominates, followed by jaro_winkler_full and sim_margin_to_runner_up." src="docs/img/shap-summary-light.png">
+</picture>
+
+## Milestones
+
+Spec §7's checkable list. Every "key number" below is reproduced by the command in
+[Reproducing this](#reproducing-this).
+
+| # | What it does | Key number | |
+|---|---|---|---|
+| 1 | Normalised-name + FTS5 trigram index over the local iNat taxa dump, read-only | 1,413,946 taxa indexed | done |
+| 2 | Batched SPARQL pull of Wikidata taxa carrying P3151 | 58,874 items | done |
+| 3 | Candidate generation, five strategies, K=20 | recall 99.84% of resolvable items | done |
+| 4 | Features + `GroupKFold` on family | 590,671 rows × 52 features, no QID in two folds | done |
+| 5 | Exact-match baseline, tie-broken by observation count | 81.2% accuracy | done |
+| 6 | Two objectives, isotonic calibration, threshold selection | 99.1% top-1 OOF | done |
+| 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.7% top-1, n=263 | done |
+| 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
+| 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
+| 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
+
+The reasoning behind milestones 6, 7 and 9 is in [`docs/findings.md`](docs/findings.md); the full
+per-milestone breakdowns and plots are in
 [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
 
-Milestones 8-11 haven't started.
+## Limitations
 
-## Install / run
+Stated plainly, because a reviewer who finds an undisclosed limitation should discount the rest
+of the numbers.
 
-### Prerequisite: the iNat taxa index
+- **Neither model can act unsupervised at the precision bar this task needs.** At ≥99.5%
+  precision the auto-accept band covers 10 of 590,671 OOF rows and zero gold rows. The system
+  ranks well; it does not yet decide.
+- **The reject threshold does not transfer.** Fitted on OOF data it is 99.6% precise and rules
+  out 91.6% of candidate rows. Re-applied unchanged to the gold set it drops to 95.7%, and would
+  hide the true match for 107 of 263 items. Thresholds fitted on the P3151 population do not hold
+  on the ambiguous one, which is the population that matters.
+- **The gold set is 263 items.** It covers A–Z after milestone 8, but the
+  `binary:logistic`-versus-`rank:map` decision rests on a two-item difference in top-1 (three
+  misses against five, over the 230 items that have a correct answer). The pick is made on the
+  best evidence available and on a consistent direction across every metric, not on a
+  large-sample result. 620 sampled items remain unlabelled.
+- **Training labels are noisy.** Quantified above, not eliminated. Every OOF number in this repo
+  inherits it.
+- **12.85% of P3151 links are stale**, pointing at iNat taxon IDs that no longer exist as active
+  taxa. They are unreachable by any candidate strategy, so the raw recall ceiling reads 87.0%
+  against 99.84% among resolvable items. Both numbers are reported everywhere rather than the
+  flattering one.
+- **Two of the three remaining gold misses are iNat-side duplicate records**, not ranking
+  failures. The headroom left on this sample is mostly not in the model.
 
-This repo reads `~/.cache/wikidata-inat-checker/taxa.db` read-only — it doesn't build it. That
-cache is produced by [wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker)
-the first time one of its checkers runs. On a machine that doesn't have it yet:
+## Reproducing this
 
-```sh
-git clone https://github.com/Livia-Rasp/wikidata-inat-checker.git
-cd wikidata-inat-checker
-npm install    # Node.js 26+
-npm run links  # or any other checker — first run downloads and builds the index
-```
+### The five-minute path
 
-Downloads iNaturalist's ~189 MB open-data taxon dump and builds a ~236 MB SQLite index at
-`~/.cache/wikidata-inat-checker/taxa.db`; takes a couple of minutes once, refreshed every 30
-days. `npm run links` is the one worth running here since it also produces
-`output/links-ambiguous.html` — the review queue this project exists to shrink.
-
-### This repo
-
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-```
-
-**Ingest check (milestone 1).** Reads `~/.cache/wikidata-inat-checker/taxa.db` read-only and
-builds a cache at `data/lookup.sqlite` (gitignored — first run ~20s over 1.4M rows, cached
-after), then looks up `prunella`, the spec's acceptance check: a genus name shared by a bird
-family (Prunellidae) and a mint family (Lamiaceae) that only differ by ancestry. Run from the
-repo root; needs the venv (`pandas`, `rapidfuzz` — milestone 3 added these as module-level
-imports, so plain `python3` no longer suffices here).
-
-```
-.venv/bin/python -m src.candidates
-```
-
-Expected output (first line only — the rest is milestone 3's full candidate-generation run,
-below):
-
-```
-2 match(es) for 'prunella':
-  {'taxon_id': '13982', 'name': 'Prunella', 'rank': 'genus', 'ancestry': '48460/1/2/355675/3/7251/71358'}
-  {'taxon_id': '52765', 'name': 'Prunella', 'rank': 'genus', 'ancestry': '48460/47126/211194/47125/47124/48151/48623/520502/918917/919181'}
-```
-
-**Wikidata pull (milestone 2).** Batched SPARQL against `https://query.wikidata.org/sparql` for
-taxa carrying P3151, cached to `data/wikidata_taxa.parquet` (+ a sidecar manifest that the
-cache-hit check compares against, gitignored). First run takes a few minutes and makes ~30
-batched network requests; reruns are a cache hit.
-
-```
-.venv/bin/python -m src.wikidata
-```
-
-**Candidate generation (milestone 3).** Runs the ingest check above, then generates up to 20
-candidates per Wikidata item via the five strategies in spec §2, cached to
-`data/candidates.parquet`, and reports the recall-ceiling breakdown. Pure local SQLite/CPU work
-(no network) — parallelized across `os.cpu_count()` worker processes (capped at 16); ~1-2
-minutes for the full 58,874-item pull here.
-
-```
-.venv/bin/python -m src.candidates
-```
-
-Expected output (after the `prunella` check above):
-
-```
-590,671 candidate rows for 58,874 Wikidata items (101.6s)
-raw recall @ K=20: 87.01% (spec target: >=97%)
-  7,564/58,874 (12.85%) true P3151 links point to iNat taxon_ids that don't exist in the active-taxa index (stale/deactivated) -- unreachable by any strategy, not a generation gap
-  recall among the 51,310 resolvable items: 99.84%
-```
-
-**Features + splits (milestone 4).** Pulls each Wikidata item's full ancestor chain (needed for
-`kingdom_match`/`family_match`/`order_match`; cached separately to
-`data/wikidata_ancestors.parquet`, ~8 min one-time network cost, ~2.7M rows), builds labels
-(P3151 positives + spec §3's 15% synthetic abstention dropout), computes every feature in spec
-§4, and splits `GroupKFold(n_splits=5)` on family — grouping on the Wikidata item's *own*
-ancestor chain, not the candidate's, so a WD item's rows always land in one fold regardless of
-which candidate turns out correct.
-
-```
-.venv/bin/python -m src.features
-```
-
-First run: ~8 min (network, one-time) + <1 min (local). Reruns of just this step are instant
-cache hits; the ancestor pull only re-runs if the Wikidata item set changes.
-
-Expected output (local part only — after the ancestor pull, which prints its own progress):
-
-```
-590,671 feature rows, 52 columns
-no QID split across folds: True
-
-fold sizes:
-fold
-0    11229
-1    11121
-2    12610
-3    13804
-4    10078
-Name: wikidata_qid, dtype: int64
-
-no_answer_reason breakdown (per item):
-no_answer_reason
-has_positive         43543
-synthetic_dropout     7684
-stale_p3151           7615
-Name: count, dtype: int64
-
-distinct family_key groups: 4,679
-```
-
-**Baseline (milestone 5).** The honest exact-match rule (spec §6): predict the candidate found
-via the `exact` strategy, tie-broken by real iNat observation count (fetched from the API,
-batched 200 ids/request, scoped to only the taxa actually involved in a tie — cached to
-`data/inat_observation_counts.parquet`). Scores per fold and overall, plus abstention accuracy
-split by `no_answer_reason`.
-
-```
-.venv/bin/python -m src.evaluate
-```
-
-First run: ~2-3 min (network, ~138 batched requests — one-time, scoped to ~27.5k taxa, not the
-full candidate set). Reruns are a cache hit.
-
-Expected output:
-
-```
-Baseline (exact-match, observation-count tiebreak) — per fold and overall:
-         n_items  coverage  precision  accuracy
-0        11229.0  0.854128   0.803566  0.803188
-1        11121.0  0.869706   0.801282  0.813956
-2        12610.0  0.872244   0.806892  0.815860
-3        13804.0  0.868371   0.812881  0.820921
-4        10078.0  0.889065   0.785156  0.800953
-overall  58842.0  0.870280   0.802808  0.811716
-
-Abstention accuracy by reason:
-                   abstention_accuracy     n
-no_answer_reason
-stale_p3151                   0.852791  7615
-synthetic_dropout             0.020562  7684
-```
-
-**Model + threshold selection (milestone 6).** Trains both objective variants across the 5 OOF
-folds, calibrates each (isotonic regression), sweeps the threshold, and reports top-1
-accuracy/MRR/Brier score plus the auto-accept threshold. Cached to `data/oof_predictions.parquet`
-+ manifest.
-
-```
-.venv/bin/python -m src.train
-```
-
-First run: ~2.5 min (590k rows × 5 folds × 2 objectives, pure local CPU work). Reruns are a
-cache hit. Final full-data models (for milestone 7) are a separate call:
-`train.build_final_models(features)`, saved to `data/models/`.
-
-Expected output:
-
-```
-=== binary:logistic ===
-top-1 accuracy: 0.9915   MRR: 0.9950   Brier: 0.0129
-auto-accept @ threshold 0.87: precision=1.0000, coverage=0.0000
-reject threshold: 0.82
-
-=== rank:map ===
-top-1 accuracy: 0.9905   MRR: 0.9944   Brier: 0.0130
-no threshold reaches 99.5% precision
-reject threshold: 0.83
-```
-
-(Coverage prints as `0.0000` at 4 decimals for `binary:logistic` — it's 0.0017%, not literally
-zero (10 of 590,671 rows); `rank:map` doesn't clear the 99.5% precision bar at all on this run.
-See the Status section above and the notebook for the full three-band breakdown and why it's
-this small.)
-
-**Gold set (milestone 7).** Full generate → label → evaluate workflow documented in
-[`gold/README.md`](gold/README.md); summary:
+Runs the gold-set evaluation end to end against committed fixtures. No Node, no 189 MB download,
+no network.
 
 ```sh
-# 1. In the sibling repo — generates output/links-ambiguous.html (~5 min, read-only)
-cd ~/repos/wikidata-inat-checker && rm -f cache/cache-links.json && npm run links -- --limit 80000 --ambiguous-only
-
-# 2. Back here — appends new items straight onto gold/labeling_filled.csv, writes gold/links-ambiguous-sample*.html
-.venv/bin/python build_gold_labeling_kit.py
-
-# 3. You hand-label the new rows in gold/labeling_filled.csv directly (see gold/README.md)
-
-# 4. Turns your answers into gold/hard_cases.csv (committed) + scores it
-.venv/bin/python build_gold_set.py
+git clone https://github.com/Livia-Rasp/xgboost-inat-wikidata-match.git
+cd xgboost-inat-wikidata-match
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m src.evaluate --gold
 ```
 
-Gold-set items are Wikidata taxa that **don't** have P3151 (that's the whole point — the only
-evaluation not contaminated by bot-added labels), so steps 2 and 4 pull their attributes fresh
-via `wikidata.py`'s existing functions rather than reusing `data/wikidata_taxa.parquet`, which
-only covers items that already have P3151.
+This reproduces the gold rows of the results table, the label-noise band comparison, and the
+per-miss breakdown. It works because `gold/hard_cases.csv`, the two small Wikidata pulls for
+those items, the slice of the iNat index they touch, and the frozen models are all committed.
+Everything else in `data/` is gitignored and rebuilt by the full path below.
 
-Step 3 doubles as this project's actual end goal, not just an evaluation-data exercise: the
-labeling page's QuickStatements copy button is meant to be used to submit the resolved P3151
-links back to Wikidata by hand. Everything automated here stays strictly read-only; that one
-step is a deliberate, human-initiated exception — see `gold/README.md` for what that implies for
-future runs (resolved items drop out of the pool this workflow samples from).
+### The full path
 
-`--gold` also reports accuracy split by whether an item is **trivial by rank** — a species
-complex or section sharing its name string with its own representative species, where only one
-candidate's iNat rank actually matches the Wikidata item's stated rank, so no similarity judgment
-is needed to resolve it. Near-100% accuracy there is a sanity floor, not a headline result; the
-number that matters is how much accuracy drops on the genuinely ambiguous remainder. The report
-notebook's milestone 7 section carries this as its own subset breakdown, not folded into the
-pooled top-1/MRR numbers.
+Needs `~/.cache/wikidata-inat-checker/taxa.db`, which this repo reads read-only and never builds.
+Produced by running any checker in the sibling repo:
 
-Milestones 8-11 haven't started — this section grows as they land.
+```sh
+git clone https://github.com/Livia-Rasp/wikidata-inat-checker.git
+cd wikidata-inat-checker && npm install    # Node.js 26+
+npm run links                              # downloads ~189 MB, builds a ~236 MB index, once
+```
+
+Then, from this repo, in order:
+
+```sh
+.venv/bin/python -m src.wikidata     # milestone 2: batched SPARQL, ~30 requests, cached
+.venv/bin/python -m src.candidates   # milestones 1+3: builds the lookup cache, generates candidates
+.venv/bin/python -m src.features     # milestone 4: ancestor pull (~8 min, network) + features
+.venv/bin/python -m src.evaluate     # milestone 5: baseline, per fold and overall
+.venv/bin/python -m src.train        # milestone 6: both objectives, 5-fold OOF, thresholds
+.venv/bin/python build_figures.py    # regenerates docs/img/ from the caches above
+```
+
+Every step caches to `data/` with a manifest and is a no-op on rerun unless its inputs change.
+Total first-run cost is roughly 15 minutes, most of it waiting on Wikidata Query Service. The
+exact flags, cache-invalidation rules, and the failure modes worth knowing about are documented
+per milestone in [`CLAUDE.md`](CLAUDE.md).
+
+The gold-set workflow — generate a fresh ambiguous sample, hand-label it, score it — is in
+[`gold/README.md`](gold/README.md).
+
+### Tests
+
+```sh
+.venv/bin/python -m pytest      # runs against committed fixtures, no network
+.venv/bin/ruff check .
+```
+
+## Design
+
+- [`docs/inat-wikidata-match-spec.md`](docs/inat-wikidata-match-spec.md) — the full spec: repo
+  shape, normalisation rules, candidate strategies, feature set, model config, milestones.
+- [`docs/motivation.md`](docs/motivation.md) — why ambiguous P3151 links matter, and what a
+  wrong one looks like on a live iNaturalist page.
+- [`docs/findings.md`](docs/findings.md) — the calibration investigation, the threshold-transfer
+  result, every gold-set miss characterised, and why `binary:logistic` won.
+- [`docs/future-work.md`](docs/future-work.md) — what is deliberately not done yet.
+
+The milestone 6 and 7 models in `data/models/` are frozen. They are the fixed reference point
+every number here is quoted against, and `train.build_final_models()` only retrains when a model
+file is missing or `force_refresh=True` is passed. Hand-labelling the gold set adds new P3151
+statements to Wikidata, so a future re-pull would see a different population than the one these
+models trained on. Freezing them means that drift cannot silently change the results.
+
+## Licence
+
+[MIT](LICENSE).

@@ -190,7 +190,10 @@ def _fuzzy_filter(rows: list[tuple], query: str, compare_col: int) -> list[dict]
     choices = [r[compare_col] for r in rows]
     matches = process.extract(query, choices, scorer=Levenshtein.distance, score_cutoff=MAX_EDIT_DISTANCE, limit=None)
     return [
-        {"taxon_id": rows[idx][0], "name": rows[idx][1], "rank": rows[idx][2], "ancestry": rows[idx][3], "normalized_name": rows[idx][5]}
+        {
+            "taxon_id": rows[idx][0], "name": rows[idx][1], "rank": rows[idx][2],
+            "ancestry": rows[idx][3], "normalized_name": rows[idx][5],
+        }
         for _, _, idx in matches
     ]
 
@@ -248,7 +251,8 @@ def _trigram_candidates(cache: sqlite3.Connection, normalized_name: str, limit: 
     match_expr = " OR ".join(f'"{c}"' for c in chunks)
     rows = cache.execute(
         """
-        SELECT taxa_trigram.taxon_id, taxa_normalized.name, taxa_normalized.rank, taxa_normalized.ancestry, taxa_normalized.normalized_name
+        SELECT taxa_trigram.taxon_id, taxa_normalized.name, taxa_normalized.rank,
+               taxa_normalized.ancestry, taxa_normalized.normalized_name
         FROM taxa_trigram JOIN taxa_normalized ON taxa_normalized.taxon_id = taxa_trigram.taxon_id
         WHERE taxa_trigram MATCH ?
         ORDER BY bm25(taxa_trigram) LIMIT ?

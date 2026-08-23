@@ -61,7 +61,7 @@ Q21440670,Agonum,http://www.wikidata.org/entity/Q21440670,154600;1395737,Agonum;
 Q13234250,Agonum fallax,http://www.wikidata.org/entity/Q13234250,1249451;1681224,Agonum fallax;Agonum fallax,1249451,both are correct in a way... 1249451 and 1681224 seem just to be the same species and should be merged on inat
 Q21441374,Agraphydrus,http://www.wikidata.org/entity/Q21441374,641690;1396733,Agraphydrus;Agraphydrus,1396733,
 Q6080542,Agriades,http://www.wikidata.org/entity/Q6080542,209734;1456512,Agriades;Agriades,1456512,here the taxon tree between inat and wiki seem to differ -- inat seems to be more up-to-date than wiki
-Q4694188,Agrisius japonicus,http://www.wikidata.org/entity/Q4694188,1265680;1364097,Agrisius japonicus;Agrisius japonicus,265680,
+Q4694188,Agrisius japonicus,http://www.wikidata.org/entity/Q4694188,1265680;1364097,Agrisius japonicus;Agrisius japonicus,1265680,corrected from 265680 (dropped leading digit; 265680 is Poecilopompilus algidus and was never an offered candidate) during the milestone 9 miss review
 Q108068642,Agrisius leloii,http://www.wikidata.org/entity/Q108068642,1364098;1364094,Agrisius leloii;Agrisius leloii,1364094,Wikidata doesn't seem to have the complex 1364098
 Q5022943,Alaria,http://www.wikidata.org/entity/Q5022943,124813;1579828,Alaria;Alaria,1579828,
 Q4712739,Albugo ipomoeae-panduratae,http://www.wikidata.org/entity/Q4712739,774949;1577655,Albugo ipomoeae-panduratae;Albugo ipomoeae-panduratae,774949,

@@ -7,12 +7,10 @@ that drives the src/ pipeline for a specific task, not part of the pipeline itse
 
 from __future__ import annotations
 
-import sqlite3
 from pathlib import Path
 
 import pandas as pd
 
-from src.candidates import DEFAULT_CACHE_PATH as LOOKUP_SQLITE_PATH
 from src.candidates import build_lookup_cache, generate_candidates
 from src.wikidata import (
     DEFAULT_GOLD_ATTRIBUTES_PATH,
@@ -61,7 +59,10 @@ def main() -> None:
     answers = load_answers(FILLED_CSV_PATH)
     print(f"{len(answers):,} answered rows in {FILLED_CSV_PATH.name}")
     if len(answers) < 300:
-        print(f"NOTE: fewer than 300 answers ({len(answers)}) — spec targets ~200+, you're still covered, but more helps.")
+        print(
+            f"NOTE: fewer than 300 answers ({len(answers)}) — spec targets ~200+, "
+            f"you're still covered, but more helps."
+        )
 
     qids = answers["wikidata_qid"].tolist()
     wikidata_taxa = build_gold_attribute_pull(qids, cache_path=DEFAULT_GOLD_ATTRIBUTES_PATH)

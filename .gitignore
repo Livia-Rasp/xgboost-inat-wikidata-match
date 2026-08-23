@@ -5,8 +5,16 @@ __pycache__/
 .venv/
 .ipynb_checkpoints/
 
-# Project data and model artifacts
-data/
+# Project data (spec §0: data/ is gitignored and rebuilt by the commands in README.md).
+# The exception is data/models/: those two models and their calibrators are deliberately frozen
+# as the fixed reference point every number in README.md and docs/findings.md is quoted against,
+# and committing them is what makes the README's five-minute path runnable from a clean clone.
+# A directory excluded by `data/` cannot have its contents re-included, hence `data/*`.
+data/*
+!data/models/
+data/models/*
+!data/models/*.json
+!data/models/*_calibrator.pkl
 *.parquet
 *.model
 
