@@ -125,9 +125,10 @@ of the numbers.
   hide the true match for 107 of 263 items. Thresholds fitted on the P3151 population do not hold
   on the ambiguous one, which is the population that matters.
 - **The gold set is 263 items.** It covers A–Z after milestone 8, but the
-  `binary:logistic`-versus-`rank:map` decision rests on a 6-item difference. The pick is made on
-  the best evidence available and is not a large-sample result. 620 sampled items remain
-  unlabelled.
+  `binary:logistic`-versus-`rank:map` decision rests on a two-item difference in top-1 (three
+  misses against five, over the 230 items that have a correct answer). The pick is made on the
+  best evidence available and on a consistent direction across every metric, not on a
+  large-sample result. 620 sampled items remain unlabelled.
 - **Training labels are noisy.** Quantified above, not eliminated. Every OOF number in this repo
   inherits it.
 - **12.85% of P3151 links are stale**, pointing at iNat taxon IDs that no longer exist as active
