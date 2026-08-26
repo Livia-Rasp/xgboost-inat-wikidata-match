@@ -513,7 +513,9 @@ Python, per the spec's §0 repo shape (`src/`, `pyproject.toml`, `data/` gitigno
 **Where prose goes.** `README.md` is the 90-second read: what the classifier decides, the results
 table, the three figures, the label-noise section, a milestone table, limitations, and the two run
 paths. Reasoning and investigation go to `docs/findings.md`; the motivating Absidia narrative to
-`docs/motivation.md`; anything deliberately not done to `docs/future-work.md`. This file stays the
+`docs/motivation.md`; anything deliberately not done to `docs/future-work.md`; the design of the
+platform milestones (13-16) — tool versions and why, the audit of the existing pipeline, and the
+alternatives that were rejected — to `docs/platform-design.md`. This file stays the
 engineering log — long is fine here, not there. The README also declares that the code was written
 with Claude Code as a pair programmer; keep that line, it is the honest framing.
 

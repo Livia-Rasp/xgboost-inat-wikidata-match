@@ -107,6 +107,11 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
 | 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
+| 13–16 | Docker, dbt-core over DuckDB, MLflow, Airflow + Terraform | — | planned |
+
+Milestones 1–12 build the model. 13–16 are platform work — a container, a SQL transformation
+layer, experiment tracking and an orchestrated DAG — and are not intended to make the model
+better; see spec §7 for what each one has to demonstrate.
 
 The reasoning behind milestones 6, 7 and 9 is in [`docs/findings.md`](docs/findings.md); the full
 per-milestone breakdowns and plots are in
@@ -202,6 +207,8 @@ The gold-set workflow — generate a fresh ambiguous sample, hand-label it, scor
   wrong one looks like on a live iNaturalist page.
 - [`docs/findings.md`](docs/findings.md) — the calibration investigation, the threshold-transfer
   result, every gold-set miss characterised, and why `binary:logistic` won.
+- [`docs/platform-design.md`](docs/platform-design.md) — the design for milestones 13–16: tool
+  versions and why, an audit of the existing pipeline, and the alternatives that were rejected.
 - [`docs/future-work.md`](docs/future-work.md) — what is deliberately not done yet.
 
 The milestone 6 and 7 models in `data/models/` are frozen. They are the fixed reference point

@@ -270,6 +270,71 @@ Each with an acceptance check, so progress is verifiable.
 12. *(Optional)* `score_ambiguous.py` that reads `links-ambiguous.html` rows and emits
     accept/review/reject — closing the loop back into the Node tool.
 
+Milestones 1-12 build the model. **13-16 are a different kind of work**: they take the result
+from "a sequence of `python -m src.*` commands documented in prose, held together by seven
+hand-rolled cache manifests in three incompatible flavours" to something with a container, a
+lockfile, an orchestrator, experiment tracking, and infrastructure defined as code. Nothing in
+13-16 is supposed to make the model better; the point is that the pipeline becomes runnable,
+reproducible and observable by someone who is not the person who wrote it. They are ordered by
+dependency, and each is committed and documented on its own before the next begins. The design —
+tool versions and why, an audit of what in the current pipeline blocks each step, and the
+alternatives that were considered and rejected — is in
+[`platform-design.md`](platform-design.md).
+
+13. **Docker.** A multi-stage image for the pipeline, an exact dependency lockfile, and a
+    `Makefile` giving every stage a single command — the sequence `CLAUDE.md` currently carries
+    only as prose. Three things have to be fixed to make a container honest rather than merely
+    green: `candidates.manifest.json` keys its cache on file **mtimes**, which container layers
+    and CI checkouts do not preserve; `wikidata.build_ancestor_chains()` and
+    `train.build_final_models()` have no CLI entry point at all and so cannot be pipeline steps;
+    and `beautifulsoup4` is imported by `build_gold_labeling_kit.py` but undeclared. Pin
+    `scikit-learn` exactly — the calibrators are pickled `IsotonicRegression` objects and will
+    not load against a different version. *Check:* from a clean clone with no venv, no Python on
+    the host and no Node, `docker compose run --rm pipeline make gold` reproduces the committed
+    gold-set numbers to every decimal — the model has not changed, so anything that moves is a
+    packaging bug.
+14. **A transformation layer in dbt-core over DuckDB.** The feature construction moves out of
+    pandas and into a dbt project: DuckDB attaches the iNat taxa index (and the checker's
+    `findings.db`) as SQLite sources read-only, reads the parquet caches directly, and
+    materialises the feature table back out as parquet. Candidate generation stays in Python —
+    `candidates.py`'s chunked-trigram FTS5 search has no DuckDB equivalent and reimplementing it
+    would change recall for no benefit. The invariants this project already cares about become
+    dbt tests rather than `print` statements: uniqueness on `(wikidata_qid, inat_taxon_id)`, the
+    accepted strategy tags, feature ranges, and — as a singular test — milestone 4's
+    no-QID-in-two-folds leakage check. Two places will produce different numbers and both must be
+    named rather than discovered later: ancestor-rank resolution is first-wins on row order in
+    pandas and needs an explicit `row_number()` rule in SQL, and the 15% synthetic dropout selects
+    a different 15% under a hash than under `random.Random(42)`. *Check:* `dbt build` is green
+    with every test passing, and a parity report compares the SQL-built feature table against the
+    pandas one column by column, with a written explanation for every column that differs.
+15. **MLflow.** Every training and evaluation run logs its parameters, metrics and artifacts to a
+    tracking server, and the models live in a registry instead of in a `data/models/` directory
+    protected by a paragraph in `CLAUDE.md`. The existing frozen models are backfilled as version
+    1 with their published metrics attached, so the history stays traceable; the retrain on the
+    dbt-built features becomes version 2, and the comparison between them is the first real use
+    of the tracking. This is the milestone that **releases the model freeze** deliberately: the
+    numbers in `README.md`, `docs/findings.md`, the six figures and the notebook's milestone 6/7
+    sections are regenerated from whichever version wins, with an old-vs-new diff table citing
+    both run ids. The notebook must not be blanket re-executed — milestone 1 reads live external
+    state and rewriting its narrative that way has already happened once. *Check:* every number
+    in the README resolves to a logged metric on a named run, and the registry alias for the
+    current champion resolves to the model those numbers came from.
+16. **Airflow and Terraform.** The stages become an asset-driven DAG rather than a documented
+    command sequence: ingest produces assets, the dbt project renders as one Airflow task per
+    model, and training is triggered by the feature asset rather than by a human. Retries are
+    matched to the failure modes this project has already hit for real — WDQS returning HTTP 200
+    with a silently truncated body, 429/502/503/504, and hung connections — rather than a blanket
+    `retries=3`. Promotion of a newly trained model is gated on a comparison against the
+    registered champion, which is the difference between a DAG and a shell script. Terraform
+    provisions the stack it all runs on (tracking server, artifact store, metadata database, the
+    Airflow services) through the Docker provider, so the infrastructure is code that is actually
+    applied rather than HCL that has never run. Reading the checker's ambiguous findings is in
+    scope; writing anything back to it is not — that integration is deliberately deferred, and
+    its direction inverted, in `docs/future-work.md`. *Check:* `terraform apply` from a
+    torn-down state brings the whole stack up and a subsequent `terraform plan` is clean; the
+    ingest → features → train → evaluate chain then runs end to end from the Airflow UI without
+    manual intervention and lands a tracked run.
+
 ---
 
 ## 8. What makes this interesting to showcase

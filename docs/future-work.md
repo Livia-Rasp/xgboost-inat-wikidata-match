@@ -41,12 +41,28 @@ model freeze every number in this repo is quoted against. Worth doing as a delib
 fully-rescored comparison — new models, all metrics regenerated, both variants — rather than as a
 patch.
 
+Spec milestone 15 releases that freeze on purpose and retrains, which is the natural moment to
+fold this in: the rescoring is happening anyway, and MLflow makes the before/after a comparison
+between two registered versions rather than a claim. The same applies to the ligature note below.
+
 ## Close the loop back into the Node tool (spec §7 milestone 12)
 
-A `score_ambiguous.py` that reads `links-ambiguous.html` directly and emits accept / review /
-reject per row, so the classifier runs where the queue actually lives instead of alongside it.
-Blocked on the threshold work above: without thresholds that hold on this population, the only
-honest output is a ranking, which the HTML could equally well just sort by.
+Scoring the ambiguous queue where it actually lives, instead of alongside it.
+`wikidata-inat-checker` has since moved that queue into a database and a webapp, and reserves a
+`score` and `scoredBy` field — always null today — on every ambiguous candidate it records, so
+the slot for this exists on their side already.
+
+**Direction, once it happens: the checker calls a scoring service exposed by this repo, not this
+repo writing rows into the checker's database.** That keeps the model's deployment surface where
+the registry and the feature code are, and keeps `findings.db` owned by exactly one writer. Not
+settled — the shape is worth a proper discussion before either side builds to it. Spec milestone
+16 therefore reads the checker's findings and stops there.
+
+Two things block the useful version regardless. The threshold work above: without thresholds that
+hold on this population, the only honest output is a ranking, which the queue could equally well
+just sort by. And on the checker's side, `POST /api/findings/:id/pick` overwrites the ambiguous
+row in place, discarding the rejected candidates — so human decisions there yield positives but
+no per-candidate negatives, and no audit trail of what was rejected.
 
 ## Smaller things
 
