@@ -3,26 +3,55 @@ name = "xgboost-inat-wikidata-match"
 version = "0.1.0"
 description = "Record-linkage classifier matching Wikidata taxon items to candidate iNaturalist taxa"
 readme = "README.md"
-requires-python = ">=3.10"
+# 3.12 is the oldest version CI has ever run; 3.10 and 3.11 were a claim, not a tested promise.
+# The container and local development both run 3.14 (spec §7 milestone 13).
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 dependencies = [
     "xgboost>=2.0",
     "pandas>=2.0",
     "numpy>=1.26",
-    "scikit-learn>=1.4",
+    # Pinned exactly, not floored. data/models/*_calibrator.pkl are pickled IsotonicRegression
+    # objects produced by this version; sklearn does not promise pickle compatibility across
+    # releases, so a float here would let a rebuild silently fail to load the frozen calibrators.
+    "scikit-learn==1.9.0",
     "scipy>=1.11",
     "rapidfuzz>=3.0",
     "pyarrow>=14.0",
     "matplotlib>=3.8",
     "requests>=2.31",
     "shap>=0.45",
+    # build_gold_labeling_kit.py has always imported this; it was simply never declared.
+    "beautifulsoup4>=4.12",
 ]
 
 [project.optional-dependencies]
+# Just enough to run the checks. Separate from dev because the container needs `make test lint`
+# but has no use for Jupyter, which is most of dev's weight.
+check = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
 dev = [
     "pytest>=8.0",
     "jupyter>=1.0",
     "ruff>=0.6",
+]
+# The three groups below belong to spec §7 milestones 14-16 and nothing imports them yet. They
+# are declared now so that one `uv lock` resolves them together with the pipeline's own
+# dependencies — if that resolution is impossible, the shared-lockfile design behind those three
+# milestones is wrong, and it is much cheaper to learn that here than three milestones later.
+dbt = [
+    "dbt-core~=1.12",  # 3.14 support landed in 1.12.x, not 1.10
+    "dbt-duckdb",
+    "duckdb>=1.5",     # 3.14 enabled in 1.5.0
+]
+tracking = [
+    "mlflow>=3.0",
+]
+airflow = [
+    "apache-airflow==3.3.1",
+    "astronomer-cosmos",
 ]
 
 [build-system]
@@ -38,7 +67,7 @@ addopts = "-q"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py312"
 # The report notebook is a narrative document whose cell outputs are committed and quoted from.
 # Linting it would mean reformatting cells, which means re-executing them, which is exactly the
 # thing that silently rewrote milestone 1's frozen numbers once already.

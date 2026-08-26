@@ -1,0 +1,34 @@
+# Without this file the build context is ~550 MB: data/lookup.sqlite alone is 493 MB, and .venv
+# is not far behind. Everything the image actually needs is listed as an exception below.
+
+.git/
+.github/
+.venv/
+**/__pycache__/
+**/*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# The report notebook's committed cell outputs are large and nothing in the image reads them.
+notebooks/
+
+# Generated caches. data/models/ is the exception: those are the frozen milestone 6/7 models,
+# committed on purpose (spec §0), and the gold path cannot score without them. A directory
+# excluded by `data/` cannot have its contents re-included, hence the `data/*` dance —
+# the same shape .gitignore uses, for the same reason.
+data/*
+!data/models/
+data/models/*
+!data/models/*.json
+!data/models/*_calibrator.pkl
+
+# Regenerable, and only ever read from the sibling repo's output.
+gold/links-ambiguous-sample*.html
+
+.env
+.env.*
+*.pem
+*.key
+credentials.json

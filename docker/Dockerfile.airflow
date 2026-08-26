@@ -1,0 +1,38 @@
+# The Airflow image for spec §7 milestone 16. Nothing runs on it yet.
+#
+# It is built now for one reason: it is the only real proof that this project's dependencies can
+# co-exist with Airflow, Cosmos, dbt and MLflow on a single interpreter. Discovering otherwise
+# three milestones from now would invalidate the shared-lockfile design that 14, 15 and 16 all
+# rest on. `make image-airflow` and the CI job that builds it are that proof.
+
+FROM apache/airflow:3.3.1-python3.14
+
+USER root
+# XGBoost's OpenMP runtime, needed by the scoring tasks the DAG will call.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+USER airflow
+
+ENV PYTHONHASHSEED=0 \
+    OMP_NUM_THREADS=4 \
+    MATCHER_WORKERS=4 \
+    MATCHER_TAXA_DB=/opt/inat-cache/taxa.db
+
+WORKDIR /opt/project
+
+# Installed with pip rather than `uv sync`, deliberately: the Airflow base image manages its own
+# environment, and replacing it with a uv-managed venv would mean re-solving Airflow's own
+# constraint set. uv exports the same locked versions in a format pip understands, so the pins
+# still come from uv.lock and cannot drift from the pipeline image's.
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/home/airflow/.cache/uv \
+    pip install --no-cache-dir uv==0.12.6 \
+    && uv export --locked --no-emit-project --no-hashes \
+         --extra dbt --extra tracking --extra airflow -o /tmp/requirements.txt \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+COPY README.md LICENSE ./
+COPY src/ ./src/
+RUN pip install --no-cache-dir --no-deps -e .

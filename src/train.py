@@ -19,6 +19,8 @@ import pandas as pd
 import xgboost
 from sklearn.isotonic import IsotonicRegression
 
+from .paths import DATA_DIR, MODEL_DIR
+
 FEATURE_COLUMNS = [
     "similarity",
     "name_exact_raw", "name_exact_norm", "jaro_winkler_full", "levenshtein_ratio_full",
@@ -56,11 +58,9 @@ TREE_PARAMS = dict(
 AUTO_ACCEPT_PRECISION = 0.995
 REJECT_NEG_PRECISION = 0.995
 
-DEFAULT_OOF_PATH = Path(__file__).resolve().parent.parent / "data" / "oof_predictions.parquet"
-DEFAULT_OOF_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "oof_predictions.manifest.json"
-)
-DEFAULT_MODEL_DIR = Path(__file__).resolve().parent.parent / "data" / "models"
+DEFAULT_OOF_PATH = DATA_DIR / "oof_predictions.parquet"
+DEFAULT_OOF_MANIFEST_PATH = DATA_DIR / "oof_predictions.manifest.json"
+DEFAULT_MODEL_DIR = MODEL_DIR
 
 
 def monotone_constraints_tuple(feature_columns: list[str] = FEATURE_COLUMNS) -> tuple[int, ...]:
@@ -329,6 +329,7 @@ def build_final_models(
     features: pd.DataFrame,
     model_dir: Path = DEFAULT_MODEL_DIR,
     manifest_path: Path = DEFAULT_OOF_MANIFEST_PATH,
+    oof_path: Path = DEFAULT_OOF_PATH,
     force_refresh: bool = False,
 ) -> dict:
     """Refit both variants on the full dataset and save them (+ their OOF-fit calibrators) for
@@ -339,7 +340,10 @@ def build_final_models(
         raise RuntimeError("run build_oof_predictions() first")
     manifest = json.loads(manifest_path.read_text())
 
-    oof = pd.read_parquet(DEFAULT_OOF_PATH)
+    # oof_path is a parameter rather than the module constant because manifest_path and model_dir
+    # already were: pointing those two somewhere else while this silently read the default was a
+    # way to pair one run's manifest with another run's scores.
+    oof = pd.read_parquet(oof_path)
     df = features.sort_values("wikidata_qid").reset_index(drop=True)
     labels = oof["label"].to_numpy()
 
@@ -365,10 +369,39 @@ def build_final_models(
 
 
 if __name__ == "__main__":
+    import argparse
+
     from .features import DEFAULT_FEATURES_PATH
 
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--final",
+        action="store_true",
+        help="refit both variants on all folds and save them to data/models/ for gold-set "
+        "scoring, instead of reporting the out-of-fold metrics",
+    )
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="retrain even when a cached result exists. NOTE: with --final this overwrites the "
+        "frozen milestone 6/7 models every published number is quoted against",
+    )
+    args = parser.parse_args()
+
     features = pd.read_parquet(DEFAULT_FEATURES_PATH)
-    oof = build_oof_predictions(features)
+
+    if args.final:
+        models = build_final_models(features, force_refresh=args.force_refresh)
+        # n_estimators is None on a model loaded from disk, so report the tree count the manifest
+        # recorded rather than the attribute.
+        manifest = json.loads(DEFAULT_OOF_MANIFEST_PATH.read_text())
+        for objective in models:
+            n_trees = manifest.get(f"{objective}_avg_best_iteration")
+            print(f"{objective}: {DEFAULT_MODEL_DIR / f'{objective}_model.json'} "
+                  f"({n_trees} trees)")
+        raise SystemExit(0)
+
+    oof = build_oof_predictions(features, force_refresh=args.force_refresh)
     labels = oof["label"].to_numpy()
 
     for variant, prob_col, raw_col in [

@@ -20,13 +20,13 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-SIBLING_REPO = Path.home() / "repos" / "wikidata-inat-checker"
+from src.paths import DATA_DIR, GOLD_DIR, SIBLING_REPO
+
 SOURCE_HTML_PATH = SIBLING_REPO / "output" / "links-ambiguous.html"
 
-GOLD_DIR = Path(__file__).resolve().parent / "gold"
 SAMPLE_HTML_PATH = GOLD_DIR / "links-ambiguous-sample.html"
 FILLED_CSV_PATH = GOLD_DIR / "labeling_filled.csv"
-LOOKUP_SQLITE_PATH = Path(__file__).resolve().parent / "data" / "lookup.sqlite"
+LOOKUP_SQLITE_PATH = DATA_DIR / "lookup.sqlite"
 
 CSV_FIELDNAMES = [
     "wikidata_qid",

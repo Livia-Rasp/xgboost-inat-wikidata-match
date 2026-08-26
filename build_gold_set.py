@@ -12,17 +12,16 @@ from pathlib import Path
 import pandas as pd
 
 from src.candidates import build_lookup_cache, generate_candidates
+from src.paths import DATA_DIR, GOLD_DIR
 from src.wikidata import (
     DEFAULT_GOLD_ATTRIBUTES_PATH,
     build_ancestor_chains,
     build_gold_attribute_pull,
 )
 
-GOLD_DIR = Path(__file__).resolve().parent / "gold"
 FILLED_CSV_PATH = GOLD_DIR / "labeling_filled.csv"
 HARD_CASES_PATH = GOLD_DIR / "hard_cases.csv"
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
 GOLD_ANCESTORS_PATH = DATA_DIR / "gold_wikidata_ancestors.parquet"
 GOLD_ANCESTORS_MANIFEST_PATH = DATA_DIR / "gold_wikidata_ancestors.manifest.json"
 

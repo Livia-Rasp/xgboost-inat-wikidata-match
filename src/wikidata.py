@@ -12,12 +12,14 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import pandas as pd
 import requests
+
+from .paths import DATA_DIR
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
@@ -44,10 +46,8 @@ DEFAULT_TARGET_SIZE = 60_000
 # under the 90s timeout. 2000 keeps the request count down (~30 for 60k) without measurable risk.
 ATTRIBUTE_BATCH_SIZE = 2000
 
-DEFAULT_CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "wikidata_taxa.parquet"
-DEFAULT_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "wikidata_taxa.manifest.json"
-)
+DEFAULT_CACHE_PATH = DATA_DIR / "wikidata_taxa.parquet"
+DEFAULT_MANIFEST_PATH = DATA_DIR / "wikidata_taxa.manifest.json"
 
 COLUMNS = [
     "qid",
@@ -334,7 +334,7 @@ def build_pull_cache(
     manifest_path.write_text(
         json.dumps(
             {
-                "pulled_at": datetime.now(timezone.utc).isoformat(),
+                "pulled_at": datetime.now(UTC).isoformat(),
                 "target_size": target_size,
                 "columns": COLUMNS,
                 "endpoint": SPARQL_ENDPOINT,
@@ -359,10 +359,8 @@ GOLD_COLUMNS = [
     "basionym_names",
 ]
 
-DEFAULT_GOLD_ATTRIBUTES_PATH = Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_attributes.parquet"
-DEFAULT_GOLD_ATTRIBUTES_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_attributes.manifest.json"
-)
+DEFAULT_GOLD_ATTRIBUTES_PATH = DATA_DIR / "gold_wikidata_attributes.parquet"
+DEFAULT_GOLD_ATTRIBUTES_MANIFEST_PATH = DATA_DIR / "gold_wikidata_attributes.manifest.json"
 
 
 def build_gold_attribute_pull(
@@ -396,7 +394,7 @@ def build_gold_attribute_pull(
     manifest_path.write_text(
         json.dumps(
             {
-                "pulled_at": datetime.now(timezone.utc).isoformat(),
+                "pulled_at": datetime.now(UTC).isoformat(),
                 "qid_count": len(qids),
                 "qid_fingerprint": _qid_set_fingerprint(qids),
                 "endpoint": SPARQL_ENDPOINT,
@@ -419,12 +417,8 @@ def build_gold_attribute_pull(
 
 ANCESTORS_BATCH_SIZE = 750
 
-DEFAULT_ANCESTORS_CACHE_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "wikidata_ancestors.parquet"
-)
-DEFAULT_ANCESTORS_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "wikidata_ancestors.manifest.json"
-)
+DEFAULT_ANCESTORS_CACHE_PATH = DATA_DIR / "wikidata_ancestors.parquet"
+DEFAULT_ANCESTORS_MANIFEST_PATH = DATA_DIR / "wikidata_ancestors.manifest.json"
 
 _ANCESTORS_RATE_LIMITER = RateLimiter(0.5)
 
@@ -524,7 +518,7 @@ def build_ancestor_chains(
     manifest_path.write_text(
         json.dumps(
             {
-                "pulled_at": datetime.now(timezone.utc).isoformat(),
+                "pulled_at": datetime.now(UTC).isoformat(),
                 "qid_count": len(qids),
                 "qid_fingerprint": _qid_set_fingerprint(qids),
                 "endpoint": SPARQL_ENDPOINT,
@@ -536,7 +530,36 @@ def build_ancestor_chains(
 
 
 if __name__ == "__main__":
-    result = build_pull_cache()
-    kind = "cache hit, no network" if result.cache_hit else "fresh pull"
-    print(f"{len(result.taxa):,} Wikidata taxa with P3151 ({kind})")
-    print(result.taxa.head(3).to_string())
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--ancestors",
+        action="store_true",
+        help="pull transitive P171 ancestor chains for the items already in the taxa cache "
+        "(milestone 4's input) instead of the attribute pull itself",
+    )
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="re-pull even on a cache hit",
+    )
+    args = parser.parse_args()
+
+    if args.ancestors:
+        # build_features() needs the full transitive chain, and until this flag existed the only
+        # callers were the notebook and build_gold_set.py — so `python -m src.features` on a
+        # clean data/ could not produce its own input.
+        if not DEFAULT_CACHE_PATH.exists():
+            raise SystemExit(
+                f"{DEFAULT_CACHE_PATH} not found — run `python -m src.wikidata` first."
+            )
+        qids = pd.read_parquet(DEFAULT_CACHE_PATH)["qid"].tolist()
+        ancestors = build_ancestor_chains(qids, force_refresh=args.force_refresh)
+        print(f"{len(ancestors):,} ancestor rows for {ancestors['qid'].nunique():,} items")
+        print(ancestors.head(3).to_string())
+    else:
+        result = build_pull_cache(force_refresh=args.force_refresh)
+        kind = "cache hit, no network" if result.cache_hit else "fresh pull"
+        print(f"{len(result.taxa):,} Wikidata taxa with P3151 ({kind})")
+        print(result.taxa.head(3).to_string())

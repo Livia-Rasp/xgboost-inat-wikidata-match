@@ -31,6 +31,7 @@ from src.fixtures import (
     GOLD_INAT_INDEX_FIXTURE,
     OOF_SUMMARY_FIXTURE,
 )
+from src.paths import REPO_ROOT
 from src.train import DEFAULT_OOF_PATH
 from src.wikidata import DEFAULT_GOLD_ATTRIBUTES_PATH
 
@@ -118,7 +119,6 @@ def main() -> None:
     reference = oof_reference(pd.read_parquet(DEFAULT_OOF_PATH))
     OOF_SUMMARY_FIXTURE.write_text(json.dumps(reference, indent=2) + "\n")
 
-    root = Path(__file__).resolve().parent
     for path, rows in [
         (GOLD_INAT_INDEX_FIXTURE, len(inat_index)),
         (GOLD_ATTRIBUTES_FIXTURE, len(attributes)),
@@ -126,7 +126,7 @@ def main() -> None:
         (OOF_SUMMARY_FIXTURE, reference["n_rows"]),
     ]:
         size_kb = path.stat().st_size / 1024
-        print(f"wrote {path.relative_to(root)}  ({rows:,} rows, {size_kb:.0f} KB)")
+        print(f"wrote {path.relative_to(REPO_ROOT)}  ({rows:,} rows, {size_kb:.0f} KB)")
 
 
 if __name__ == "__main__":

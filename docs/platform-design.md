@@ -121,14 +121,18 @@ packaging boundary between them for no current benefit.
 
 Researched August 2026; pins should be re-checked if this sits unbuilt for long.
 
-| Tool | Pin | Why this version, and what matters |
+**Python 3.14 everywhere**, matching the interpreter the committed numbers were produced under.
+The versions below are what `uv lock` actually resolved against it in milestone 13, not what was
+guessed beforehand — two of the guesses were wrong and are marked.
+
+| Tool | Resolved | Why this version, and what matters |
 |---|---|---|
-| Apache Airflow | **3.3.1** | Airflow 3 replaced the webserver with an `api-server` and split the DAG processor into its own service, so any pre-3.0 compose file or tutorial is misleading. Brings first-class **Assets** with event-driven scheduling, DAG versioning, and the Task SDK. Note: if the `api-server` is unavailable or CPU-starved the `dag-processor` hangs on import — fix the api-server first when debugging. |
-| dbt-core | **1.10.x** | dbt-duckdb requires dbt-core ≥ 1.8. dbt-core 2.0 is in beta and DuckDB is one of the *last* adapters on that track (Snowflake/BigQuery/Databricks/Redshift are in preview; Spark and DuckDB in beta). Staying on 1.10 avoids being the person who finds the beta adapter's bugs. |
-| dbt-duckdb | **1.3.x** | Two features carry the design: `materialized='external'` writes a model straight out as parquet/csv/json at a chosen `location`, so dbt can produce the same `data/features.parquet` the Python side already reads; and Python models, where `dbt.ref()` yields a DuckDB Relation and the function may return a Relation, pandas DataFrame or Arrow table. Limits worth knowing: Python functions cannot be imported between models, ephemeral models cannot be referenced from Python models, and a Python model is single-threaded and memory-bound — filter in SQL upstream. |
-| DuckDB | **1.x** | `ATTACH '…/taxa.db' (TYPE sqlite)` reads a SQLite file in place, so the 236 MB iNat index needs no copy or import step. Native string similarity — `jaro_winkler_similarity`, `jaro_similarity`, `levenshtein`, `damerau_levenshtein`, `jaccard`, `hamming` — covers the fuzzy features in pure SQL. Caveat: `jaro_winkler_similarity` is case-sensitive and returns 0 below its `score_cutoff`, so normalise before comparing. |
-| MLflow | **3.x** | `mlflow.xgboost.autolog()` captures params, per-boosting-round metrics, feature importances, model signature and the environment, for both the native and sklearn-style APIs. Use `model_format="json"` for portability across XGBoost versions (`ubj` is faster but less portable). MLflow 3 removed Recipes and several flavors — not used here. |
-| astronomer-cosmos | current | Renders a dbt project as Airflow tasks, one per model, via `DbtTaskGroup` inside an existing DAG (or `DbtDag` for a standalone one), so dbt failures land in the Airflow UI at model granularity with per-model retries, rather than as one opaque `dbt build` task. |
+| Apache Airflow | **3.3.1** | Airflow 3 replaced the webserver with an `api-server` and split the DAG processor into its own service, so any pre-3.0 compose file or tutorial is misleading. Brings first-class **Assets** with event-driven scheduling, DAG versioning, and the Task SDK. Supports 3.10–3.14, and `apache/airflow:3.3.1-python3.14` is published (plus a slim variant). Note: if the `api-server` is unavailable or CPU-starved the `dag-processor` hangs on import — fix the api-server first when debugging. |
+| dbt-core | **1.12.3** | Corrected from an earlier `1.10.x` pin: **3.14 support landed in 1.12.x**, so 1.10 was never an option here. Still 1.x, so the original reason for the pin holds — dbt-core 2.0 is in beta and DuckDB is one of the *last* adapters on that track (Snowflake/BigQuery/Databricks/Redshift in preview; Spark and DuckDB in beta). |
+| dbt-duckdb | **1.11.0** | Also corrected: the adapter's numbering has moved on from the `1.3.x` this doc originally recorded. Two features carry the design: `materialized='external'` writes a model straight out as parquet/csv/json at a chosen `location`, so dbt can produce the same `data/features.parquet` the Python side already reads; and Python models, where `dbt.ref()` yields a DuckDB Relation and the function may return a Relation, pandas DataFrame or Arrow table. Limits worth knowing: Python functions cannot be imported between models, ephemeral models cannot be referenced from Python models, and a Python model is single-threaded and memory-bound — filter in SQL upstream. |
+| DuckDB | **1.5.5** (needs ≥1.5) | 3.14 was enabled in 1.5.0. `ATTACH '…/taxa.db' (TYPE sqlite)` reads a SQLite file in place, so the 236 MB iNat index needs no copy or import step. Native string similarity — `jaro_winkler_similarity`, `jaro_similarity`, `levenshtein`, `damerau_levenshtein`, `jaccard`, `hamming` — covers the fuzzy features in pure SQL. Verified live on 3.14: `jaro_winkler_similarity('prunella','prunela')` = 0.975 and `levenshtein('rubrum','ruber')` = 3, the latter agreeing with what this project already documents. Caveat: `jaro_winkler_similarity` is case-sensitive and returns 0 below its `score_cutoff`, so normalise before comparing. |
+| MLflow | **3.15.2** | `mlflow.xgboost.autolog()` captures params, per-boosting-round metrics, feature importances, model signature and the environment, for both the native and sklearn-style APIs. Use `model_format="json"` for portability across XGBoost versions (`ubj` is faster but less portable). MLflow 3 removed Recipes and several flavors — not used here. |
+| astronomer-cosmos | **1.15.1** | Renders a dbt project as Airflow tasks, one per model, via `DbtTaskGroup` inside an existing DAG (or `DbtDag` for a standalone one), so dbt failures land in the Airflow UI at model granularity with per-model retries, rather than as one opaque `dbt build` task. **Its PyPI classifiers claim support only up to 3.12 and are simply stale** — 1.15.1 installs and imports on 3.14 without complaint. Worth remembering before treating classifiers as evidence again. |
 | Terraform | ≥ 1.1.5, `kreuzwerker/docker` ≥ 3.0 | The provider's source is shorthand for `registry.terraform.io/kreuzwerker/docker`. Resources used: `docker_image`, `docker_container`, `docker_network`, `docker_volume`. |
 | Postgres / MinIO | current stable | MLflow backend store and S3-compatible artifact store. One container each; also what gives Terraform something with real dependency ordering to provision. |
 
@@ -222,25 +226,39 @@ possible fix: delete the manifest rather than improve it.
 
 ## 5. Milestone designs
 
-### 5.1 Milestone 13 — Docker
+### 5.1 Milestone 13 — Docker — **done**
 
-`docker/Dockerfile` (multi-stage; builder compiles wheels, runtime is slim, non-root uid 1000
-matching the sibling repo's convention, `pip install -e .`), `docker/Dockerfile.airflow`
-(`FROM apache/airflow:3.3.1` plus this package, Cosmos, dbt, MLflow — built now so milestone 16
-has nothing to invent), `.dockerignore`, `compose.yaml`, `Makefile`, `requirements.lock.txt`.
+`docker/Dockerfile` (multi-stage; builder runs `uv sync` into `/opt/venv`, runtime is
+`python:3.14-slim`, non-root uid 1000 matching the sibling repo's convention, editable install
+over a source copy), `docker/Dockerfile.airflow` (`FROM apache/airflow:3.3.1-python3.14`),
+`.dockerignore`, `compose.yaml`, `Makefile`, `src/paths.py`, `uv.lock`.
 
-Volumes: `~/.cache/wikidata-inat-checker` bind-mounted **read-only**; a named volume for `data/`,
-shared with the Airflow containers later. The hardcoded module constants
-(`candidates.DEFAULT_TAXA_DB_PATH`, the `data/` roots) become environment-configurable with their
-current values as defaults.
+Locking is **uv**, not pip-tools. The deciding argument was not speed: `pip-compile` resolves
+only for the interpreter it runs under, and this project has three (3.12 and 3.13 in CI, 3.14
+locally and in the image). `uv.lock` is universal and covers all of them in one file.
 
-The `Makefile` gives each stage one target — `ingest features train evaluate gold figures test
-lint` — which is both the human interface and, later, one Airflow task each. Fixes from §4.1,
-§4.2 and §4.4 land here.
+`compose.yaml` has two services and no overlap with milestone 16's Terraform. `pipeline` takes
+**no host mounts at all** — the fixtures, `gold/hard_cases.csv` and the frozen models are baked
+into the image, which is what makes the acceptance check meaningful on a machine that has never
+seen this project. `pipeline-full` adds the read-only `taxa.db` bind and a named volume for
+`data/`. They are separate services rather than one with an optional mount because compose fails
+outright on a missing bind source, and most people running the five-minute path will not have the
+sibling checkout.
 
-*Open at implementation time:* lockfile via `pip-compile` (pip-tools, a plain pip dependency) or
-`uv pip compile` (faster, same output artifact, but a new tool on the machine). Default to
-pip-tools; ask before installing anything.
+The `Makefile` gives each stage one target, which is also the task boundary milestone 16 will
+turn into Airflow tasks. The fixes from §4.1–§4.4 all landed, each with a mutation-checked
+regression test in `tests/test_paths.py`; §4.1 was a genuine bug, not just an inconvenience.
+
+Two things worth carrying forward:
+
+- **The pipeline image does not install dbt or MLflow.** They are declared and locked so that
+  one resolution proves all four platform tools co-exist on one interpreter, and
+  `Dockerfile.airflow` is where that proof runs. Installing them into the pipeline image cost
+  ~600 MB for code no milestone imports yet; 14 and 15 add their own extras.
+- **`MODEL_DIR` is overridable independently of `DATA_DIR`.** Docker seeds an empty named volume
+  from the image's content, so the frozen models survive `pipeline-full` by default — but a
+  volume that already holds a previous run's output is not empty and is never seeded, and a bind
+  mount never is either.
 
 ### 5.2 Milestone 14 — dbt-core over DuckDB
 
@@ -333,7 +351,8 @@ committed `.example`; nothing secret enters the repo.
 
 ## 6. Open questions
 
-1. **Lockfile tool** — pip-tools or `uv` (§5.1).
+1. ~~**Lockfile tool** — pip-tools or `uv`.~~ Settled in milestone 13: uv, for the
+   multiple-interpreter reason in §5.1.
 2. **Whether the retrain waits on the parity report.** Milestone 14 produces the drift measurement
    and milestone 15 acts on it. If any column turns out to differ for a reason that is a *bug*
    rather than a design change, the retrain should wait until it is fixed.

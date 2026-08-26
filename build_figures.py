@@ -31,6 +31,7 @@ import pandas as pd  # noqa: E402
 import xgboost  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
 
+from src.paths import IMG_DIR, REPO_ROOT  # noqa: E402
 from src.train import (  # noqa: E402
     DEFAULT_MODEL_DIR,
     DEFAULT_OOF_PATH,
@@ -42,7 +43,6 @@ from src.train import (  # noqa: E402
     reliability_diagram_data,
 )
 
-IMG_DIR = Path(__file__).resolve().parent / "docs" / "img"
 SHAP_SAMPLE_SIZE = 5000
 SHAP_SAMPLE_SEED = 0
 DPI = 160
@@ -297,7 +297,7 @@ def main() -> None:
             shap_figure(features, mode),
             threshold_bands_figure(oof, mode),
         ):
-            print(f"wrote {path.relative_to(Path(__file__).resolve().parent)}")
+            print(f"wrote {path.relative_to(REPO_ROOT)}")
 
 
 if __name__ == "__main__":

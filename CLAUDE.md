@@ -449,11 +449,80 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   through it. Colours come from the `dataviz` skill's validated palette and were re-validated
   all-pairs in both modes.
 
-- **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
-  `.github/workflows/ci.yml` on Python 3.12 and 3.13 (local is 3.14; the matrix catches skew).
+- **Docker + lockfile (milestone 13, done)** — the pipeline runs with no venv, no Node and
+  nothing on the host. `docker/Dockerfile` (pipeline) and `docker/Dockerfile.airflow` (built but
+  unused until milestone 16), `compose.yaml`, `Makefile`, `.dockerignore`, `uv.lock`.
+  ```sh
+  docker compose run --rm pipeline make gold        # the acceptance check
+  docker compose run --rm pipeline make test lint
+  docker compose run --rm pipeline-full make all    # needs the sibling repo's taxa.db
+  make help                                          # every target
   ```
-  .venv/bin/python -m pytest
-  .venv/bin/ruff check .
+  **Python 3.14 everywhere**, matching the interpreter the committed numbers were produced
+  under, so `make gold` in the image is a like-for-like reproduction rather than a comparison
+  with a caveat. Verified: identical to every decimal, in the container and on the host.
+  `apache/airflow:3.3.1-python3.14` exists; dbt-core needs **1.12.x** for 3.14 (not 1.10) and
+  DuckDB needs **≥1.5**. Cosmos resolved fine at 1.15.1 despite its PyPI classifiers claiming
+  only ≤3.12 — those are stale, which is worth remembering before trusting classifiers again.
+
+  `uv` for locking, installed into `.venv` as an ordinary package (`make lock` / `make sync`).
+  `uv.lock` is universal — one file resolving across 3.12/3.13/3.14 — which matters because
+  `pip-compile` resolves only for the interpreter it runs under, and this project has three.
+  `requires-python` moved to `>=3.12`: 3.10/3.11 were a claim CI never tested. The new `check`
+  extra is pytest+ruff without Jupyter, so the image can verify itself without carrying it.
+  **`scikit-learn` is pinned exactly (==1.9.0)**, not floored — `data/models/*_calibrator.pkl`
+  are pickled `IsotonicRegression` objects and sklearn makes no cross-version pickle promise.
+
+  The `dbt`/`tracking`/`airflow` extras are declared and locked but **not installed in the
+  pipeline image**: they exist so one `uv lock` proves all four platform tools co-resolve on one
+  interpreter before milestones 14-16 depend on it, and `Dockerfile.airflow` is where that proof
+  actually runs. Installing them early cost ~600 MB of image for nothing; each milestone adds its
+  own extra when it needs it.
+
+  Four things had to be fixed to make any of this honest, all of them silent failure modes with
+  a regression test each in `tests/test_paths.py` (both mutation-checked):
+  1. **A real bug**: `_cache_is_valid()` called `taxa_db_path.stat()` unguarded, so a container
+     with a prebuilt `lookup.sqlite` but no sibling `taxa.db` raised `FileNotFoundError` from
+     inside a predicate — and `build_lookup_cache()` is called unconditionally from
+     `features.py` and `candidates.py`. An absent source is not evidence of staleness; it now
+     skips the comparison, keeps the column check, and errors with the mount name when it has
+     neither a cache nor a source.
+  2. `candidates.manifest.json` keyed on raw `st_mtime` floats — the only mtime-based manifest in
+     the repo. Image layers, volume restores and fresh checkouts all rewrite mtimes without
+     touching content. Now content fingerprints (`paths.file_fingerprint()`, sha256 for the same
+     reason `_qid_set_fingerprint` uses it). Measured on the real data: 98s regenerate → 11s
+     cache hit, and `touch`ing both sources no longer invalidates. Files over 64 MB are
+     fingerprinted from size + head + tail (SQLite's change counter is in the first 100 bytes,
+     parquet's metadata footer at the end); the fingerprint string records which mode was used.
+  3. Same manifest **omitted** the `wikidata_parquet` key when that argument was not passed, and
+     since the check is a dict comparison across differing key sets, a manifest written by
+     `python -m src.candidates` could never match a call that left it out — a guaranteed silent
+     rebuild. Both keys are now always present, `None` when absent.
+  4. `os.cpu_count()` sized the worker pool from *host* cores regardless of a `--cpus` quota, and
+     `processes` was reachable only from Python. Now `MATCHER_WORKERS` first — neither
+     `cpu_count()` nor `process_cpu_count()` can see a CFS quota, so the env var is the only
+     thing that actually works in a container.
+
+  `src/paths.py` is the single source of truth for the fifteen path constants that each used to
+  recompute their own (`MATCHER_DATA_DIR`, `MATCHER_TAXA_DB`, `MATCHER_MODEL_DIR`,
+  `MATCHER_SIBLING_REPO`). **`MODEL_DIR` is overridable independently of `DATA_DIR`** on purpose:
+  the frozen models are the one committed thing inside `data/`, and a volume mounted over `data/`
+  would hide them — Docker seeds an *empty* named volume from the image, but a volume that
+  already holds a previous run's output is not empty and never gets seeded.
+
+  Two functions that were pipeline stages with no way to invoke them now have flags:
+  `python -m src.wikidata --ancestors` and `python -m src.train --final`. All three flag-taking
+  modules use `argparse`; `evaluate.py`'s old `"--gold" in sys.argv` accepted `--golf` silently
+  and ran the wrong branch.
+
+- **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
+  `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
+  a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
+  `make gold`'s output for the committed numbers** — a silently-passing `make gold` would not
+  catch a packaging regression, which is the whole thing milestone 13 is defending.
+  ```
+  make test
+  make lint
   ```
   The suite never touches the network or `data/`. `tests/conftest.py` builds a real throwaway
   `taxa.db` from the 26 hand-written rows in `tests/fixtures/taxa_mini.csv` and runs the *real*

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import multiprocessing as mp
-import os
 import sqlite3
 from pathlib import Path
 
@@ -17,9 +16,10 @@ from rapidfuzz import process
 from rapidfuzz.distance import Levenshtein
 
 from .normalize import normalize_name
+from .paths import DATA_DIR, TAXA_DB_PATH, file_fingerprint, worker_count
 
-DEFAULT_TAXA_DB_PATH = Path.home() / ".cache" / "wikidata-inat-checker" / "taxa.db"
-DEFAULT_CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "lookup.sqlite"
+DEFAULT_TAXA_DB_PATH = TAXA_DB_PATH
+DEFAULT_CACHE_PATH = DATA_DIR / "lookup.sqlite"
 
 # Every strategy tag generate_candidates() can attach to a candidate — the fixed source of truth
 # for features.py's one-hot strategy_* columns. Must stay a *fixed* list, not derived from
@@ -55,7 +55,11 @@ def connect_readonly(path: Path) -> sqlite3.Connection:
 def _cache_is_valid(cache_path: Path, taxa_db_path: Path) -> bool:
     if not cache_path.exists():
         return False
-    if cache_path.stat().st_mtime < taxa_db_path.stat().st_mtime:
+    # The source being absent is not evidence of staleness. A container that mounts a prebuilt
+    # lookup.sqlite but not the sibling repo's taxa.db is a supported setup — the five-minute
+    # path never needs the source — and stat()ing it unconditionally raised FileNotFoundError
+    # there instead, from a function whose entire job is to answer a yes/no question.
+    if taxa_db_path.exists() and cache_path.stat().st_mtime < taxa_db_path.stat().st_mtime:
         return False
     try:
         conn = sqlite3.connect(cache_path)
@@ -79,6 +83,15 @@ def build_lookup_cache(
     taxa_db_path if it's missing, older than the source db, or built under an older schema."""
     if _cache_is_valid(cache_path, taxa_db_path):
         return sqlite3.connect(cache_path)
+
+    if not taxa_db_path.exists():
+        raise SystemExit(
+            f"Cannot build the lookup cache: {taxa_db_path} does not exist, and "
+            f"{cache_path} is missing or was built under an older schema.\n"
+            "That index is built by the sibling wikidata-inat-checker repo and only read here — "
+            "see README.md, 'The full path'. Set MATCHER_TAXA_DB if it lives somewhere else "
+            "(in the container it is a read-only bind mount)."
+        )
 
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.unlink(missing_ok=True)
@@ -162,10 +175,8 @@ K = 20
 MAX_EDIT_DISTANCE = 2
 TRIGRAM_LIMIT = 10
 
-DEFAULT_CANDIDATES_PATH = Path(__file__).resolve().parent.parent / "data" / "candidates.parquet"
-DEFAULT_CANDIDATES_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "candidates.manifest.json"
-)
+DEFAULT_CANDIDATES_PATH = DATA_DIR / "candidates.parquet"
+DEFAULT_CANDIDATES_MANIFEST_PATH = DATA_DIR / "candidates.manifest.json"
 
 
 def _exact_candidates(cache: sqlite3.Connection, normalized_name: str) -> list[dict]:
@@ -350,7 +361,23 @@ def generate_candidates(
     ]
 
 
-def _candidates_manifest_matches(manifest_path: Path, source_mtimes: dict) -> bool:
+def _source_fingerprints(lookup_sqlite_path: Path, wikidata_parquet_path: Path | None) -> dict:
+    """Content fingerprints of the two inputs candidates.parquet is derived from.
+
+    Both keys are always present, with None for an input that is absent or was not passed. The
+    previous version omitted the wikidata_parquet key entirely in that case, and since the check
+    is a dict comparison, a manifest written by `python -m src.candidates` (which passes the
+    path) could never match a later call that did not — a guaranteed silent rebuild.
+    """
+    return {
+        "lookup_sqlite": file_fingerprint(lookup_sqlite_path),
+        "wikidata_parquet": (
+            file_fingerprint(wikidata_parquet_path) if wikidata_parquet_path is not None else None
+        ),
+    }
+
+
+def _candidates_manifest_matches(manifest_path: Path, source_fingerprints: dict) -> bool:
     if not manifest_path.exists():
         return False
     try:
@@ -360,7 +387,7 @@ def _candidates_manifest_matches(manifest_path: Path, source_mtimes: dict) -> bo
     return (
         manifest.get("k") == K
         and manifest.get("max_edit_distance") == MAX_EDIT_DISTANCE
-        and manifest.get("source_mtimes") == source_mtimes
+        and manifest.get("source_fingerprints") == source_fingerprints
     )
 
 
@@ -405,25 +432,30 @@ def build_candidates_cache(
     processes: int | None = None,
 ) -> pd.DataFrame:
     """Generate candidates for every row in wikidata_taxa, cached to parquet. Rebuilds whenever
-    K, MAX_EDIT_DISTANCE, or either source file's mtime changes (both are themselves versioned
-    caches, so this transitively picks up e.g. a re-pulled Wikidata parquet or a rebuilt
-    lookup.sqlite).
+    K, MAX_EDIT_DISTANCE, or either source file's *contents* change (both are themselves
+    versioned caches, so this transitively picks up e.g. a re-pulled Wikidata parquet or a
+    rebuilt lookup.sqlite).
+
+    Content fingerprints rather than mtimes: see paths.file_fingerprint(). Rebuilding 590k rows
+    because a file was copied into an image is a slow, silent wrong answer.
 
     This is pure local SQLite/CPU work (no network calls), and each item's generation is
     independent read-only work against lookup.sqlite, so it's parallelized with a process pool —
     one read-only connection per worker (SQLite supports concurrent readers fine)."""
-    source_mtimes = {"lookup_sqlite": lookup_sqlite_path.stat().st_mtime}
-    if wikidata_parquet_path is not None and wikidata_parquet_path.exists():
-        source_mtimes["wikidata_parquet"] = wikidata_parquet_path.stat().st_mtime
+    source_fingerprints = _source_fingerprints(lookup_sqlite_path, wikidata_parquet_path)
 
-    if not force_refresh and candidates_path.exists() and _candidates_manifest_matches(manifest_path, source_mtimes):
+    if (
+        not force_refresh
+        and candidates_path.exists()
+        and _candidates_manifest_matches(manifest_path, source_fingerprints)
+    ):
         return pd.read_parquet(candidates_path)
 
     tasks = [
         (wd.qid, wd.name, wd.synonym_names, wd.basionym_names)
         for wd in wikidata_taxa.itertuples(index=False)
     ]
-    n_workers = processes or min(os.cpu_count() or 4, 16)
+    n_workers = worker_count(processes)
 
     rows: list[dict] = []
     with mp.Pool(n_workers, initializer=_init_worker, initargs=(lookup_sqlite_path,)) as pool:
@@ -435,7 +467,11 @@ def build_candidates_cache(
     df.to_parquet(candidates_path, index=False)
     manifest_path.write_text(
         json.dumps(
-            {"k": K, "max_edit_distance": MAX_EDIT_DISTANCE, "source_mtimes": source_mtimes},
+            {
+                "k": K,
+                "max_edit_distance": MAX_EDIT_DISTANCE,
+                "source_fingerprints": source_fingerprints,
+            },
             indent=2,
         )
     )

@@ -107,7 +107,8 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
 | 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
-| 13–16 | Docker, dbt-core over DuckDB, MLflow, Airflow + Terraform | — | planned |
+| 13 | Container, lockfile, one command per stage | gold numbers reproduce from a clean clone | done |
+| 14–16 | dbt-core over DuckDB, MLflow, Airflow + Terraform | — | planned |
 
 Milestones 1–12 build the model. 13–16 are platform work — a container, a SQL transformation
 layer, experiment tracking and an orchestrated DAG — and are not intended to make the model
@@ -153,6 +154,12 @@ no network.
 ```sh
 git clone https://github.com/Livia-Rasp/xgboost-inat-wikidata-match.git
 cd xgboost-inat-wikidata-match
+docker compose run --rm pipeline make gold
+```
+
+Or without Docker, if you would rather use a local Python 3.12+:
+
+```sh
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m src.evaluate --gold
 ```
@@ -173,21 +180,35 @@ cd wikidata-inat-checker && npm install    # Node.js 26+
 npm run links                              # downloads ~189 MB, builds a ~236 MB index, once
 ```
 
-Then, from this repo, in order:
+Then, from this repo, in order — `make all` runs exactly this sequence:
 
 ```sh
-.venv/bin/python -m src.wikidata     # milestone 2: batched SPARQL, ~30 requests, cached
-.venv/bin/python -m src.candidates   # milestones 1+3: builds the lookup cache, generates candidates
-.venv/bin/python -m src.features     # milestone 4: ancestor pull (~8 min, network) + features
-.venv/bin/python -m src.evaluate     # milestone 5: baseline, per fold and overall
-.venv/bin/python -m src.train        # milestone 6: both objectives, 5-fold OOF, thresholds
-.venv/bin/python build_figures.py    # regenerates docs/img/ from the caches above
+make wikidata      # milestone 2: batched SPARQL, ~30 requests, cached
+make candidates    # milestones 1+3: builds the lookup cache, generates candidates
+make ancestors     # milestone 4's input: transitive P171 chains (~8 min, network)
+make features      # milestone 4: features and GroupKFold splits
+make baseline      # milestone 5: the exact-match rule, per fold and overall
+make train         # milestone 6: both objectives, 5-fold OOF, thresholds
+make final-models  # refits both variants on all folds into data/models/
+make figures       # regenerates docs/img/ from the caches above
 ```
 
-Every step caches to `data/` with a manifest and is a no-op on rerun unless its inputs change.
+In a container, with the sibling repo's index mounted read-only:
+
+```sh
+docker compose run --rm pipeline-full make all
+```
+
+Every step caches to `data/` with a manifest and is a no-op on rerun unless its inputs change —
+keyed on content, so copying a cache between machines or into an image does not invalidate it.
 Total first-run cost is roughly 15 minutes, most of it waiting on Wikidata Query Service. The
 exact flags, cache-invalidation rules, and the failure modes worth knowing about are documented
-per milestone in [`CLAUDE.md`](CLAUDE.md).
+per milestone in [`CLAUDE.md`](CLAUDE.md); `make help` lists every target.
+
+Paths are configurable for the container's sake and default to the layout above:
+`MATCHER_DATA_DIR`, `MATCHER_TAXA_DB`, `MATCHER_MODEL_DIR`, `MATCHER_SIBLING_REPO`, and
+`MATCHER_WORKERS` to cap the candidate-generation pool (neither `os.cpu_count()` nor
+`os.process_cpu_count()` can see a `--cpus` quota).
 
 The gold-set workflow — generate a fresh ambiguous sample, hand-label it, score it — is in
 [`gold/README.md`](gold/README.md).
@@ -195,9 +216,11 @@ The gold-set workflow — generate a fresh ambiguous sample, hand-label it, scor
 ### Tests
 
 ```sh
-.venv/bin/python -m pytest      # runs against committed fixtures, no network
-.venv/bin/ruff check .
+make test    # pytest against committed fixtures, no network
+make lint    # ruff check .
 ```
+
+Or `docker compose run --rm pipeline make test lint` to run them the way CI does.
 
 ## Design
 

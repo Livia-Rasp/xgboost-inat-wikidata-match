@@ -1,0 +1,43 @@
+# Running the pipeline. The platform services (Postgres, MinIO, MLflow, Airflow) are spec §7
+# milestone 16's job and are provisioned by terraform/, not here — no service appears in both
+# files. See docs/platform-design.md §2.1.
+
+services:
+  # The five-minute path and the checks. No host mounts at all: the fixtures, gold/hard_cases.csv
+  # and the frozen models are baked into the image, which is exactly what makes
+  # `docker compose run --rm pipeline make gold` reproducible on a machine that has never seen
+  # this project.
+  pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ghcr.io/livia-rasp/xgboost-inat-wikidata-match:dev
+    init: true
+    # mp.Pool against Docker's default 64 MB /dev/shm is a documented way to hang a worker pool.
+    shm_size: 1gb
+    environment:
+      MATCHER_WORKERS: ${MATCHER_WORKERS:-4}
+    command: ["make", "gold"]
+
+  # The full path. Needs the sibling repo's taxa index, which this project reads and never builds
+  # (README, "The full path"). Split into its own service rather than making the mount optional
+  # on `pipeline`, because compose fails outright when a bind source does not exist and most
+  # people running the five-minute path will not have that checkout.
+  pipeline-full:
+    extends:
+      service: pipeline
+    volumes:
+      - ${MATCHER_INAT_CACHE:-${HOME}/.cache/wikidata-inat-checker}:/opt/inat-cache:ro
+      - matcher_data:/opt/project/data
+    environment:
+      MATCHER_WORKERS: ${MATCHER_WORKERS:-4}
+      MATCHER_TAXA_DB: /opt/inat-cache/taxa.db
+      # data/ is a volume here, which would otherwise hide the frozen models baked into the
+      # image. Docker seeds an empty named volume from the image's content, so this is belt and
+      # braces — but a volume that already holds a previous run's output is not empty, and then
+      # the seeding never happens.
+      MATCHER_MODEL_DIR: /opt/project/data/models
+    command: ["make", "all"]
+
+volumes:
+  matcher_data:

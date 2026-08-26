@@ -17,17 +17,14 @@ import pandas as pd
 import requests
 import xgboost
 
+from .paths import DATA_DIR, GOLD_DIR
 from .wikidata import HEADERS, RateLimiter, _fetch_with_retry, _qid_set_fingerprint
 
 INATURALIST_API = "https://api.inaturalist.org/v1/taxa"
 OBSERVATION_COUNT_BATCH_SIZE = 200
 
-DEFAULT_OBS_COUNTS_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "inat_observation_counts.parquet"
-)
-DEFAULT_OBS_COUNTS_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "inat_observation_counts.manifest.json"
-)
+DEFAULT_OBS_COUNTS_PATH = DATA_DIR / "inat_observation_counts.parquet"
+DEFAULT_OBS_COUNTS_MANIFEST_PATH = DATA_DIR / "inat_observation_counts.manifest.json"
 
 _OBS_COUNT_RATE_LIMITER = RateLimiter(1.0)
 
@@ -177,9 +174,8 @@ def score_baseline(features: pd.DataFrame, predictions: pd.DataFrame) -> pd.Data
 # small-scale inputs (gold/hard_cases.csv + the cached data/gold_wikidata_*.parquet pulls) this
 # section reads. See gold/README.md for the full generate → label → evaluate workflow.
 
-GOLD_DIR = Path(__file__).resolve().parent.parent / "gold"
 GOLD_HARD_CASES_PATH = GOLD_DIR / "hard_cases.csv"
-GOLD_ANCESTORS_PATH = Path(__file__).resolve().parent.parent / "data" / "gold_wikidata_ancestors.parquet"
+GOLD_ANCESTORS_PATH = DATA_DIR / "gold_wikidata_ancestors.parquet"
 
 
 def _load_gold_attributes() -> pd.DataFrame:
@@ -541,9 +537,19 @@ def score_gold_set(features: pd.DataFrame) -> dict:
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    if "--gold" in sys.argv:
+    # argparse rather than `"--gold" in sys.argv`: three modules now take flags, and a
+    # membership test accepts `--golf` silently and runs the wrong branch.
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--gold",
+        action="store_true",
+        help="score the hand-labelled gold set instead of the baseline on the OOF population",
+    )
+    args = parser.parse_args()
+
+    if args.gold:
         features = load_gold_features()
         result = score_gold_set(features)
         reference = load_oof_reference()

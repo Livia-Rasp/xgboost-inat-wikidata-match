@@ -22,6 +22,7 @@ from .labels import (
     build_labels,
 )
 from .normalize import normalize_name
+from .paths import DATA_DIR
 
 N_SPLITS = 5
 RANDOM_STATE = 42
@@ -29,10 +30,8 @@ RANDOM_STATE = 42
 # Standard ranks compared between the WD ancestor chain and the iNat ancestry chain.
 COMPARISON_RANKS = ("kingdom", "family", "order")
 
-DEFAULT_FEATURES_PATH = Path(__file__).resolve().parent.parent / "data" / "features.parquet"
-DEFAULT_FEATURES_MANIFEST_PATH = (
-    Path(__file__).resolve().parent.parent / "data" / "features.manifest.json"
-)
+DEFAULT_FEATURES_PATH = DATA_DIR / "features.parquet"
+DEFAULT_FEATURES_MANIFEST_PATH = DATA_DIR / "features.manifest.json"
 
 
 INAT_INDEX_COLUMNS = ["taxon_id", "name", "rank", "ancestry", "genus", "specific_epithet"]
