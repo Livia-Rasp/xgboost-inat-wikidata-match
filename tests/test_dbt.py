@@ -259,10 +259,16 @@ def test_strategy_tags_var_matches_the_python_tuple():
     assert tuple(project["vars"]["strategy_tags"]) == STRATEGY_TAGS
 
 
-def test_the_dbt_project_directory_is_copied_into_the_image():
-    """docker/Dockerfile has to carry dbt/ or `make features-sql` cannot run in the container."""
-    dockerfile = (REPO_ROOT / "docker" / "Dockerfile").read_text()
-    assert "dbt/ ./dbt/" in dockerfile
+def test_the_dbt_project_ships_alongside_the_makefile():
+    """`make features-sql` needs the project next to the Makefile that invokes it.
+
+    Asserted on the filesystem rather than by grepping docker/Dockerfile, because this suite also
+    runs *inside* the image, where the Dockerfile is not present but the omission it guards
+    against would be — the project directory simply missing.
+    """
+    assert (REPO_ROOT / "Makefile").exists()
+    assert (DBT_DIR / "dbt_project.yml").exists()
+    assert (DBT_DIR / "models" / "marts" / "fct_features.sql").exists()
 
 
 def test_fixture_universe_has_enough_groups_for_groupkfold(pandas_features):

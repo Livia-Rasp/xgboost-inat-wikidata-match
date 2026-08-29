@@ -83,7 +83,7 @@ COPY --chown=matcher:matcher tests/ ./tests/
 COPY --chown=matcher:matcher dbt/ ./dbt/
 COPY --chown=matcher:matcher gold/hard_cases.csv ./gold/
 COPY --chown=matcher:matcher data/models/ ./data/models/
-COPY --chown=matcher:matcher build_figures.py build_fixtures.py build_gold_set.py build_gold_labeling_kit.py ./
+COPY --chown=matcher:matcher build_figures.py build_fixtures.py build_gold_set.py build_gold_labeling_kit.py build_parity_report.py ./
 
 USER matcher
 

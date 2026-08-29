@@ -108,13 +108,16 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
 | 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
 | 13 | Container, lockfile, one command per stage | gold numbers reproduce from a clean clone | done |
-| 14–16 | dbt-core over DuckDB, MLflow, Airflow + Terraform | — | planned |
+| 14 | Feature construction moved into dbt-core over DuckDB | 46 of 52 columns identical, 103 dbt tests green | done |
+| 15–16 | MLflow, Airflow + Terraform | — | planned |
 
 Milestones 1–12 build the model. 13–16 are platform work — a container, a SQL transformation
 layer, experiment tracking and an orchestrated DAG — and are not intended to make the model
 better; see spec §7 for what each one has to demonstrate.
 
-The reasoning behind milestones 6, 7 and 9 is in [`docs/findings.md`](docs/findings.md); the full
+The reasoning behind milestones 6, 7 and 9 is in [`docs/findings.md`](docs/findings.md), along
+with [what moved when the features were rebuilt in SQL](docs/findings.md#9-rebuilding-the-features-in-sql-what-moved-and-why)
+and why each column that differs differs; the full
 per-milestone breakdowns and plots are in
 [`notebooks/01-report.ipynb`](notebooks/01-report.ipynb).
 
@@ -191,6 +194,14 @@ make baseline      # milestone 5: the exact-match rule, per fold and overall
 make train         # milestone 6: both objectives, 5-fold OOF, thresholds
 make final-models  # refits both variants on all folds into data/models/
 make figures       # regenerates docs/img/ from the caches above
+```
+
+Milestone 14 rebuilds the same feature table in SQL, beside the pandas one rather than over it,
+and diffs the two:
+
+```sh
+make features-sql  # dbt build: 15 models, 103 tests -> data/features_dbt.parquet
+make parity        # the column-by-column comparison behind docs/findings.md §9
 ```
 
 In a container, with the sibling repo's index mounted read-only:

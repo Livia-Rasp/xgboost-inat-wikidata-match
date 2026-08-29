@@ -5806,7 +5806,7 @@ wheels = [
 
 [[package]]
 name = "xgboost-inat-wikidata-match"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

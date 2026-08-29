@@ -522,6 +522,20 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   make features-sql   # dbt build --project-dir dbt --profiles-dir dbt
   make parity         # diff the two feature tables, column by column
   ```
+  **Result: 46 of 52 columns identical.** The six that differ are `sim_rank_in_group` (38.25% of
+  rows, every one inside a similarity tie), the three `*_match` columns plus their sum
+  `shared_ancestor_depth` (1.4% of rows, 100% inside items whose P171 chain genuinely holds two
+  ancestors at one rank), and `parent_name_jw` (0.67%, all non-ASCII). Written up in
+  `docs/findings.md` §9 — that section is the milestone's actual deliverable, not the dbt project.
+
+  The substitution §2.2 expected to dominate the drift barely registers: **DuckDB's `levenshtein`
+  agrees with rapidfuzz exactly and `jaro_winkler_similarity` to 5.55e-17 (one ULP) on all 590,671
+  rows.** But **both DuckDB functions count UTF-8 bytes where rapidfuzz counts code points** —
+  `jaro_winkler_similarity('abc','ab×c')` is 0.689 against rapidfuzz's 0.933 — so
+  `levenshtein_ratio`'s denominator uses `strlen` (bytes), not `length` (code points), to keep the
+  units matching. Only `parent_name_jw` is exposed, being the one feature computed on raw rather
+  than normalised names; every normalised name is ASCII because `normalize.py`'s genus/epithet
+  patterns are `[A-Za-z-]`.
   Run from the repo root: dbt does **not** chdir into `--project-dir`, so `data/` in
   `dbt/profiles.yml` and in `fct_features`' `location` resolves against the caller's cwd. Every
   path derives from `MATCHER_DATA_DIR`, so pointing that at a throwaway directory is the whole of
