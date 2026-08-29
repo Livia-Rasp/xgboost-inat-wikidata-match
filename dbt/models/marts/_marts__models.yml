@@ -1,0 +1,114 @@
+version: 2
+
+models:
+  - name: fct_features
+    description: >
+      One row per candidate pair, with the 41 model features plus the label, split and bookkeeping
+      columns. Materialised as data/features_dbt.parquet, alongside — not over — the pandas
+      features.parquet the frozen milestone 6/7 models were trained on.
+    columns:
+      - name: wikidata_qid
+        data_tests: [not_null]
+      - name: inat_taxon_id
+        data_tests: [not_null]
+      - name: label
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [0, 1], quote: false}
+      - name: no_answer_reason
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["has_positive", "synthetic_dropout", "stale_p3151"]
+      - name: fold
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [0, 1, 2, 3, 4], quote: false}
+      - name: family_key
+        data_tests: [not_null]
+
+      # The similarity columns are bounded by construction. A null or an out-of-range value means
+      # a guard was dropped somewhere upstream, and XGBoost would train straight through it.
+      - name: similarity
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: jaro_winkler_full
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: levenshtein_ratio_full
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: genus_jw
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: epithet_jw
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: parent_name_jw
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: shared_ancestor_depth
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 3}
+      - name: sim_rank_in_group
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 1, max_value: 20}
+      - name: sim_margin_to_runner_up
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: -1, max_value: 1}
+      - name: n_candidates
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 1, max_value: 20}
+
+      # rank_level_diff is legitimately null when either side's rank is off the ordinal scale.
+      - name: rank_level_diff
+        data_tests:
+          - between:
+              arguments: {min_value: 0, max_value: 82}
+
+      - name: kingdom_match
+        data_tests: [not_null]
+      - name: family_match
+        data_tests: [not_null]
+      - name: order_match
+        data_tests: [not_null]
+      - name: name_exact_raw
+        data_tests: [not_null]
+      - name: name_exact_norm
+        data_tests: [not_null]
+
+  - name: dim_folds
+    description: One row per Wikidata item — its family grouping key and GroupKFold fold.
+    columns:
+      - name: wikidata_qid
+        data_tests: [unique, not_null]
+      - name: family_key
+        data_tests: [not_null]
+      - name: fold
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [0, 1, 2, 3, 4], quote: false}

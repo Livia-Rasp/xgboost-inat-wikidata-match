@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: stg_candidates
+    description: Candidate pairs from milestone 3. The row identity for everything downstream.
+    columns:
+      - name: wikidata_qid
+        data_tests: [not_null]
+      - name: inat_taxon_id
+        data_tests: [not_null]
+      - name: similarity
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 1}
+      - name: strategies
+        data_tests: [not_null]
+
+  - name: stg_wd_taxa
+    description: Wikidata taxon items carrying P3151, with the columns the features join in.
+    columns:
+      - name: wikidata_qid
+        data_tests: [unique, not_null]
+      # wikidata_name is deliberately *not* not_null: Q2125371 is a real item with no label, and
+      # normalize_name() has a degenerate-input branch precisely for that. A test here would fail
+      # on correct data.
+
+  - name: stg_wd_ancestors
+    description: Transitive P171 pairs with the ancestor's rank resolved to a comparable name.
+    columns:
+      - name: wikidata_qid
+        data_tests: [not_null]
+      - name: ancestor_qid
+        data_tests: [not_null]
+
+  - name: stg_inat_taxa
+    description: The attached SQLite index of active iNat taxa with a parseable name.
+    columns:
+      - name: inat_taxon_id
+        data_tests: [unique, not_null]
+      - name: inat_name
+        data_tests: [not_null]
+      - name: inat_rank
+        data_tests: [not_null]
+
+  - name: stg_rank_names
+    description: WD_RANK_TO_NAME as a table, straight from src/labels.py.
+    columns:
+      - name: rank_qid
+        data_tests: [unique, not_null]
+      - name: rank_name
+        data_tests: [not_null]
+
+  - name: stg_rank_levels
+    description: RANK_LEVEL as a table — the ordinal scale rank_level_diff is measured on.
+    columns:
+      - name: rank_name
+        data_tests: [unique, not_null]
+      - name: rank_level
+        data_tests: [not_null]

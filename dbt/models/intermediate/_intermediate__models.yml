@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: int_name_parts
+    description: >
+      normalize_name() applied to each distinct name string on either side. One row per string,
+      not per candidate row.
+    columns:
+      # Not not_null: Q2125371 is a real Wikidata taxon with no label, so one row here has a null
+      # raw_name and the degenerate parse normalize_name() gives it. fct_features joins with
+      # `is not distinct from` so that row is reached rather than silently missed.
+      - name: raw_name
+        data_tests: [unique]
+      - name: normalized
+        data_tests: [not_null]
+      - name: hybrid
+        data_tests: [not_null]
+      - name: token_count
+        # genus + specific epithet + infraspecific rank + infraspecific epithet is the whole
+        # grammar; a fifth token means the parser kept authorship it should have stopped at.
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 0, max_value: 4}
+
+  - name: int_ancestor_by_rank
+    description: >
+      The Wikidata item's ancestor name at kingdom/family/order, one row per (item, rank), with
+      the same-rank ambiguity resolved by the explicit rule in the model.
+    columns:
+      - name: ancestor_name
+        data_tests: [not_null]
+      - name: rank_name
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: ["kingdom", "family", "order"]}
+
+  - name: int_inat_ancestor_by_rank
+    description: The same, walking the iNat candidate's slash-joined ancestry string.
+    columns:
+      - name: ancestor_name
+        data_tests: [not_null]
+      - name: rank_name
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: ["kingdom", "family", "order"]}
+
+  - name: int_name_collisions
+    description: How many taxa share each raw name string, on each side.
+    columns:
+      - name: side
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: ["inat", "wikidata"]}
+      - name: n_taxa_same_name
+        data_tests: [not_null]
+
+  - name: int_group_stats
+    description: Per-item candidate context — group size, within-group rank, margin to runner-up.
+    columns:
+      - name: n_candidates
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 1, max_value: 20}
+      - name: sim_rank_in_group
+        data_tests:
+          - not_null
+          - between:
+              arguments: {min_value: 1, max_value: 20}
+
+  - name: int_labels
+    description: >
+      P3151 positives and negatives, with spec §3's 15% synthetic dropout applied by the real
+      seeded function rather than a SQL hash.
+    columns:
+      - name: label
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [0, 1], quote: false}
+      - name: no_answer_reason
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["has_positive", "synthetic_dropout", "stale_p3151"]

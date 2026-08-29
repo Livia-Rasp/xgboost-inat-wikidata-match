@@ -1,0 +1,37 @@
+version: 2
+
+sources:
+  # The parquet caches milestones 2-4 produce. dbt reads them in place through read_parquet();
+  # nothing is loaded into the warehouse.
+  - name: caches
+    description: Parquet caches written by src/wikidata.py and src/candidates.py.
+    meta:
+      external_location: "read_parquet('{{ env_var('MATCHER_DATA_DIR', 'data') }}/{name}.parquet')"
+    tables:
+      - name: wikidata_taxa
+        description: One row per Wikidata taxon item carrying P3151 (milestone 2).
+        columns:
+          - name: qid
+            data_tests: [unique, not_null]
+      - name: wikidata_ancestors
+        description: >
+          Transitive wdt:P171+ closure, one row per (item, ancestor) pair. Unordered and with no
+          depth column, which is why int_ancestor_by_rank needs an explicit tie-break rule.
+      - name: candidates
+        description: Up to K=20 candidate iNat taxa per Wikidata item (milestone 3).
+
+  # data/lookup.sqlite, attached read-only in profiles.yml rather than copied. Addressed as an
+  # ordinary catalog/schema, not through meta.external_location — that key quotes its value as a
+  # file path, which is right for parquet and wrong for an attached database.
+  - name: lookup
+    description: The normalised-name index built by candidates.build_lookup_cache() (milestone 1).
+    database: lookup
+    schema: main
+    tables:
+      - name: taxa_normalized
+        description: >
+          Active iNat taxa with a parseable name. Excludes species-or-below rows with no
+          parseable epithet, which is why this is ~1.41M rows rather than the raw dump's count.
+        columns:
+          - name: taxon_id
+            data_tests: [unique, not_null]

@@ -515,6 +515,70 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   modules use `argparse`; `evaluate.py`'s old `"--gold" in sys.argv` accepted `--golf` silently
   and ran the wrong branch.
 
+- **dbt over DuckDB (milestone 14)** — `dbt/` builds the same feature table `src/features.py`
+  builds, in SQL, and writes it to `data/features_dbt.parquet`. 15 models, 103 tests, ~19s over
+  the real 590,671-row frame.
+  ```sh
+  make features-sql   # dbt build --project-dir dbt --profiles-dir dbt
+  make parity         # diff the two feature tables, column by column
+  ```
+  Run from the repo root: dbt does **not** chdir into `--project-dir`, so `data/` in
+  `dbt/profiles.yml` and in `fct_features`' `location` resolves against the caller's cwd. Every
+  path derives from `MATCHER_DATA_DIR`, so pointing that at a throwaway directory is the whole of
+  what `tests/test_dbt.py` does instead of maintaining a second profile that could drift.
+
+  **It writes beside `data/features.parquet`, not over it** — a deliberate deviation from
+  platform-design §5.2, which named the canonical path. The frozen milestone 6/7 models are quoted
+  against the pandas artefact; overwriting it in the milestone that only *measures* the drift
+  would destroy the thing the parity report compares to. Milestone 15 promotes it when it releases
+  the freeze.
+
+  Three more deviations, all in the same direction — keep the drift down to what is worth
+  measuring:
+  - **`normalize.py` is registered as a DuckDB UDF** (`src/dbt_udf.py`, a dbt-duckdb `Plugin`
+    whose `configure_connection` calls `create_function`), not transcribed into `regexp_extract`
+    as §5.2 proposed. It is a token-by-token state machine with `break` semantics, ten of the 41
+    features derive from it, and a transcription would have buried the interesting drift under a
+    tail of parser bugs. Returns a `STRUCT`; the fields must **not** be declared nullable
+    (duckdb#18600 — it creates fine and then fails at call time). `null_handling='special'` so a
+    NULL name reaches Python's degenerate-input branch instead of short-circuiting. Applied in
+    `int_name_parts` to the ~650k *distinct* strings, not once per row per side.
+  - **The 15% synthetic dropout stays the real seeded function** (`int_labels` is a Python model),
+    against §4.3.2's plan to accept a hash-modulo selection. `label` and `no_answer_reason` are
+    therefore identical between the two paths.
+  - **`dim_folds` stays Python**, as §5.2 already intended: the leakage guarantee is the one
+    property that must not move.
+
+  `stg_link_findings` (the checker's `findings.db`) is deferred to milestone 16 — it has no
+  consumer here, and a model that fails when the sibling repo is absent would break `dbt build`
+  in the container.
+
+  **A fourth order-dependency, not in §4.3's list of three:** `sim_rank_in_group` ranks with
+  `.rank(method="first")` (`features.py:208`), so pandas breaks ties on `candidates.parquet`'s row
+  order — which comes out of `imap_unordered` and is not stable across regenerations even on the
+  pandas side. Ties are the common case, not the exception: every exact match scores 1.0.
+  `int_group_stats` uses an explicit rule (similarity desc, then `inat_taxon_id`).
+
+  Things worth knowing before touching the project:
+  - **The attached SQLite index is addressed as a catalog**, `database: lookup` / `schema: main`
+    in `sources.yml` — *not* `meta.external_location`, which quotes its value as a file path.
+    That is right for the parquet sources and produces `Catalog Error: Table with name
+    'lookup.taxa_normalized' does not exist` for an attached database.
+  - **Generic test arguments go under `arguments:`** in dbt 1.12. The old inline form still runs
+    but emits `MissingArgumentsPropertyInGenericTestDeprecation`, once per test.
+  - `between` is a local generic test (`dbt/macros/test_between.sql`) rather than `dbt_utils`:
+    a package would mean `dbt deps` and a network fetch before `dbt build` could run at all,
+    which the five-minute path is built on not needing.
+  - **Two `not_null` tests that looked obvious are wrong on real data.** `Q2125371` is a genuine
+    Wikidata taxon with no label, so `stg_wd_taxa.wikidata_name` and `int_name_parts.raw_name` are
+    both legitimately null, and `fct_features` joins the name parts with `is not distinct from`
+    rather than `=` so that row's parse is reached instead of silently missed.
+  - **`data/features.parquet`'s column order already disagrees with the code that writes it** —
+    the on-disk artefact has the ten `strategy_*` columns alphabetically, `build_features()`
+    emits them in `STRATEGY_TAGS` declaration order. Harmless, because `train.py` selects by name,
+    but it is §4.3.3's positional-`monotone_constraints` hazard showing up for real.
+    `fct_features` follows the code, and `build_parity_report.py` aligns by name.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
@@ -587,6 +651,13 @@ platform milestones (13-16) — tool versions and why, the audit of the existing
 alternatives that were rejected — to `docs/platform-design.md`. This file stays the
 engineering log — long is fine here, not there. The README also declares that the code was written
 with Claude Code as a pair programmer; keep that line, it is the honest framing.
+
+**Versions are the changelog.** Adopted at milestone 14, matching `wikidata-inat-checker` and
+`commons-describe-upload-toolbox`: bump `pyproject.toml`'s `version` on every feature or fix and
+title the commit `vX.Y.Z: <what changed>`. No `CHANGELOG.md`, no tags, no release tooling —
+`git log --grep '^v[0-9]'` is the changelog. A version bump means re-running `uv lock`, since the
+project's own entry in `uv.lock` carries the version and CI's `uv lock --check` job will otherwise
+fail. Commits before `v0.2.0` predate the convention and are left alone.
 
 **Documentation stays current.** Update `README.md` and this file's Commands section in the same
 commit as the code change they describe, not as a follow-up. A milestone isn't done until its
