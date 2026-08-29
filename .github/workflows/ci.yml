@@ -24,7 +24,10 @@ jobs:
           cache: pip
 
       - name: Install
-        run: pip install -e ".[dev]"
+        # dbt is in here so tests/test_dbt.py actually runs rather than skipping itself: it
+        # builds the whole dbt project against the fixture universe, which is the only place
+        # milestone 14's SQL is exercised without the 190 MB of caches CI does not have.
+        run: pip install -e ".[dev,dbt]"
 
       - name: Lint
         run: ruff check .

@@ -18,6 +18,14 @@ data/models/*
 *.parquet
 *.model
 
+# dbt build artefacts (spec §7 milestone 14). The warehouse and the feature parquet it writes are
+# already covered by data/* above; these four live inside the project directory instead.
+# .user.yml is a per-machine anonymous-usage id dbt writes on first run.
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+
 # Gold-set intermediates — regenerable from build_gold_labeling_kit.py, which appends new rows
 # straight onto gold/labeling_filled.csv. gold/hard_cases.csv (the actual deliverable, spec §0)
 # and gold/labeling_filled.csv (your raw answers — small, worth keeping) are NOT excluded.

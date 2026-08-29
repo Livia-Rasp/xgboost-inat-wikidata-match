@@ -1,0 +1,26 @@
+# Checked in, and deliberately not in ~/.dbt: every path here is derived from MATCHER_DATA_DIR,
+# the same environment variable src/paths.py already honours (spec §7 milestone 13). One target is
+# enough — pointing MATCHER_DATA_DIR at a throwaway directory is what tests/test_dbt.py does
+# instead of maintaining a second profile that could drift from this one.
+#
+# Relative paths resolve against the process working directory, which is the repo root for every
+# documented invocation (`make features-sql`).
+
+matcher:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('MATCHER_DATA_DIR', 'data') }}/warehouse.duckdb"
+      threads: 4
+      extensions:
+        - sqlite
+      # The 1.4M-row iNat index stays in SQLite and is read in place — no copy, no import step.
+      attach:
+        - path: "{{ env_var('MATCHER_DATA_DIR', 'data') }}/lookup.sqlite"
+          alias: lookup
+          type: sqlite
+          read_only: true
+      # Registers normalize_name() as a scalar UDF; see src/dbt_udf.py for why.
+      plugins:
+        - module: src.dbt_udf

@@ -1,0 +1,39 @@
+name: matcher
+version: "1.0.0"
+config-version: 2
+
+profile: matcher
+
+# The one-hot strategy columns, in candidates.STRATEGY_TAGS' declaration order — which is also
+# the column order build_features() emits. Duplicated here because SQL cannot import a Python
+# tuple; tests/test_dbt.py asserts the two lists are identical, so the copy cannot drift silently.
+vars:
+  strategy_tags:
+    - exact
+    - genus_epithet_fuzzy
+    - epithet_genus_fuzzy
+    - trigram
+    - synonym_exact
+    - synonym_genus_epithet_fuzzy
+    - synonym_epithet_genus_fuzzy
+    - basionym_exact
+    - basionym_genus_epithet_fuzzy
+    - basionym_epithet_genus_fuzzy
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Staging stays views — they are renames over parquet and DuckDB reads the files directly either
+# way. Intermediate models are tables: int_name_parts calls a Python UDF and int_name_collisions
+# aggregates the full 1.4M-row index, so recomputing them per downstream reference would be the
+# single most expensive mistake available here.
+models:
+  matcher:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table

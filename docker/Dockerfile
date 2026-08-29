@@ -23,21 +23,22 @@ WORKDIR /opt/project
 # Dependencies first, in their own layer: they change when uv.lock does, which is far less often
 # than the source. --no-install-project is what keeps the two separable.
 #
-# `check` gets pytest and ruff so the image can verify itself. dbt and mlflow are deliberately
-# absent: they are declared in pyproject.toml and pinned in uv.lock so the resolution is proven
-# (docker/Dockerfile.airflow is where that proof is exercised), but milestones 14 and 15 are what
-# actually import them, and carrying ~1.5 GB of unused dependencies until then would make every
-# build and pull slower for nothing. Each milestone adds its own extra when it needs it.
+# `check` gets pytest and ruff so the image can verify itself; `dbt` arrived with milestone 14,
+# which is the first thing in the image that imports it (dbt/, and tests/test_dbt.py, which is
+# part of `make test`). mlflow is still deliberately absent — declared in pyproject.toml and
+# pinned in uv.lock so the resolution is proven (docker/Dockerfile.airflow is where that proof is
+# exercised), but nothing here imports it until milestone 15. Each milestone adds its own extra
+# when it needs it, rather than the image carrying all of them from the start.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project --extra check
+    uv sync --locked --no-install-project --extra check --extra dbt
 
 # hatchling reads `readme` and `license` from [project], so the build fails without both files
 # present — they are not optional extras here.
 COPY README.md LICENSE ./
 COPY src/ ./src/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --extra check
+    uv sync --locked --extra check --extra dbt
 
 # ---------------------------------------------------------------------------------------------
 # Runtime
@@ -79,13 +80,15 @@ COPY --from=builder /opt/venv /opt/venv
 COPY --chown=matcher:matcher pyproject.toml uv.lock README.md LICENSE Makefile ./
 COPY --chown=matcher:matcher src/ ./src/
 COPY --chown=matcher:matcher tests/ ./tests/
+COPY --chown=matcher:matcher dbt/ ./dbt/
 COPY --chown=matcher:matcher gold/hard_cases.csv ./gold/
 COPY --chown=matcher:matcher data/models/ ./data/models/
-COPY --chown=matcher:matcher build_figures.py build_fixtures.py build_gold_set.py build_gold_labeling_kit.py ./
+COPY --chown=matcher:matcher build_figures.py build_fixtures.py build_gold_set.py build_gold_labeling_kit.py build_parity_report.py ./
 
 USER matcher
 
-# PYTHON is what the Makefile shells out to; in the image the venv is already on PATH.
-ENV PYTHON=python
+# PYTHON and DBT are what the Makefile shells out to; in the image the venv is already on PATH.
+ENV PYTHON=python \
+    DBT=dbt
 
 CMD ["make", "gold"]

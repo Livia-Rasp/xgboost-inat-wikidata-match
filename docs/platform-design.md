@@ -161,10 +161,11 @@ ancestors cache and will `FileNotFoundError` on a clean `data/`, which means the
 milestone-4 line describes a command that cannot currently produce its own input. Both need CLI
 flags before they can be Airflow tasks.
 
-### 4.3 Three places where the numbers are order- or seed-dependent
+### 4.3 Four places where the numbers are order- or seed-dependent
 
 These decide what "drift" means in §2.2, and each must be handled explicitly in SQL rather than
-discovered afterwards.
+discovered afterwards. The first three came out of the audit; the fourth was found while building
+milestone 14 and is the largest of them.
 
 1. **Ancestor-rank resolution is first-wins on row order.** `_wd_ancestor_names_by_rank()` takes
    the first ancestor it sees at each target rank, and a transitive P171 chain really can contain
@@ -179,6 +180,18 @@ discovered afterwards.
    by index, so reordering the feature list silently changes which features are constrained.
    Anything that regenerates the feature set must preserve column order, and MLflow should log the
    ordered list as a parameter.
+
+   Milestone 14 found this one has *already* happened, harmlessly: `data/features.parquet` on disk
+   carries the ten `strategy_*` columns alphabetically, while `build_features()` emits them in
+   `STRATEGY_TAGS` declaration order. Nothing broke, because `train.py` selects by name — but the
+   artefact and the code that writes it have drifted apart in exactly the way this item warns
+   about, which is a good argument for MLflow logging the ordered list rather than trusting it.
+4. **`sim_rank_in_group` ties break on row order too** (`features.py:208`, `.rank(method="first")`).
+   Not in the original audit, and bigger than the other three: ties are the common case rather than
+   the exception, since every exact-match candidate scores `similarity = 1.0`. The row order it
+   falls back on is `candidates.parquet`'s, which comes out of an `imap_unordered` pool and is
+   therefore not stable across regenerations even on the pandas side. Same treatment as item 1 —
+   an explicit rule (`similarity desc, inat_taxon_id`).
 
 ### 4.4 Packaging hazards
 
@@ -260,42 +273,80 @@ Two things worth carrying forward:
   volume that already holds a previous run's output is not empty and is never seeded, and a bind
   mount never is either.
 
-### 5.2 Milestone 14 — dbt-core over DuckDB
+### 5.2 Milestone 14 — dbt-core over DuckDB — **done**
 
-Warehouse at `data/warehouse.duckdb`. Sources: the iNat taxa index and the checker's `findings.db`
-via `ATTACH … (TYPE sqlite, READ_ONLY)`; the Wikidata taxa, ancestors and candidates parquet
-caches via `read_parquet()`.
+Warehouse at `data/warehouse.duckdb`. Sources: the iNat taxa index via
+`ATTACH … (TYPE sqlite, READ_ONLY)`; the Wikidata taxa, ancestors and candidates parquet caches
+via `read_parquet()`. Every path derives from `MATCHER_DATA_DIR`, so one profile target serves
+both a real run and the fixture-scale build in `tests/test_dbt.py`.
 
 ```
-staging/       stg_inat_taxa   stg_wd_taxa   stg_wd_ancestors
-               stg_candidates  stg_link_findings
-intermediate/  int_name_parts  int_ancestor_by_rank  int_name_collisions
-               int_labels      int_group_stats
-marts/         fct_features (materialized='external' → data/features.parquet)
-               dim_folds
+staging/       stg_inat_taxa   stg_wd_taxa   stg_wd_ancestors  stg_candidates
+               stg_rank_names(.py)  stg_rank_levels(.py)
+intermediate/  int_name_parts  int_ancestor_by_rank  int_inat_ancestor_by_rank
+               int_name_collisions  int_labels(.py)  int_group_stats
+marts/         fct_features (materialized='external' → data/features_dbt.parquet)
+               dim_folds(.py)
 ```
 
-- `int_name_parts` — genus/epithet/infraspecific parsing via `regexp_extract`, mirroring
-  `normalize.py`. Note the known limitation already pinned by a test: ligatures (`æ`/`œ`/`ß`) are
-  not decomposed by NFKD and parse empty. Zero such names exist in the 1.4M-row index; do not
-  "fix" it here.
-- `int_ancestor_by_rank` — the explicit `row_number()` rule from §4.3.1.
+15 models and 103 tests, ~19 seconds over the real 590,671-row frame.
+
+**Four deviations from what this section originally planned**, all pulling the same way: keep the
+measured drift down to the part that is worth measuring, so the parity report reads as an argument
+rather than as noise.
+
+- **The feature table is written beside `data/features.parquet`, not over it.** The frozen
+  milestone 6/7 models are quoted against the pandas artefact, and this is the milestone that only
+  *measures* the difference — overwriting it here would destroy the comparand. §5.3 promotes the
+  dbt path when it releases the freeze.
+- **`normalize.py` is registered as a DuckDB UDF** (`src/dbt_udf.py`, a dbt-duckdb `Plugin` whose
+  `configure_connection` calls `create_function`) rather than transcribed into `regexp_extract`.
+  It is a token-by-token state machine with `break` semantics, not a regex, and ten of the 41
+  features derive from it. A transcription would have buried the deliberate drift of §2.2 under a
+  tail of parser bugs in code nobody wanted to change. The known limitation the transcription plan
+  already flagged — ligatures (`æ`/`œ`/`ß`) are not decomposed by NFKD and parse empty — is
+  preserved for free by using the real function.
+- **The 15% synthetic dropout stays the real seeded function**, as a Python model, against
+  §4.3.2's plan to accept a hash-modulo selection. `label` and `no_answer_reason` come out
+  identical between the two paths, so no downstream metric moves for a reason unrelated to the
+  migration.
+- **`stg_link_findings` is deferred to milestone 16.** It has no consumer here, and a model that
+  fails when the sibling repo is absent would break `dbt build` in the container.
+
+Per-model notes:
+
+- `int_name_parts` — the UDF applied to the ~650k *distinct* name strings across both sides, not
+  once per candidate row per side. It returns a `STRUCT`, whose fields must not be declared
+  nullable (duckdb#18600 creates the function fine and then fails at call time), and
+  `null_handling` is `'special'` so a null name reaches Python's degenerate-input branch.
+- `int_ancestor_by_rank` — the explicit `row_number()` rule from §4.3.1: self-as-own-ancestor
+  first, then lowest QID number. `int_inat_ancestor_by_rank` is its iNat counterpart, ordering by
+  position in the slash-joined `ancestry` string, which *reproduces* the pandas walk rather than
+  replacing it — that side was never row-order-dependent.
 - `int_group_stats` — `n_candidates`, `sim_rank_in_group`, `sim_margin_to_runner_up` as window
-  functions over `wikidata_qid`.
+  functions over `wikidata_qid`, with §4.3.4's explicit tie-break.
 - `dim_folds` — a dbt **Python** model calling `GroupKFold(5, shuffle=True, random_state=42)` on
   `family_key`. Deliberately not reimplemented in SQL: the leakage guarantee is the one property
   that must not move, and there is nothing to gain from moving it.
+- `stg_rank_names` / `stg_rank_levels` — `WD_RANK_TO_NAME` and `RANK_LEVEL` as tables, read from
+  `src/labels.py` rather than copied into `seeds/`. A seed CSV would be a second copy of a mapping
+  the pandas path also uses, and the parity report would then be measuring the copy.
 
 Tests are where dbt earns its inclusion, because these invariants already matter to this project
-and are currently enforced by `print` statements and a single pytest: uniqueness on
-`(wikidata_qid, inat_taxon_id)`, `not_null` across the feature columns, `accepted_values` against
-`STRATEGY_TAGS`, ranges on the similarity columns, plus two singular tests — milestone 4's
-no-QID-in-two-folds leakage check, and milestone 3's ≥97% recall check at `warn` severity.
+and were enforced by `print` statements and a single pytest: the `(wikidata_qid, inat_taxon_id)`
+grain, `not_null` across the feature columns, ranges on the similarity columns, the accepted
+strategy tags, plus three singular tests — milestone 4's no-QID-in-two-folds leakage check,
+milestone 3's ≥97% recall check at `warn` severity, and the grain itself.
+
+Two `not_null` tests that looked obvious turned out to be wrong on real data: `Q2125371` is a
+genuine Wikidata taxon with no label, so `stg_wd_taxa.wikidata_name` and `int_name_parts.raw_name`
+are both legitimately null. `fct_features` joins the name parts with `is not distinct from` so
+that row's parse is reached rather than silently missed.
 
 `build_parity_report.py` (repo root, matching the convention for one-off tooling that drives the
 pipeline) diffs the SQL-built feature table against the pandas one column by column: exact-match
-rate, max absolute delta, row-level disagreement counts. Its output becomes a `findings.md`
-section. Every non-zero delta needs a written cause; §4.3 predicts two of them already.
+rate, max absolute delta, row-level disagreement counts. Its output is `docs/findings.md` §9,
+where every non-zero delta has a written cause.
 
 ### 5.3 Milestone 15 — MLflow
 
@@ -353,9 +404,11 @@ committed `.example`; nothing secret enters the repo.
 
 1. ~~**Lockfile tool** — pip-tools or `uv`.~~ Settled in milestone 13: uv, for the
    multiple-interpreter reason in §5.1.
-2. **Whether the retrain waits on the parity report.** Milestone 14 produces the drift measurement
-   and milestone 15 acts on it. If any column turns out to differ for a reason that is a *bug*
-   rather than a design change, the retrain should wait until it is fixed.
+2. ~~**Whether the retrain waits on the parity report.**~~ Answered by milestone 14: no column
+   differs for a reason that is a bug. Every delta traces to one of the four deviations or
+   order-dependencies named in §4.3 and §5.2, and `docs/findings.md` §9 gives each a cause. The
+   retrain does not have to wait — though §9 also records one *pre-existing* pandas-side bug that
+   milestone 15's retrain is the right moment to fix, since fixing it changes the features.
 3. **Whether the gold labeling kit moves from HTML scraping to the checker's JSON API** (§4.6).
    Cheap, and removes a markup contract both repos currently defend — but it touches the workflow
    that produced milestones 7–9's numbers, so it is not free.

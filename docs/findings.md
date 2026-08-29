@@ -207,3 +207,103 @@ The same reasoning drives spec §3's synthetic abstention dropout: 15% of items 
 label hidden, so the model has to learn that "none of these" is a valid answer. Without it, a
 model trained only on items that have an answer will confidently invent one for items that do
 not.
+
+## 9. Rebuilding the features in SQL: what moved, and why
+
+Spec §7 milestone 14 moves feature construction from pandas into dbt-core over DuckDB. Its
+acceptance check is not "the numbers match" — `docs/platform-design.md` §2.2 accepts drift
+deliberately — but that every column which differs has a written cause. This is that comparison,
+over the full 590,671-row frame. Reproduce it with `make features-sql && make parity`.
+
+**46 of 52 columns are identical**, including the labels, the fold assignment, the family
+grouping key, all ten strategy one-hots, both name-collision counts and
+`sim_margin_to_runner_up`. Six differ.
+
+| column | rows differing | share | max abs delta | cause |
+|---|---:|---:|---:|---|
+| `sim_rank_in_group` | 225,911 | 38.25% | 19 | tie-break rule |
+| `shared_ancestor_depth` | 8,321 | 1.41% | 2 | ancestor tie-break (sum of the three below) |
+| `order_match` | 7,184 | 1.22% | — | ancestor tie-break |
+| `parent_name_jw` | 3,976 | 0.67% | 0.786 | bytes vs code points |
+| `family_match` | 1,185 | 0.20% | — | ancestor tie-break |
+| `kingdom_match` | 9 | 0.00% | — | ancestor tie-break |
+
+### The 38% column is the least interesting one
+
+`sim_rank_in_group` ranks a candidate against the others for the same item. pandas uses
+`.rank(method="first")`, so **ties break on row order** — and ties are the common case, not the
+exception, because every exact-match candidate scores `similarity = 1.0`. The row order it falls
+back on comes out of `candidates.py`'s `imap_unordered` pool, so it is not stable across
+regenerations on the pandas side either. SQL has no implicit row order, so the rule is now
+explicit: highest similarity first, then lowest `inat_taxon_id`.
+
+Every one of the 225,911 differing rows sits inside a group of equally-similar candidates — checked,
+not assumed — and `sim_margin_to_runner_up`, which depends on the values rather than their order,
+is bit-identical. 6,055 of 58,842 groups get a different rank-1 candidate out of it, but in both
+implementations that candidate was picked arbitrarily from a set of identical scores.
+
+This one was not in the audit that preceded the migration. It is now `platform-design.md` §4.3's
+fourth entry, and it is the largest of the four.
+
+### The taxonomic columns move only where the taxonomy is genuinely ambiguous
+
+`kingdom_match` / `family_match` / `order_match` compare the two sides' ancestor *name* at that
+rank. A transitive P171 chain can hold more than one ancestor at the same rank — 10,102 of 58,842
+items do — and pandas resolved that by taking whichever row came first in the parquet. SQL orders
+by lowest QID number instead: the older, more established Wikidata item.
+
+**100% of the differing rows fall inside those 10,102 items**, on all three columns. Not a single
+row moved outside the ambiguous population, which is what makes this a tie-break change rather
+than a bug. 1,277 items are affected in total, and `shared_ancestor_depth` — their sum — moves by
++0.13 on average, so the SQL rule agrees with iNaturalist slightly more often than the pandas one
+did. That is not an argument for it; it is a coincidence worth recording so it is not mistaken for
+one later.
+
+### DuckDB counts bytes, rapidfuzz counts code points
+
+The substitution `platform-design.md` §2.2 expected to be the main source of drift turned out to
+be almost free. On ASCII input the two agree: `levenshtein` exactly, and `jaro_winkler` to a
+maximum absolute difference of **5.55e-17** — one unit in the last place of a 64-bit float, on
+every one of 590,671 rows. Three of the four string-similarity features therefore agree to
+floating-point noise and nothing more.
+
+The fourth does not, and the reason is worth knowing before reaching for these functions again:
+
+```
+jaro_winkler_similarity('abc', 'ab×c')  →  DuckDB 0.689   rapidfuzz 0.933
+levenshtein('Müller', 'Muller')         →  DuckDB 2       rapidfuzz 1
+```
+
+DuckDB's string-similarity functions operate on **UTF-8 bytes**; rapidfuzz operates on code
+points. A two-byte character counts twice, and both the edit distance and the length that
+normalises it come out wrong for the comparison being made.
+
+It reaches exactly one feature. Every *normalised* name is ASCII by construction — `normalize.py`'s
+genus and epithet patterns are `[A-Za-z-]` — so the only feature computed on raw strings,
+`parent_name_jw`, is the only one exposed. All 3,976 disagreements involve a non-ASCII raw name,
+overwhelmingly the hybrid marker `×`. The SQL is left as it is, and the deltas measured, rather
+than working around it: this is precisely the deliberate substitution §2.2 signed up for, and
+milestone 15's retrain is where its cost gets priced.
+
+### What did *not* move, and why that was a choice
+
+`label`, `no_answer_reason`, `family_key` and `fold` are identical. They did not have to be:
+§4.3.2 planned to accept a hash-modulo synthetic dropout, which would have relabelled a different
+15% of groups and moved every downstream metric for a reason unrelated to the migration. Keeping
+the real seeded function (as a dbt Python model) is what leaves the six columns above legible.
+The same reasoning kept `normalize.py` as a DuckDB UDF rather than a `regexp_extract`
+transcription — ten features derive from that parse, and the ten agree exactly.
+
+### One pre-existing bug, faithfully reproduced
+
+Porting the code is a good way to read it. The ten `strategy_*` one-hots are built with
+`strategies.str.contains(tag, regex=False)`, and three tags are substrings of others — `exact` of
+`synonym_exact` and `basionym_exact`, and the same for `genus_epithet_fuzzy` and
+`epithet_genus_fuzzy`. `candidates.py`'s own comment asserts the tags "are chosen not to be
+substrings of each other", which is not true. 735 rows are marked `strategy_exact` on the strength
+of a synonym or basionym match; only 42 of them were literally tagged `exact`.
+
+The SQL reproduces it, deliberately. The frozen models trained on this behaviour, and changing it
+in the milestone whose entire job is to measure drift would have made every number above
+uninterpretable. It is in [`future-work.md`](future-work.md) as a one-line fix to take with
+milestone 15's retrain.

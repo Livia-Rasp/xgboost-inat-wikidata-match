@@ -27,6 +27,12 @@ data/models/*
 # Regenerable, and only ever read from the sibling repo's output.
 gold/links-ambiguous-sample*.html
 
+# dbt build artefacts. The project itself (dbt/models, dbt/macros, dbt/tests) is copied in.
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+
 .env
 .env.*
 *.pem

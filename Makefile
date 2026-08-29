@@ -6,10 +6,11 @@
 
 PYTHON ?= .venv/bin/python
 UV     ?= $(PYTHON) -m uv
+DBT    ?= .venv/bin/dbt
 IMAGE  ?= ghcr.io/livia-rasp/xgboost-inat-wikidata-match
 
-.PHONY: help lock sync test lint wikidata ancestors candidates features baseline train \
-        final-models gold figures fixtures all image image-airflow shell clean-caches
+.PHONY: help lock sync test lint wikidata ancestors candidates features features-sql parity \
+        baseline train final-models gold figures fixtures all image image-airflow shell
 
 help:
 	@grep -E '^[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -43,6 +44,14 @@ candidates:  ## milestones 1+3: build the lookup cache, then generate candidates
 
 features:  ## milestone 4: features and GroupKFold splits
 	$(PYTHON) -m src.features
+
+# Run from the repo root: dbt does not chdir, so `data/` in dbt/profiles.yml and in
+# fct_features' `location` resolves against the caller's working directory, not dbt/.
+features-sql:  ## milestone 14: build the same feature table with dbt, into data/features_dbt.parquet
+	$(DBT) build --project-dir dbt --profiles-dir dbt
+
+parity:  ## milestone 14: diff the dbt feature table against the pandas one, column by column
+	$(PYTHON) build_parity_report.py
 
 baseline:  ## milestone 5: the exact-match baseline, per fold and overall
 	$(PYTHON) -m src.evaluate

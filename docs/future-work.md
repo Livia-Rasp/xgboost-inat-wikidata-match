@@ -64,8 +64,28 @@ just sort by. And on the checker's side, `POST /api/findings/:id/pick` overwrite
 row in place, discarding the rejected candidates — so human decisions there yield positives but
 no per-candidate negatives, and no audit trail of what was rejected.
 
+## Read the checker's findings from dbt (spec §7 milestone 16)
+
+`docs/platform-design.md` §5.2 planned a `stg_link_findings` staging model attaching the sibling
+repo's `findings.db`. Milestone 14 left it out: nothing in the feature pipeline consumes it, and a
+model that fails whenever the sibling repo is absent would break `dbt build` in the container,
+which is exactly the property milestone 13 spent its effort on. Milestone 16's scoring DAG is what
+actually needs those rows, and it can add the model when it does — read-only, per §2.4.
+
 ## Smaller things
 
+- **`strategy_exact` is true for `synonym_exact` and `basionym_exact` rows.** The ten one-hot
+  strategy columns are built with `strategies.str.contains(tag, regex=False)`
+  (`features.py:213-214`), and three of the tags are substrings of others: `exact` of
+  `synonym_exact` / `basionym_exact`, and likewise for `genus_epithet_fuzzy` and
+  `epithet_genus_fuzzy`. `candidates.py`'s own comment claims the tags "are chosen not to be
+  substrings of each other", which is not true. It affects a small number of rows — 735 are marked
+  `strategy_exact` on the strength of a synonym or basionym match, of which only 42 were literally
+  tagged `exact` — but it means three feature columns are quietly conflated with three others.
+  Found while porting the feature build to SQL (milestone 14), and **deliberately reproduced
+  there**: the frozen models trained on this behaviour, so changing it in the milestone that only
+  measures drift would have made the parity report meaningless. Splitting on `|` and testing set
+  membership is the one-line fix; milestone 15's retrain is when to take it.
 - **Rank restriction as an ablation.** Restricting to species-rank items would remove a class of
   genuine ambiguity (a species complex sharing its name with its representative species). That is
   a modelling-stage ablation to measure, not a data-cleaning step to apply — the rank-trivial
