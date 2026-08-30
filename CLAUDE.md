@@ -610,6 +610,49 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     but it is §4.3.3's positional-`monotone_constraints` hazard showing up for real.
     `fct_features` follows the code, and `build_parity_report.py` aligns by name.
 
+- **The platform stack (milestone 15)** — `terraform/` provisions an MLflow tracking server with
+  a Postgres backend store and a MinIO artifact store, through the `kreuzwerker/docker` provider
+  (4.5.0; Terraform ≥1.1.5, applied against 1.16.0). Full write-up in
+  [`docs/platform.md`](docs/platform.md).
+  ```sh
+  cd terraform/envs/local && cp terraform.tfvars.example terraform.tfvars   # change every value
+  make platform-up      # init + apply, prints the export line
+  make platform-plan    # a clean plan after apply is the milestone's acceptance check
+  make platform-down    # destroy, volumes included
+  ```
+  **Terraform, not `compose.yaml`** — brought forward from milestone 16 rather than standing the
+  server up in compose and moving it later, which would have broken the invariant `compose.yaml`
+  states on its first line (no service in both files). Milestone 16 adds only `modules/airflow`.
+  **Postgres because the Model Registry is unsupported on the file store**, and the registry is
+  what replaces the prose freeze.
+
+  Three things worth knowing before touching it:
+  - **The server image is built, not pulled.** `ghcr.io/mlflow/mlflow:v3.15.2` is a bare
+    `pip install --no-cache mlflow` — it ships `sqlalchemy` and `alembic` but **neither
+    `psycopg2` nor `boto3`**, so as published it can reach neither store.
+    `docker/Dockerfile.mlflow` adds exactly those two. Its Python 3.10 is deliberately unrelated
+    to this project's 3.14: client and server speak HTTP, which is also why the known
+    `mlflow server` failure on 3.13/3.14 (mlflow#18868) cannot affect this stack.
+  - **Postgres 18 moved the data directory.** The volume mounts at `/var/lib/postgresql`, *not*
+    `/var/lib/postgresql/data` — since 18 the image keeps data in a major-version-specific
+    subdirectory so `pg_upgrade --link` need not cross a mount boundary, and it refuses to start
+    if it finds data at the old path. It restart-loops, so the symptom is a healthcheck timeout
+    rather than a readable error (docker-library/postgres#1259).
+  - **`--serve-artifacts` does not proxy *downloads*.** With an S3-backed destination the server
+    advertises multipart downloads, so a client that has not been told otherwise asks for a
+    presigned URL and fetches `http://minio:9000` directly — which resolves on the docker network
+    but not from the host, so it hangs rather than fails. Clients need
+    `MLFLOW_ENABLE_PROXY_MULTIPART_DOWNLOAD=false` and `..._UPLOAD=false`. The other fix, making
+    `MLFLOW_S3_ENDPOINT_URL` resolve identically inside and outside the network, ties the
+    configuration to a machine's IP address. Uploads and the registry were fine throughout; it is
+    only the download path.
+
+  Verified by applying it, not by `terraform validate`: three healthy containers, MLflow's 59
+  Alembic-created tables in Postgres, a clean second `plan` (`docker_image`'s `build{}` is keyed
+  on the Dockerfile's own hash, the usual source of a perpetual diff), and a 3.14 client with
+  `boto3` **not installed** round-tripping a model + calibrator as one artifact with bit-identical
+  raw and calibrated predictions over all 2,610 gold rows, bytes landing in MinIO.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

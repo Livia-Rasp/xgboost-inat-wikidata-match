@@ -8,9 +8,11 @@ PYTHON ?= .venv/bin/python
 UV     ?= $(PYTHON) -m uv
 DBT    ?= .venv/bin/dbt
 IMAGE  ?= ghcr.io/livia-rasp/xgboost-inat-wikidata-match
+TF_ENV ?= terraform/envs/local
 
 .PHONY: help lock sync test lint wikidata ancestors candidates features features-sql parity \
-        baseline train final-models gold figures fixtures all image image-airflow shell
+        baseline train final-models gold figures fixtures all image image-airflow shell \
+        platform-up platform-plan platform-down platform-url
 
 help:
 	@grep -E '^[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -84,3 +86,24 @@ image-airflow:  ## Build the Airflow image (unused until milestone 16; proves th
 
 shell:  ## Interactive shell in the pipeline image
 	docker compose run --rm --entrypoint bash pipeline
+
+# -- platform (spec §7 milestone 15; milestone 16 adds Airflow to the same environment) --------
+#
+# Terraform, not compose: compose.yaml runs the pipeline and states the invariant at its first
+# line that no service appears in both files. Needs terraform/envs/local/terraform.tfvars, which
+# is gitignored — copy terraform.tfvars.example and change every value.
+
+platform-up:  ## terraform apply: Postgres + MinIO + the MLflow tracking server
+	terraform -chdir=$(TF_ENV) init -input=false
+	terraform -chdir=$(TF_ENV) apply -auto-approve -input=false
+	@echo
+	@terraform -chdir=$(TF_ENV) output -raw tracking_env; echo
+
+platform-plan:  ## terraform plan; a clean plan after apply is the milestone's acceptance check
+	terraform -chdir=$(TF_ENV) plan -input=false
+
+platform-down:  ## terraform destroy: removes the containers, and the volumes with them
+	terraform -chdir=$(TF_ENV) destroy -auto-approve -input=false
+
+platform-url:  ## Print the export line that points the pipeline at the stack
+	@terraform -chdir=$(TF_ENV) output -raw tracking_env; echo

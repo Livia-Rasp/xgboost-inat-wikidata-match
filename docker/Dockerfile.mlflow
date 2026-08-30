@@ -1,0 +1,19 @@
+# The MLflow tracking server. Built by terraform/modules/mlflow, not by the Makefile — it is
+# infrastructure, not a pipeline stage, and nothing in this repo imports it.
+#
+# The official image is a bare `pip install --no-cache mlflow==$VERSION` with no storage drivers
+# at all: verified against v3.15.2, which ships sqlalchemy 2.0.52 and alembic 1.19.1 but neither
+# psycopg2 nor boto3. It therefore cannot reach the Postgres backend store or the MinIO artifact
+# store as shipped, and these two lines are what make the stack in terraform/ actually stand up.
+#
+# Pinned to the same MLflow version pyproject.toml's `tracking` extra resolves to. The image runs
+# Python 3.10.18, which is deliberately unrelated to this project's 3.14: the client and the
+# server speak HTTP, so their interpreters are decoupled. That is also why the known
+# `mlflow server` failure on 3.13/3.14 (mlflow#18868) cannot affect this stack.
+FROM ghcr.io/mlflow/mlflow:v3.15.2
+
+# psycopg2-binary rather than psycopg2: no build toolchain in this image, and the binary wheel is
+# the documented choice for a container that only ever connects.
+RUN pip install --no-cache-dir psycopg2-binary==2.9.12 boto3==1.43.83
+
+EXPOSE 5000
