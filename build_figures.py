@@ -28,12 +28,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
-import xgboost  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
 
 from src.paths import IMG_DIR, REPO_ROOT  # noqa: E402
+from src.tracking import resolve_model  # noqa: E402
 from src.train import (  # noqa: E402
-    DEFAULT_MODEL_DIR,
     DEFAULT_OOF_PATH,
     FEATURE_COLUMNS,
     _prepare_X,
@@ -167,8 +166,11 @@ def shap_figure(features: pd.DataFrame, mode: str) -> Path:
 
     theme = THEMES[mode]
     _style(theme)
-    model = xgboost.XGBClassifier()
-    model.load_model(DEFAULT_MODEL_DIR / "binary_model.json")
+    # The registry's champion when MLFLOW_TRACKING_URI is set, the committed file otherwise.
+    # shap.TreeExplainer needs a real booster, which is why resolve_model() hands one back rather
+    # than only a pyfunc — and it comes out of the same registered version as its calibrator, so
+    # the figure cannot end up depicting a model the numbers did not come from.
+    model = resolve_model("binary").booster
 
     sample = features.sample(SHAP_SAMPLE_SIZE, random_state=SHAP_SAMPLE_SEED)
     explainer = shap.TreeExplainer(model)

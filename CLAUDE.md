@@ -653,6 +653,52 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   `boto3` **not installed** round-tripping a model + calibrator as one artifact with bit-identical
   raw and calibrated predictions over all 2,610 gold rows, bytes landing in MinIO.
 
+- **Tracking and the registry (milestone 15)** — `src/tracking.py` holds every MLflow call, so
+  `train.py` and `evaluate.py` keep their shape and the instrumentation is strictly additive: not
+  one existing print moved. `src/mlflow_model.py` is the logged artifact.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000   # `make platform-url`
+  .venv/bin/python -m src.train            # logs an OOF run
+  .venv/bin/python -m src.train --final    # logs + registers both variants; THE run for a model
+  .venv/bin/python -m src.evaluate --gold  # resumes that run and attaches the gold numbers
+  ```
+  **Off unless `MLFLOW_TRACKING_URI` is set**, and then `mlflow` is never imported at all — which
+  is what keeps the five-minute path (`pip install -e ".[dev]"`, no mlflow) and CI's offline
+  `make gold` working. `enabled()` tests **truthiness, not membership**: `compose.yaml` passes
+  `${MLFLOW_TRACKING_URI:-}`, so the name is always set and `in os.environ` would call an empty
+  string tracking-on. Set-but-not-installed raises instead of no-opping — silently ignoring an
+  operator who asked for tracking is the worst available outcome.
+
+  - **One artifact holds the booster *and* its calibrator.** `CLAUDE.md`'s milestone 7 entry
+    records a real bug where a frozen model was silently paired with a calibrator refit against
+    different OOF data, and `build_final_models()` still guards the pair with an existence check
+    and no manifest. One registered version holding both makes that unrepresentable.
+    `resolve_model()` pulls both out of the *same* version.
+  - **Logged as models-from-code**, not a CloudPickled instance, so the artifact does not need
+    `src` importable to load. `src/mlflow_model.py` imports nothing from this package on purpose;
+    it takes `objective` and the ordered `feature_columns` through `model_config`, which also
+    means the artifact records the feature order it was trained against — §4.3.3's positional-
+    constraint hazard, closed at the artifact level.
+  - **The bool→int8 cast happens inside the wrapper.** Inferring the signature from
+    `_prepare_X`'s output makes the columns `int32`, and predicting with the natural boolean
+    frame then dies with `Can not safely convert bool to int32`.
+  - **`resolve_model()` replaces three hardcoded constructions** of the same two paths
+    (`train.build_final_models`, `evaluate.score_gold_with_model`, `build_figures.shap_figure`):
+    the registry's champion when a URI is set, `data/models/` otherwise. Verified the swap is
+    inert — gold reproduces every committed decimal, and all six PNGs stay byte-identical.
+  - **Gold metrics land on the run that registered the model**, across a process boundary, via
+    `resolve_model().run_id` off the registry version — not a file in `data/`, which would be an
+    eighth cache manifest.
+  - `client.get_latest_versions()` is deprecated (stages removal); use `search_model_versions()`.
+  - **Deleting an experiment soft-deletes it and blocks reuse of the name** — `set_experiment`
+    then raises. Restore it (`restore_experiment`) rather than picking a new name.
+  - **`tracking = ["mlflow-skinny"]`, not `mlflow`.** The client only logs; the server runs from
+    its own image. Verified rather than assumed: a full log → register → alias → resolve → score
+    cycle against a live server imports none of the 23 packages skinny omits, and the image
+    carries no Flask, SQLAlchemy or boto3 while `make gold` still reproduces every decimal.
+  - `MATCHER_GIT_SHA` is a build arg: `.dockerignore` excludes `.git/`, so `git rev-parse` cannot
+    work in the image and CI passes `github.sha`.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

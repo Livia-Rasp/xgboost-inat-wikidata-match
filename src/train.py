@@ -391,6 +391,71 @@ def build_final_models(
     return models
 
 
+def oof_metrics(oof: pd.DataFrame, objective: str) -> dict:
+    """Every OOF number this project reports, for one objective, under one metric vocabulary.
+
+    Both raw and calibrated top-1/MRR are logged: docs/findings.md §3 exists because they diverge,
+    by 0.03pp at OOF scale and by eleven points on the gold set, and a report that quotes one
+    should be able to show the other. Brier stays calibrated-only — it scores probability quality,
+    which is what calibration is for.
+    """
+    from .tracking import metric_key
+
+    raw_col, prob_col = f"{objective}_raw_score", f"{objective}_calibrated_prob"
+    labels = oof["label"].to_numpy()
+    probs = oof[prob_col].to_numpy()
+
+    top1_raw, mrr_raw = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", raw_col]], raw_col)
+    top1_cal, mrr_cal = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", prob_col]], prob_col)
+    table = precision_at_threshold_table(probs, labels)
+    accept = find_auto_accept_threshold(table)
+    reject = find_reject_threshold(probs, labels)
+
+    metrics = {
+        metric_key("oof", objective, "top1", "raw"): top1_raw,
+        metric_key("oof", objective, "mrr", "raw"): mrr_raw,
+        metric_key("oof", objective, "top1", "calibrated"): top1_cal,
+        metric_key("oof", objective, "mrr", "calibrated"): mrr_cal,
+        metric_key("oof", objective, "brier", "calibrated"): brier_score(probs, labels),
+        metric_key("oof", objective, "reject_threshold"): reject,
+    }
+    if accept is not None:
+        metrics[metric_key("oof", objective, "accept_threshold")] = accept["threshold"]
+        metrics[metric_key("oof", objective, "accept_precision")] = accept["precision"]
+        metrics[metric_key("oof", objective, "accept_coverage")] = accept["coverage"]
+        metrics[metric_key("oof", objective, "accept_n")] = accept["n"]
+    return metrics
+
+
+def _log_final_run(features: pd.DataFrame, manifest: dict) -> None:
+    """Register both variants and attach the OOF metrics that describe them."""
+    from . import tracking
+
+    if not tracking.enabled():
+        return
+    oof = pd.read_parquet(DEFAULT_OOF_PATH)
+    sha, _ = tracking.git_sha()
+    with tracking.run(f"final-{(sha or 'nogit')[:8]}", tags={"stage": "final"}):
+        tracking.log_params(tracking.params_blob())
+        for objective, long_name in tracking.OBJECTIVES.items():
+            tracking.log_metrics(oof_metrics(oof, objective))
+            tracking.log_metrics(
+                {
+                    tracking.metric_key("oof", objective, "avg_best_iteration"): manifest.get(
+                        f"{objective}_avg_best_iteration"
+                    )
+                }
+            )
+            version = tracking.log_and_register(
+                objective,
+                DEFAULT_MODEL_DIR / f"{objective}_model.json",
+                DEFAULT_MODEL_DIR / f"{objective}_calibrator.pkl",
+                input_example=features[FEATURE_COLUMNS].head(3),
+                tags={"objective": long_name},
+            )
+            print(f"  logged to MLflow: {tracking.REGISTERED_MODEL[objective]} v{version}")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -422,6 +487,11 @@ if __name__ == "__main__":
             n_trees = manifest.get(f"{objective}_avg_best_iteration")
             print(f"{objective}: {DEFAULT_MODEL_DIR / f'{objective}_model.json'} "
                   f"({n_trees} trees)")
+
+        # This is the run that carries a model, so it is the one gold metrics resume: the OOF
+        # numbers, the registered versions and (later) the gold-set numbers all describe the same
+        # binaries. A no-op when MLFLOW_TRACKING_URI is unset.
+        _log_final_run(features, manifest)
         raise SystemExit(0)
 
     oof = build_oof_predictions(
@@ -457,3 +527,15 @@ if __name__ == "__main__":
         else:
             print(f"no threshold reaches {AUTO_ACCEPT_PRECISION:.1%} precision")
         print(f"reject threshold: {reject}")
+
+    # An OOF-only run: the experiment record for a training pass that did not refit final models.
+    # `--final` is the run that carries the registered versions and the gold metrics.
+    from . import tracking
+
+    if tracking.enabled():
+        sha, _ = tracking.git_sha()
+        with tracking.run(f"oof-{(sha or 'nogit')[:8]}", tags={"stage": "oof"}):
+            tracking.log_params(tracking.params_blob())
+            for objective in tracking.OBJECTIVES:
+                tracking.log_metrics(oof_metrics(oof, objective))
+        print("\nlogged to MLflow")

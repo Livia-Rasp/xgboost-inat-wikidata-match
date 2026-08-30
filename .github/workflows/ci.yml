@@ -65,6 +65,9 @@ jobs:
           file: docker/Dockerfile
           load: true
           tags: pipeline:ci
+          # .dockerignore excludes .git/, so tracking.git_sha() cannot derive this in the image.
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -112,6 +115,8 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           tags: |
             ghcr.io/livia-rasp/xgboost-inat-wikidata-match:latest
             ghcr.io/livia-rasp/xgboost-inat-wikidata-match:${{ github.sha }}
