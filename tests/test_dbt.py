@@ -176,7 +176,9 @@ def dbt_run(mini_data_dir) -> subprocess.CompletedProcess:
 @pytest.fixture(scope="module")
 def dbt_features(dbt_run, mini_data_dir) -> pd.DataFrame:
     assert dbt_run.returncode == 0, dbt_run.stdout + dbt_run.stderr
-    return pd.read_parquet(mini_data_dir / "features_dbt.parquet")
+    # features.parquet, not features_dbt.parquet: milestone 15 promoted the dbt table to the
+    # canonical path and moved the pandas build to features_pandas.parquet beside it.
+    return pd.read_parquet(mini_data_dir / "features.parquet")
 
 
 @pytest.fixture(scope="module")
@@ -190,6 +192,19 @@ def pandas_features(mini_data_dir, tmp_path_factory) -> pd.DataFrame:
         features_path=out / "features.parquet",
         manifest_path=out / "features.manifest.json",
     )
+
+
+def test_the_feature_table_has_a_deterministic_row_order(pandas_features):
+    """A rebuild must reproduce, or nothing that spans one can be attributed.
+
+    candidates.parquet comes out of an imap_unordered pool and the merges do not preserve a
+    stable order, while TREE_PARAMS's subsample=0.8 selects rows by *position* — so before this
+    was pinned, rebuilding the feature table from byte-identical inputs trained a different model.
+    A fifth order-dependency after platform-design §4.3's four.
+    """
+    key = ["wikidata_qid", "inat_taxon_id"]
+    assert pandas_features[key].equals(pandas_features[key].sort_values(key).reset_index(drop=True))
+    assert not pandas_features.duplicated(key).any(), "the sort is only total if the key is unique"
 
 
 def _aligned(dbt_features: pd.DataFrame, pandas_features: pd.DataFrame):

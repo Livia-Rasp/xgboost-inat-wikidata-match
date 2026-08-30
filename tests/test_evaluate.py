@@ -83,6 +83,35 @@ def test_top1_and_mrr_reward_ranking_the_true_row_first():
     assert mrr == pytest.approx((1.0 + 1 / 3) / 2)  # Q2's true row is third
 
 
+def test_the_observation_count_fixture_covers_every_gold_tie(no_network):
+    """`make gold` is only offline while this holds.
+
+    score_gold_set -> baseline_predict -> build_observation_counts asks for the taxon ids in a
+    gold exact-match tie. If the fixture stops covering them, _observation_counts_fixture()
+    correctly declines to zero-fill (0 is a real tie-break value) and the call goes to
+    api.inaturalist.org — so the five-minute path quietly needs the network again and the
+    committed baseline number starts depending on live counts that drift.
+    """
+    from src.evaluate import _observation_counts_fixture, load_gold_features
+
+    # strategy_exact off the built frame, not re-derived from the `strategies` string. Deriving
+    # it with a substring test is the bug milestone 15 fixed, and it reappeared here and in
+    # build_fixtures.py — three places, all of which then disagreed with what baseline_predict()
+    # actually asks for.
+    features = load_gold_features()
+    exact = features[features["strategy_exact"]]
+    sizes = exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size")
+    tied = sorted(set(exact.loc[sizes > 1, "inat_taxon_id"]))
+
+    assert tied, "no exact-match ties in the gold set — this test would prove nothing"
+    covered = _observation_counts_fixture(tied)
+    assert covered is not None, (
+        f"the fixture does not cover all {len(tied)} tied taxon ids; "
+        "rerun `python build_fixtures.py`"
+    )
+    assert set(covered["taxon_id"]) == set(tied)
+
+
 def test_ranking_uses_the_raw_score_not_the_calibrated_one():
     """A calibrated probability is a step function and can flatten a whole group onto one value,
     which destroys within-group ordering. See evaluate.ranking_score_column()."""

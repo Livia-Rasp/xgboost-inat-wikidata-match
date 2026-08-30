@@ -1,6 +1,6 @@
 [project]
 name = "xgboost-inat-wikidata-match"
-version = "0.3.0"
+version = "0.14.0"
 description = "Record-linkage classifier matching Wikidata taxon items to candidate iNaturalist taxa"
 readme = "README.md"
 # 3.12 is the oldest version CI has ever run; 3.10 and 3.11 were a claim, not a tested promise.
@@ -46,8 +46,15 @@ dbt = [
     "dbt-duckdb",
     "duckdb>=1.5",     # 3.14 enabled in 1.5.0
 ]
+# The client only ever logs; the tracking server runs from its own image (terraform/modules/
+# mlflow), so nothing here needs the full package. mlflow-skinny ships byte-identical
+# mlflow/xgboost, mlflow/pyfunc and mlflow/models plus the registry client, and the fat build's
+# extra weight is either server-only (Flask, gunicorn, graphene, alembic, waitress, huey) or
+# already a dependency of this project (numpy, pandas, pyarrow, scikit-learn, scipy, matplotlib).
+# Verified rather than assumed: a full log -> register -> alias -> resolve -> score cycle against
+# a live server imports none of the packages skinny omits.
 tracking = [
-    "mlflow>=3.0",
+    "mlflow-skinny>=3.15,<4",
 ]
 airflow = [
     "apache-airflow==3.3.1",

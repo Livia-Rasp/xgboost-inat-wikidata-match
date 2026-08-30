@@ -26,6 +26,13 @@ DEFAULT_CACHE_PATH = DATA_DIR / "lookup.sqlite"
 # whatever tags happen to appear in a given candidate set: a small subset (e.g. a partial gold
 # sample) can easily go a whole run without ever hitting synonym/basionym matches, and deriving
 # columns from what's present would silently produce fewer columns than FEATURE_COLUMNS expects.
+#
+# Three of these ARE substrings of others — `exact` of `synonym_exact` and `basionym_exact`, and
+# likewise for the two fuzzy pairs. An earlier version of this comment claimed the opposite, and
+# features.py tested membership with `str.contains`, which conflated all three pairs: 735 rows
+# were marked strategy_exact on the strength of a synonym or basionym match, of which only 42
+# were literally tagged `exact`. Both paths now split on '|' and test set membership, so the
+# tags are free to overlap — but anything else reading `strategies` must do the same.
 STRATEGY_TAGS = (
     "exact", "genus_epithet_fuzzy", "epithet_genus_fuzzy", "trigram",
     "synonym_exact", "synonym_genus_epithet_fuzzy", "synonym_epithet_genus_fuzzy",

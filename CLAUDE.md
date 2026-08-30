@@ -91,7 +91,14 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   .venv/bin/python -m src.features
   ```
   First run: ~8 min (ancestor pull, network, one-time) + <1 min (everything else, local).
-  Reruns are a cache hit unless the upstream caches' row counts change or `N_SPLITS` changes.
+  Reruns are a cache hit unless `N_SPLITS` changes, or any of the four inputs changes — keyed on
+  `paths.file_fingerprint()` content hashes (`_features_source_fingerprints()`,
+  `FEATURE_SOURCE_NAMES`), not on the row counts it used to compare. Row counts cannot see a
+  change in feature *values*: rebuilding the same 590,671 rows with different numbers in them
+  leaves every count identical, so the cache reported a hit and handed back the previous frame.
+  Every key is always present, `None` for a source whose path was not passed — milestone 13's
+  lesson (a sometimes-absent key can never match a dict comparison), applied to the second
+  manifest. `source_paths=` is how a caller opts in; `python -m src.features` passes all four.
 
 - **Baseline (milestone 5)** — `src/evaluate.py`: the honest exact-match rule (spec §6), tie-
   broken by real iNat observation count. Spec's own wording implies sourcing that offline from
@@ -134,6 +141,16 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   silently retrain. (Both of these were real bugs caught here during development — worth keeping
   the guardrails, not just the fix, since the failure mode is silent either way: wrong-but-not-
   crashing results, not an exception.)
+  `shape_key` is built by `oof_shape_key(features, features_path)` and carries a
+  `features_fingerprint` — a third instance of the same silent failure. `n_rows`,
+  `feature_columns`, `n_folds`, `tree_params` and `monotone_up` are all identical between two
+  feature tables of the same shape holding different values, which is precisely what milestone
+  15's retrain produces, so without the fingerprint the previous model's predictions come back as
+  if they were the new ones. `None` when no path is passed, so the subset match still hits
+  against a manifest written before the key existed — an absent path is not evidence of change,
+  the rule `_cache_is_valid()` learned in milestone 13. Note a parquet byte-fingerprint also
+  moves on a column reorder or a compression change, neither of which affects the model: that is
+  a wasted rebuild, never a false hit, which is the right direction to fail in.
   ```
   .venv/bin/python -m src.train
   ```
@@ -593,6 +610,235 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     but it is §4.3.3's positional-`monotone_constraints` hazard showing up for real.
     `fct_features` follows the code, and `build_parity_report.py` aligns by name.
 
+- **The platform stack (milestone 15)** — `terraform/` provisions an MLflow tracking server with
+  a Postgres backend store and a MinIO artifact store, through the `kreuzwerker/docker` provider
+  (4.5.0; Terraform ≥1.1.5, applied against 1.16.0). Full write-up in
+  [`docs/platform.md`](docs/platform.md).
+  ```sh
+  cd terraform/envs/local && cp terraform.tfvars.example terraform.tfvars   # change every value
+  make platform-up      # init + apply, prints the export line
+  make platform-plan    # a clean plan after apply is the milestone's acceptance check
+  make platform-down    # destroy, volumes included
+  ```
+  **Terraform, not `compose.yaml`** — brought forward from milestone 16 rather than standing the
+  server up in compose and moving it later, which would have broken the invariant `compose.yaml`
+  states on its first line (no service in both files). Milestone 16 adds only `modules/airflow`.
+  **Postgres because the Model Registry is unsupported on the file store**, and the registry is
+  what replaces the prose freeze.
+
+  Three things worth knowing before touching it:
+  - **The server image is built, not pulled.** `ghcr.io/mlflow/mlflow:v3.15.2` is a bare
+    `pip install --no-cache mlflow` — it ships `sqlalchemy` and `alembic` but **neither
+    `psycopg2` nor `boto3`**, so as published it can reach neither store.
+    `docker/Dockerfile.mlflow` adds exactly those two. Its Python 3.10 is deliberately unrelated
+    to this project's 3.14: client and server speak HTTP, which is also why the known
+    `mlflow server` failure on 3.13/3.14 (mlflow#18868) cannot affect this stack.
+  - **Postgres 18 moved the data directory.** The volume mounts at `/var/lib/postgresql`, *not*
+    `/var/lib/postgresql/data` — since 18 the image keeps data in a major-version-specific
+    subdirectory so `pg_upgrade --link` need not cross a mount boundary, and it refuses to start
+    if it finds data at the old path. It restart-loops, so the symptom is a healthcheck timeout
+    rather than a readable error (docker-library/postgres#1259).
+  - **`--serve-artifacts` does not proxy *downloads*.** With an S3-backed destination the server
+    advertises multipart downloads, so a client that has not been told otherwise asks for a
+    presigned URL and fetches `http://minio:9000` directly — which resolves on the docker network
+    but not from the host, so it hangs rather than fails. Clients need
+    `MLFLOW_ENABLE_PROXY_MULTIPART_DOWNLOAD=false` and `..._UPLOAD=false`. The other fix, making
+    `MLFLOW_S3_ENDPOINT_URL` resolve identically inside and outside the network, ties the
+    configuration to a machine's IP address. Uploads and the registry were fine throughout; it is
+    only the download path.
+
+  Verified by applying it, not by `terraform validate`: three healthy containers, MLflow's 59
+  Alembic-created tables in Postgres, a clean second `plan` (`docker_image`'s `build{}` is keyed
+  on the Dockerfile's own hash, the usual source of a perpetual diff), and a 3.14 client with
+  `boto3` **not installed** round-tripping a model + calibrator as one artifact with bit-identical
+  raw and calibrated predictions over all 2,610 gold rows, bytes landing in MinIO.
+
+- **Tracking and the registry (milestone 15)** — `src/tracking.py` holds every MLflow call, so
+  `train.py` and `evaluate.py` keep their shape and the instrumentation is strictly additive: not
+  one existing print moved. `src/mlflow_model.py` is the logged artifact.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000   # `make platform-url`
+  .venv/bin/python -m src.train            # logs an OOF run
+  .venv/bin/python -m src.train --final    # logs + registers both variants; THE run for a model
+  .venv/bin/python -m src.evaluate --gold  # resumes that run and attaches the gold numbers
+  ```
+  **Off unless `MLFLOW_TRACKING_URI` is set**, and then `mlflow` is never imported at all — which
+  is what keeps the five-minute path (`pip install -e ".[dev]"`, no mlflow) and CI's offline
+  `make gold` working. `enabled()` tests **truthiness, not membership**: `compose.yaml` passes
+  `${MLFLOW_TRACKING_URI:-}`, so the name is always set and `in os.environ` would call an empty
+  string tracking-on. Set-but-not-installed raises instead of no-opping — silently ignoring an
+  operator who asked for tracking is the worst available outcome.
+
+  - **One artifact holds the booster *and* its calibrator.** `CLAUDE.md`'s milestone 7 entry
+    records a real bug where a frozen model was silently paired with a calibrator refit against
+    different OOF data, and `build_final_models()` still guards the pair with an existence check
+    and no manifest. One registered version holding both makes that unrepresentable.
+    `resolve_model()` pulls both out of the *same* version.
+  - **Logged as models-from-code**, not a CloudPickled instance, so the artifact does not need
+    `src` importable to load. `src/mlflow_model.py` imports nothing from this package on purpose;
+    it takes `objective` and the ordered `feature_columns` through `model_config`, which also
+    means the artifact records the feature order it was trained against — §4.3.3's positional-
+    constraint hazard, closed at the artifact level.
+  - **The bool→int8 cast happens inside the wrapper.** Inferring the signature from
+    `_prepare_X`'s output makes the columns `int32`, and predicting with the natural boolean
+    frame then dies with `Can not safely convert bool to int32`.
+  - **`resolve_model()` replaces three hardcoded constructions** of the same two paths
+    (`train.build_final_models`, `evaluate.score_gold_with_model`, `build_figures.shap_figure`):
+    the registry's champion when a URI is set, `data/models/` otherwise. Verified the swap is
+    inert — gold reproduces every committed decimal, and all six PNGs stay byte-identical.
+  - **Gold metrics land on the run that registered the model**, across a process boundary, via
+    `resolve_model().run_id` off the registry version — not a file in `data/`, which would be an
+    eighth cache manifest.
+  - `client.get_latest_versions()` is deprecated (stages removal); use `search_model_versions()`.
+  - **Deleting an experiment soft-deletes it and blocks reuse of the name** — `set_experiment`
+    then raises. Restore it (`restore_experiment`) rather than picking a new name.
+  - **`tracking = ["mlflow-skinny"]`, not `mlflow`.** The client only logs; the server runs from
+    its own image. Verified rather than assumed: a full log → register → alias → resolve → score
+    cycle against a live server imports none of the 23 packages skinny omits, and the image
+    carries no Flask, SQLAlchemy or boto3 while `make gold` still reproduces every decimal.
+  - `MATCHER_GIT_SHA` is a build arg: `.dockerignore` excludes `.git/`, so `git rev-parse` cannot
+    work in the image and CI passes `github.sha`.
+
+- **Backfilling the frozen models as registry v1 (milestone 15)** — `backfill_v1.py` at the repo
+  root (the convention for one-off tooling that drives the pipeline). Runs once, needs the stack.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python backfill_v1.py
+  ```
+  After it, `models:/inat-match-binary@champion` resolves to the exact binaries every published
+  number is quoted against — the mechanism that replaces the prose freeze. Verified: the alias
+  round-trips and scores identically, and all nine published gold numbers (README's results
+  table, findings §1/§6, the recall ceiling) resolve to a logged metric on run
+  `v1-backfill-3e59a13`, which is spec §7 milestone 15's own acceptance check.
+
+  **Metrics are recomputed, never transcribed** — copying numbers out of README.md would record
+  what the docs say, not what the models do. The two families are recomputed differently and the
+  run is tagged with the difference rather than smoothing it over:
+  - **Gold metrics** come from scoring these exact binaries; fully reproducible, and CI proves it.
+  - **OOF metrics** are a *fresh recompute of the same configuration in the current environment*
+    (`oof_metrics_source=recomputed`), because the frozen ones are not reproducible — see below.
+    Written to `data/oof_predictions.v1_recompute.parquet`, **not** over the frozen cache: gold
+    scoring reads that file for its thresholds (`load_oof_reference`), so overwriting it would
+    move `gold_band_comparison`/`gold_threshold_check` in the slice that only records numbers.
+
+  `3e59a13` is the commit whose tree holds the model bytes — verified with `git hash-object`, not
+  inferred from file dates — and is logged as the run's `git_sha` param, separately from the SHA
+  the backfill itself ran at.
+
+  **Two independent reasons a retrain does not reproduce the committed OOF**, both measured here
+  and both mattering for anything that compares model versions:
+  1. **Environment drift.** `data/models/*` are dated 2026-08-23; `.venv` was rebuilt 2026-08-29
+     for milestones 13/14. Feeding the *same* `features.parquet` through the current environment
+     moves every one of 590,671 raw scores and `binary_avg_best_iteration` 882 → 841. It is **not**
+     thread count: `n_jobs` ∈ {1,4,8,20} give bit-identical fits, which quietly contradicts
+     `docker/Dockerfile`'s stated rationale for pinning `OMP_NUM_THREADS=4` (harmless, and worth
+     keeping to bound container CPU, but the comment is wrong).
+  2. **`features.parquet`'s row order is not stable across rebuilds** — a fifth order-dependency,
+     beyond the four in platform-design §4.3. Rebuilding from byte-identical inputs yields the
+     same rows in a different order, and `TREE_PARAMS`'s `subsample=0.8` selects rows by
+     position, so the model changes. Verified: two OOF runs over the *same* file are bit-identical,
+     two over differently-ordered copies of the same values are not.
+
+  Aggregate metrics survive both (0.9913 vs the published 99.1%), which is why this hid: only the
+  row-level scores and `best_iteration` move.
+
+- **The ladder (milestone 15)** — `run_ladder.py --rung vN` trains one rung, refits into
+  `data/ladder/vN/`, scores the gold set with *those* models and registers a version. Models never
+  go over `data/models/`; the committed export stays the champion's until promotion, so the
+  five-minute path and CI keep reproducing numbers the README states. A rung never moves the
+  champion alias — promotion applies the pre-registered rule once every rung has run.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python run_ladder.py --rung v3
+  ```
+  **v2 measures the noise floor** — it changes no feature definition, only the order rows are
+  written in, so its delta is what a pure `subsample` reshuffle is worth. It is not small: one
+  full gold item of `rank:map`'s top-1 (0.9783 → 0.9870) and 1.25 points of band precision. Two
+  published conclusions are qualified by it, and both should be read alongside the floor:
+  `findings.md` §6 picked `binary:logistic` on what README's Limitations calls "a two-item
+  difference", i.e. about twice the noise; and §1's 98.2% band precision moves ~1pp on row order,
+  with the band's membership moving too (167 → 164 → 180 rows across v1/v2/v3).
+  `binary:logistic`'s gold top-1 is unmoved at 0.9870 across all three rungs, and OOF is stable
+  to ~0.05pp because 590k rows average the reshuffle out. It is the 263-item gold set where it
+  bites.
+
+  **v3 promoted the dbt table to `data/features.parquet`** and moved the pandas build to
+  `features_pandas.parquet`, which is now the parity comparand (`build_parity_report.py` inverted;
+  `make all` gained `features-sql` and `parity`). The promotion required aligning three tie-breaks
+  first, because `evaluate.load_gold_features()` always builds gold features with the **pandas**
+  path — training on SQL features while scoring on pandas ones would have skewed every gold number
+  on 38% of rows and been misread as the retrain's doing:
+  - `sim_rank_in_group` ties now break on `inat_taxon_id`, matching `int_group_stats`.
+  - ancestor-rank ties now take the lowest QID number, matching `int_ancestor_by_rank`.
+  - `parent_name_jw` uses a **rapidfuzz UDF** (`dbt_udf.jaro_winkler_codepoints`) instead of
+    DuckDB's `jaro_winkler_similarity`, which counts UTF-8 bytes where rapidfuzz counts code
+    points. Only this feature was exposed, being the one computed on raw rather than normalised
+    names, and every normalised name is ASCII.
+
+  `fct_features` also gained `order by wikidata_qid, inat_taxon_id`: SQL guarantees no order
+  without one, and making an unordered table canonical would have reintroduced exactly the
+  irreproducibility v2 had just fixed.
+
+  **Result: 52 of 52 columns now agree**, up from milestone 14's 46, and the two paths differ only
+  by ~5.55e-17 on three Jaro-Winkler columns over normalised ASCII names — one ULP, well inside
+  the parity tolerance. `docs/findings.md` §9's table describes the milestone-14 state and is
+  dated rather than rewritten.
+
+  **A code change to a feature definition does not invalidate `features.manifest.json`** — it
+  fingerprints this stage's *inputs*, not the code that reads them, so editing `build_features()`
+  leaves the cache looking valid and `python -m src.features` silently returns the old table.
+  Caught here for real: the first parity check after the alignment showed no change at all.
+  `--force-refresh` is the escape, and is required after any feature-definition edit.
+
+- **Promotion and the regenerated report (milestone 15, done)** — the champion is **ladder rung
+  v4**, exported to `data/models/` so the committed copy and the alias cannot drift, with `data/
+  oof_predictions.parquet` promoted alongside it so the thresholds belong to the same model.
+  `docs/findings.md` §10 is the milestone's deliverable and carries the full five-rung table, the
+  pre-registered rule and the two places it produced an uncomfortable answer.
+
+  Two of those are worth knowing before reading any number here:
+  - **v5 was ineligible by 0.006pp.** It had the best gold top-1 and MRR of any rung and regressed
+    OOF top-1 by 0.106pp against a pre-registered gate of 0.100pp. The gate was not moved. Its
+    *mechanism* fix was kept (`MONOTONE_DOWN` exists, `monotone_constraints_tuple()` emits `-1`)
+    because that was a real bug; only the constraint set is unadopted, so `MONOTONE_DOWN` is empty.
+  - **The rule selected v3, which was not a coherent answer** — rungs are cumulative code states,
+    so promoting v3 meant reverting v4's correctness fix on a 0.0005 Brier difference. v4 was
+    promoted as the latest eligible rung, and that is recorded in §10 as a deviation rather than
+    presented as the rule's output.
+
+  **`rank:map` is now the reported default**, replacing `binary:logistic`. Gold top-1 is exactly
+  tied (98.26%, four misses each, three of them the same items); the rule's Brier tie-break picks
+  `rank`, but the real argument is §2: **`rank:map`'s reject threshold survives the population
+  change and `binary:logistic`'s does not** — 5 hidden true matches against 98 of 263. §6's old
+  decisive claim (`binary` "the only variant clearing the auto-accept bar") no longer reproduces
+  in the current environment and has been retired.
+
+  Regenerated: README's results table, headline, label-noise section, Limitations and milestone
+  table; `findings.md` §§1, 2, 3, 5, 6 and the new §10; §9 **dated rather than rewritten**, since a
+  parity report retro-fitted to its own fix records nothing; the six PNGs; the five fixtures; and
+  CI's grep assertions. Verified with `docker run --rm --network none` — all five greps pass.
+
+  **The notebook was regenerated by splicing, never by re-executing.** `nbconvert --execute` on
+  this file rewrites milestone 1's narrative against live external state, which has already
+  happened once. The procedure that worked, and the two traps in it:
+  - Build a throwaway notebook from cells 47-81 only, run it with `nbclient` (cwd `notebooks/`,
+    since cell 48 does `sys.path.insert(0, Path.cwd().parent)`), and write back **only**
+    `outputs` and `execution_count`. Cells 47-64 and 65-81 are run as **separate kernels**,
+    matching how the file was originally produced — each restarts at `execution_count` 1.
+  - **`nbformat.write` normalises on save.** nbformat 4.5 requires a per-cell `id` and this file
+    only had them on 17 of 82 cells, so saving through nbformat silently added the other 65 —
+    including 47 in the frozen range. Rebuild from `git show HEAD:` instead and serialise with
+    `json.dumps(nb, indent=1, sort_keys=False, ensure_ascii=False) + "\n"`, which reproduces the
+    committed bytes exactly (verified by round-trip before writing).
+  - `Read` cannot open this notebook (29.5k tokens, over the limit even with `offset`/`limit`), so
+    `NotebookEdit` is unusable on it. Author replacement markdown as files and assign them **by
+    cell id** — index-based assignment, with no pattern that can silently match nothing.
+  - The expensive half is prose, not machinery: ten markdown cells quote numbers in hand-written
+    narrative and each was re-read against its own new output.
+
+  Verify with: cells 0-46 byte-identical to HEAD **including `id` fields**, no code cell's source
+  changed, and a grep for the superseded figures.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
@@ -632,6 +878,17 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   real caches and announce which copy they used. Verified bit-for-bit: all 41 feature columns
   identical between the fixture path and the full path, and the printed metrics match to every
   decimal.
+
+  **`make gold` was not actually offline until milestone 15, and two places claimed it was.**
+  `score_gold_set` → `baseline_predict` → `build_observation_counts` asks the iNat API for the
+  480 taxon ids involved in a gold exact-match tie, because `data/inat_observation_counts.parquet`
+  is gitignored and `docker/Dockerfile` copies only `data/models/`. So the committed baseline
+  number `0.209125` silently depended on **live** observation counts, which drift — CI could have
+  failed without a commit. Fixed with `tests/fixtures/gold_observation_counts.csv.gz` (480 rows,
+  2 KB) and `evaluate._observation_counts_fixture()`, which is used **only when it covers every
+  id asked for**: a partial fixture would zero-fill the rest, and 0 is a real tie-break value, not
+  an absence. CI now runs the acceptance check with **`--network none`**, so the claim is enforced
+  rather than asserted — verified both ways, the pre-fix image fails it with a DNS error.
 
   **The iNat index fixture is not just the candidate rows.** It also carries every row *sharing a
   name* with a candidate (otherwise `n_inat_taxa_same_name`, which counts collisions across the

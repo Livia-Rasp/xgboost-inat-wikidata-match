@@ -19,7 +19,7 @@ import pandas as pd
 import xgboost
 from sklearn.isotonic import IsotonicRegression
 
-from .paths import DATA_DIR, MODEL_DIR
+from .paths import DATA_DIR, MODEL_DIR, file_fingerprint
 
 FEATURE_COLUMNS = [
     "similarity",
@@ -40,6 +40,22 @@ FEATURE_COLUMNS = [
 # Spec §5's "nice touch": monotone increasing on these three — costs a little accuracy, buys
 # defensibility (a candidate can never look *less* plausible for scoring higher on any of them).
 MONOTONE_UP = {"jaro_winkler_full", "shared_ancestor_depth", "kingdom_match"}
+
+# Monotone *decreasing*. Empty, deliberately — see docs/findings.md §10.
+#
+# Milestone 15's ladder tested extending the constraints (family_match increasing,
+# sim_rank_in_group decreasing) as rung v5. It produced the best gold top-1 and MRR of any rung
+# and was **ineligible**: the pre-registered gate allowed an OOF top-1 regression of 0.1pp against
+# v1 and it regressed 0.106pp. Missing by 0.006pp is still missing, and moving the threshold after
+# seeing the number it excludes is the failure mode writing it down beforehand exists to prevent.
+#
+# The *mechanism* stays, because that part was a real bug rather than a tuning choice:
+# findings.md §4 and future-work.md both call this "a one-line change to MONOTONE_UP", and it
+# never could have been. sim_rank_in_group is built with rank(ascending=False), so rank 1 is the
+# **best** candidate and the feature is inversely related to quality — putting it in MONOTONE_UP
+# would have constrained it backwards, and monotone_constraints_tuple() could emit only 1 or 0, so
+# -1 was not expressible at all. Both are fixed; only the constraint set is not adopted.
+MONOTONE_DOWN: set[str] = set()
 
 RANDOM_STATE = 42
 
@@ -64,7 +80,17 @@ DEFAULT_MODEL_DIR = MODEL_DIR
 
 
 def monotone_constraints_tuple(feature_columns: list[str] = FEATURE_COLUMNS) -> tuple[int, ...]:
-    return tuple(1 if f in MONOTONE_UP else 0 for f in feature_columns)
+    """+1 increasing, -1 decreasing, 0 unconstrained — positional over `feature_columns`, which
+    is why the ordered list is logged as a run parameter (platform-design §4.3.3)."""
+    if MONOTONE_UP & MONOTONE_DOWN:
+        raise ValueError(
+            f"a feature cannot be both increasing and decreasing: {sorted(MONOTONE_UP & MONOTONE_DOWN)}"
+        )
+    unknown = (MONOTONE_UP | MONOTONE_DOWN) - set(feature_columns)
+    if unknown:
+        # A typo here would otherwise constrain nothing at all, silently.
+        raise ValueError(f"constrained feature(s) not in feature_columns: {sorted(unknown)}")
+    return tuple(1 if f in MONOTONE_UP else -1 if f in MONOTONE_DOWN else 0 for f in feature_columns)
 
 
 def _prepare_X(df: pd.DataFrame) -> pd.DataFrame:
@@ -286,19 +312,43 @@ def _avg_best_iteration(models: list) -> int:
     return int(round(sum(iterations) / len(iterations))) if iterations else TREE_PARAMS["n_estimators"]
 
 
-def build_oof_predictions(
-    features: pd.DataFrame,
-    oof_path: Path = DEFAULT_OOF_PATH,
-    manifest_path: Path = DEFAULT_OOF_MANIFEST_PATH,
-    force_refresh: bool = False,
-) -> pd.DataFrame:
-    shape_key = {
+def oof_shape_key(features: pd.DataFrame, features_path: Path | None = None) -> dict:
+    """Everything that must change the OOF cache: the data, the feature list, the folds, the
+    hyperparameters and the constraints.
+
+    `features_fingerprint` is None when no path is passed, so the subset match in
+    _oof_manifest_matches() still hits against a manifest written before this key existed. An
+    absent path is not evidence of change — the same rule candidates._cache_is_valid() learned in
+    milestone 13.
+    """
+    return {
         "n_rows": len(features),
         "feature_columns": FEATURE_COLUMNS,
         "n_folds": features["fold"].nunique(),
         "tree_params": TREE_PARAMS,
         "monotone_up": sorted(MONOTONE_UP),
+        "monotone_down": sorted(MONOTONE_DOWN),
+        "features_fingerprint": file_fingerprint(features_path) if features_path else None,
     }
+
+
+def build_oof_predictions(
+    features: pd.DataFrame,
+    oof_path: Path = DEFAULT_OOF_PATH,
+    manifest_path: Path = DEFAULT_OOF_MANIFEST_PATH,
+    features_path: Path | None = None,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Five-fold out-of-fold predictions for both objectives, cached to parquet.
+
+    `features_path` opts into content fingerprinting of the feature table. Without it the cache
+    key cannot notice that the *values* changed: swapping data/features.parquet for a table with
+    the same 590,671 rows and the same 41 columns (the dbt-built one, or the same builder after a
+    feature fix) leaves n_rows, feature_columns, n_folds, tree_params and monotone_up all
+    identical, and the cached predictions from the previous model would be returned as if they
+    were the new ones. Callers that have the path should pass it.
+    """
+    shape_key = oof_shape_key(features, features_path)
     if not force_refresh and oof_path.exists() and _oof_manifest_matches(manifest_path, shape_key):
         return pd.read_parquet(oof_path)
 
@@ -368,6 +418,71 @@ def build_final_models(
     return models
 
 
+def oof_metrics(oof: pd.DataFrame, objective: str) -> dict:
+    """Every OOF number this project reports, for one objective, under one metric vocabulary.
+
+    Both raw and calibrated top-1/MRR are logged: docs/findings.md §3 exists because they diverge,
+    by 0.03pp at OOF scale and by eleven points on the gold set, and a report that quotes one
+    should be able to show the other. Brier stays calibrated-only — it scores probability quality,
+    which is what calibration is for.
+    """
+    from .tracking import metric_key
+
+    raw_col, prob_col = f"{objective}_raw_score", f"{objective}_calibrated_prob"
+    labels = oof["label"].to_numpy()
+    probs = oof[prob_col].to_numpy()
+
+    top1_raw, mrr_raw = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", raw_col]], raw_col)
+    top1_cal, mrr_cal = top1_accuracy_and_mrr(oof[["wikidata_qid", "label", prob_col]], prob_col)
+    table = precision_at_threshold_table(probs, labels)
+    accept = find_auto_accept_threshold(table)
+    reject = find_reject_threshold(probs, labels)
+
+    metrics = {
+        metric_key("oof", objective, "top1", "raw"): top1_raw,
+        metric_key("oof", objective, "mrr", "raw"): mrr_raw,
+        metric_key("oof", objective, "top1", "calibrated"): top1_cal,
+        metric_key("oof", objective, "mrr", "calibrated"): mrr_cal,
+        metric_key("oof", objective, "brier", "calibrated"): brier_score(probs, labels),
+        metric_key("oof", objective, "reject_threshold"): reject,
+    }
+    if accept is not None:
+        metrics[metric_key("oof", objective, "accept_threshold")] = accept["threshold"]
+        metrics[metric_key("oof", objective, "accept_precision")] = accept["precision"]
+        metrics[metric_key("oof", objective, "accept_coverage")] = accept["coverage"]
+        metrics[metric_key("oof", objective, "accept_n")] = accept["n"]
+    return metrics
+
+
+def _log_final_run(features: pd.DataFrame, manifest: dict) -> None:
+    """Register both variants and attach the OOF metrics that describe them."""
+    from . import tracking
+
+    if not tracking.enabled():
+        return
+    oof = pd.read_parquet(DEFAULT_OOF_PATH)
+    sha, _ = tracking.git_sha()
+    with tracking.run(f"final-{(sha or 'nogit')[:8]}", tags={"stage": "final"}):
+        tracking.log_params(tracking.params_blob())
+        for objective, long_name in tracking.OBJECTIVES.items():
+            tracking.log_metrics(oof_metrics(oof, objective))
+            tracking.log_metrics(
+                {
+                    tracking.metric_key("oof", objective, "avg_best_iteration"): manifest.get(
+                        f"{objective}_avg_best_iteration"
+                    )
+                }
+            )
+            version = tracking.log_and_register(
+                objective,
+                DEFAULT_MODEL_DIR / f"{objective}_model.json",
+                DEFAULT_MODEL_DIR / f"{objective}_calibrator.pkl",
+                input_example=features[FEATURE_COLUMNS].head(3),
+                tags={"objective": long_name},
+            )
+            print(f"  logged to MLflow: {tracking.REGISTERED_MODEL[objective]} v{version}")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -399,9 +514,16 @@ if __name__ == "__main__":
             n_trees = manifest.get(f"{objective}_avg_best_iteration")
             print(f"{objective}: {DEFAULT_MODEL_DIR / f'{objective}_model.json'} "
                   f"({n_trees} trees)")
+
+        # This is the run that carries a model, so it is the one gold metrics resume: the OOF
+        # numbers, the registered versions and (later) the gold-set numbers all describe the same
+        # binaries. A no-op when MLFLOW_TRACKING_URI is unset.
+        _log_final_run(features, manifest)
         raise SystemExit(0)
 
-    oof = build_oof_predictions(features, force_refresh=args.force_refresh)
+    oof = build_oof_predictions(
+        features, features_path=DEFAULT_FEATURES_PATH, force_refresh=args.force_refresh
+    )
     labels = oof["label"].to_numpy()
 
     for variant, prob_col, raw_col in [
@@ -432,3 +554,15 @@ if __name__ == "__main__":
         else:
             print(f"no threshold reaches {AUTO_ACCEPT_PRECISION:.1%} precision")
         print(f"reject threshold: {reject}")
+
+    # An OOF-only run: the experiment record for a training pass that did not refit final models.
+    # `--final` is the run that carries the registered versions and the gold metrics.
+    from . import tracking
+
+    if tracking.enabled():
+        sha, _ = tracking.git_sha()
+        with tracking.run(f"oof-{(sha or 'nogit')[:8]}", tags={"stage": "oof"}):
+            tracking.log_params(tracking.params_blob())
+            for objective in tracking.OBJECTIVES:
+                tracking.log_metrics(oof_metrics(oof, objective))
+        print("\nlogged to MLflow")

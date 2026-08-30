@@ -1,13 +1,17 @@
 -- One row per candidate pair, with every column src/features.py's build_features_and_splits()
 -- produces, in the order that function produces them.
 --
--- Written out as parquet next to the pandas one rather than over it: the milestone 6/7 models are
--- frozen against data/features.parquet and every published number is quoted against them, so
--- milestone 14 measures the difference and milestone 15 is where the freeze is released and this
--- becomes the canonical path (platform-design §2.2).
+-- This is the **canonical** feature table — what train.py, evaluate.py and build_figures.py read
+-- (spec §7 milestone 15, platform-design §2.2).
+--
+-- Milestone 14 wrote it beside data/features.parquet rather than over it, because that milestone
+-- only *measured* the drift and overwriting the comparand would have destroyed what the parity
+-- report compares to. Milestone 15 released the freeze and aligned the two paths — all 52 columns
+-- and the row order now agree — so the promotion changes no value, and
+-- `python -m src.features` writes data/features_pandas.parquet as the comparand instead.
 {{ config(
     materialized = 'external',
-    location = env_var('MATCHER_DATA_DIR', 'data') ~ '/features_dbt.parquet'
+    location = env_var('MATCHER_DATA_DIR', 'data') ~ '/features.parquet'
 ) }}
 
 with pairs as (
@@ -166,7 +170,10 @@ select
     (kingdom_match::int + family_match::int + order_match::int)::bigint
                                                                     as shared_ancestor_depth,
     -- Wikidata's *parent* label against the iNat candidate's *own* name, on the raw strings.
-    {{ jaro_winkler('parent_name', 'inat_name') }}                  as parent_name_jw,
+    -- rapidfuzz via a UDF, not DuckDB's jaro_winkler_similarity: this is the one feature
+    -- computed on *raw* names, and DuckDB counts UTF-8 bytes where rapidfuzz counts code
+    -- points. See src/dbt_udf.jaro_winkler_codepoints.
+    jaro_winkler_codepoints(parent_name, inat_name)                 as parent_name_jw,
     true                                                            as inat_active,
 
     -- ---- Group context ----
@@ -176,7 +183,7 @@ select
     sim_rank_in_group::double                                       as sim_rank_in_group,
     sim_margin_to_runner_up,
     {% for tag in var('strategy_tags') -%}
-    contains(strategies, '{{ tag }}')                               as strategy_{{ tag }},
+    list_contains(str_split(strategies, '|'), '{{ tag }}')          as strategy_{{ tag }},
     {% endfor %}
 
     -- ---- Popularity / quality ----
@@ -189,3 +196,10 @@ select
     family_key,
     fold
 from matches
+-- Deterministic row order, matching build_features_and_splits'.
+--
+-- Not cosmetic: TREE_PARAMS's subsample=0.8 selects rows by *position*, so the order this table
+-- is written in is part of the trained model. SQL guarantees no order without an order by, and
+-- this table is about to become the canonical one train.py reads — without this line, making it
+-- canonical would reintroduce exactly the irreproducibility the pandas path just had fixed.
+order by wikidata_qid, inat_taxon_id

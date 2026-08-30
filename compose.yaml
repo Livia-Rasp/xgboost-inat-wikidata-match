@@ -17,6 +17,11 @@ services:
     shm_size: 1gb
     environment:
       MATCHER_WORKERS: ${MATCHER_WORKERS:-4}
+      # Empty unless you have the terraform/ stack up, and empty means tracking is off — which is
+      # why tracking.enabled() tests truthiness rather than membership: compose sets the name
+      # either way. With the stack up, point it at the host's published port:
+      #   MLFLOW_TRACKING_URI=http://host.docker.internal:5000 docker compose run --rm pipeline …
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
     command: ["make", "gold"]
 
   # The full path. Needs the sibling repo's taxa index, which this project reads and never builds
@@ -31,6 +36,7 @@ services:
       - matcher_data:/opt/project/data
     environment:
       MATCHER_WORKERS: ${MATCHER_WORKERS:-4}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
       MATCHER_TAXA_DB: /opt/inat-cache/taxa.db
       # data/ is a volume here, which would otherwise hide the frozen models baked into the
       # image. Docker seeds an empty named volume from the image's content, so this is belt and

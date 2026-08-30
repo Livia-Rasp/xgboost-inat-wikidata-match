@@ -161,3 +161,33 @@ def test_strategy_flags_are_one_column_per_tag(inat_index):
     features = build_features(_candidates("Q_BIRD"), WIKIDATA_TAXA, ANCESTORS, inat_index)
     assert features["strategy_exact"].all()
     assert not features["strategy_trigram"].any()
+
+
+def test_strategy_flags_do_not_leak_across_substring_tags(inat_index):
+    """Three tags are substrings of others: `exact` of `synonym_exact` and `basionym_exact`, and
+    the same for both fuzzy pairs. Testing membership with str.contains conflated them — 735 rows
+    on the real data were marked strategy_exact on the strength of a synonym or basionym match,
+    only 42 of which were literally tagged `exact`.
+
+    The test above passes under that bug, which is why it survived: it only ever sees a row
+    tagged plain `exact`. This one uses the tags that actually collide.
+    """
+    candidates = _candidates("Q_BIRD").assign(strategies="synonym_exact")
+    features = build_features(candidates, WIKIDATA_TAXA, ANCESTORS, inat_index)
+
+    assert features["strategy_synonym_exact"].all()
+    assert not features["strategy_exact"].any(), "`exact` leaked from `synonym_exact`"
+
+    fuzzy = _candidates("Q_BIRD").assign(strategies="basionym_genus_epithet_fuzzy")
+    fuzzy_features = build_features(fuzzy, WIKIDATA_TAXA, ANCESTORS, inat_index)
+    assert fuzzy_features["strategy_basionym_genus_epithet_fuzzy"].all()
+    assert not fuzzy_features["strategy_genus_epithet_fuzzy"].any()
+
+
+def test_strategy_flags_handle_a_multi_tag_row(inat_index):
+    """`strategies` is a '|'-joined list, and a candidate really can be found more than one way."""
+    candidates = _candidates("Q_BIRD").assign(strategies="exact|trigram")
+    features = build_features(candidates, WIKIDATA_TAXA, ANCESTORS, inat_index)
+    assert features["strategy_exact"].all()
+    assert features["strategy_trigram"].all()
+    assert not features["strategy_synonym_exact"].any()

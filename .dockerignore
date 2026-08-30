@@ -33,6 +33,10 @@ dbt/logs/
 dbt/dbt_packages/
 dbt/.user.yml
 
+# Terraform provisions the platform the pipeline talks to; the pipeline image never reads it.
+# Excluding it also keeps terraform.tfvars out of any build context, belt and braces.
+terraform/
+
 .env
 .env.*
 *.pem

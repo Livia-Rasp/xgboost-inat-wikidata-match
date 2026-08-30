@@ -31,6 +31,20 @@ dbt/.user.yml
 # and gold/labeling_filled.csv (your raw answers — small, worth keeping) are NOT excluded.
 gold/links-ambiguous-sample*.html
 
+# Terraform (spec §7 milestones 15-16). terraform.tfvars holds the stack's credentials and is
+# never committed — terraform.tfvars.example is the template and IS committed. .terraform.lock.hcl
+# is deliberately NOT ignored: pinning the provider hashes is the point of having it.
+terraform/**/.terraform/
+terraform/**/terraform.tfvars
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# MLflow's local fallback store. With a sqlite backend and no artifact root, artifacts land in
+# ./mlruns relative to the working directory; the real stack keeps them in MinIO.
+mlruns/
+
 # Secrets
 .env
 .env.*

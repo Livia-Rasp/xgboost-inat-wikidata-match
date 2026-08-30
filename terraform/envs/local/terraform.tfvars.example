@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars and change every value. terraform.tfvars is gitignored; this file is
+# committed. Nothing secret enters the repo (docs/platform-design.md §5.4).
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#   $EDITOR terraform.tfvars
+#   make platform-up
+#
+# These are local-only credentials for containers on a laptop, not cloud keys — but they are
+# still credentials, and a default in a public repo is how a habit of committing them starts.
+
+postgres_password = "change-me"
+
+minio_access_key = "change-me"
+minio_secret_key = "change-me-too" # MinIO refuses to start on fewer than 8 characters.
+
+# Uncomment to move a port that is already taken on your machine.
+# mlflow_port        = 5000
+# postgres_port      = 5432
+# minio_api_port     = 9000
+# minio_console_port = 9001

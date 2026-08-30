@@ -9,13 +9,12 @@ stratified metrics) needs a trained model first and extends this file in later m
 from __future__ import annotations
 
 import json
-import pickle
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import requests
-import xgboost
 
 from .paths import DATA_DIR, GOLD_DIR
 from .wikidata import HEADERS, RateLimiter, _fetch_with_retry, _qid_set_fingerprint
@@ -65,6 +64,10 @@ def build_observation_counts(
     if not force_refresh and cache_path.exists() and _manifest_matches(manifest_path, taxon_ids):
         return pd.read_parquet(cache_path)
 
+    fixture = _observation_counts_fixture(taxon_ids)
+    if fixture is not None:
+        return fixture
+
     counts: dict[str, int] = {}
     for batch in _chunked(taxon_ids, OBSERVATION_COUNT_BATCH_SIZE):
         counts.update(_fetch_observation_counts_batch(batch))
@@ -81,6 +84,30 @@ def build_observation_counts(
         )
     )
     return df
+
+
+def _observation_counts_fixture(taxon_ids: list[str]) -> pd.DataFrame | None:
+    """The committed counts for the gold set's exact-match ties, when data/ has nothing.
+
+    Without this, `make gold` is not offline. score_gold_set -> baseline_predict ->
+    build_observation_counts hits api.inaturalist.org for the 480 taxon ids involved in a gold
+    exact-match tie, because data/inat_observation_counts.parquet is gitignored and is not copied
+    into the image. `.github/workflows/ci.yml` and README both claimed "no network" for that path
+    and were wrong — and worse, the committed baseline number depended on a live API whose counts
+    drift, so CI could fail without a commit.
+
+    Only used when it covers every id asked for; a partial fixture would silently zero-fill the
+    rest, and a zero observation count is a real tie-break value, not an absence.
+    """
+    from .fixtures import GOLD_OBS_COUNTS_FIXTURE, announce, read_csv_fixture
+
+    if not GOLD_OBS_COUNTS_FIXTURE.exists():
+        return None
+    counts = read_csv_fixture(GOLD_OBS_COUNTS_FIXTURE, dtype={"taxon_id": str})
+    if not set(taxon_ids).issubset(set(counts["taxon_id"])):
+        return None
+    announce("observation counts", GOLD_OBS_COUNTS_FIXTURE)
+    return counts[counts["taxon_id"].isin(taxon_ids)].sort_values("taxon_id").reset_index(drop=True)
 
 
 def _manifest_matches(manifest_path: Path, taxon_ids: list[str]) -> bool:
@@ -246,15 +273,12 @@ def load_gold_features() -> pd.DataFrame:
 
 
 def score_gold_with_model(features: pd.DataFrame, objective: str) -> tuple[np.ndarray, np.ndarray]:
-    from .train import DEFAULT_MODEL_DIR, _prepare_X
+    """Resolved through tracking.resolve_model(): the registry's champion when
+    MLFLOW_TRACKING_URI is set, the committed data/models/ files otherwise — which is what keeps
+    the five-minute path and CI's offline `make gold` working with no server."""
+    from .tracking import resolve_model
 
-    model = xgboost.XGBClassifier() if objective == "binary" else xgboost.XGBRanker()
-    model.load_model(DEFAULT_MODEL_DIR / f"{objective}_model.json")
-    calibrator = pickle.loads((DEFAULT_MODEL_DIR / f"{objective}_calibrator.pkl").read_bytes())
-
-    X = _prepare_X(features)
-    raw = model.predict_proba(X)[:, 1] if objective == "binary" else model.predict(X)
-    return raw, calibrator.predict(raw)
+    return resolve_model(objective).score(features)
 
 
 def ranking_score_column(objective: str) -> str:
@@ -536,6 +560,82 @@ def score_gold_set(features: pd.DataFrame) -> dict:
     return {"features": features, "metrics": metrics, "recall_ceiling": recall_ceiling}
 
 
+def gold_metrics(result: dict, reference: dict, objective: str) -> dict:
+    """Every gold-set number, for one objective, in the same vocabulary train.oof_metrics() uses."""
+    from .tracking import metric_key
+
+    features = result["features"]
+    variant = result["metrics"][objective]
+    breakdown = gold_rank_trivial_breakdown(features, ranking_score_column(objective))
+    check = gold_threshold_check(features, reference, objective)
+    queue = review_queue_reduction(features, reference, objective)
+
+    metrics = {
+        metric_key("gold", objective, "top1", "raw"): variant["top1_accuracy"],
+        metric_key("gold", objective, "mrr", "raw"): variant["mrr"],
+        metric_key("gold", objective, "brier", "calibrated"): variant["brier"],
+        metric_key("gold", objective, "accept_precision"): check["gold_precision"],
+    }
+    # `holds` is None and `gold_precision` NaN when no gold row clears the OOF accept threshold,
+    # which is the actual result on this gold set rather than an edge case — zero rows clear it
+    # for either objective. float(None) raised here and killed the whole logging call.
+    if check["holds"] is not None:
+        metrics[metric_key("gold", objective, "accept_threshold_holds")] = float(check["holds"])
+    for bucket, values in breakdown.items():
+        for name, value in values.items():
+            metrics[metric_key("gold", objective, f"{bucket}.{name}")] = value
+    # review_queue_reduction() carries its own 'objective' key, which is a string. Flattening the
+    # dict wholesale fed that to log_metric and raised — after half the run's metrics were already
+    # written, which is worse than not logging at all.
+    for name, value in queue.items():
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            metrics[metric_key("gold", objective, f"queue.{name}")] = value
+    return metrics
+
+
+def log_gold_metrics(result: dict, reference: dict) -> None:
+    """Attach the gold numbers to the run that registered the model they were produced with.
+
+    Gold scoring is a separate process from training, so the run id has to come from somewhere:
+    it comes off the registry version (`resolve_model().run_id`), not from a file in data/ —
+    an eighth cache manifest is the thing this milestone exists to remove.
+    """
+    from . import tracking
+
+    if not tracking.enabled():
+        return
+
+    band = gold_band_comparison(result["features"], reference)
+    shared = {
+        tracking.metric_key("gold", "band", "n"): band["gold_n"],
+        tracking.metric_key("gold", "band", "precision"): band["gold_precision"],
+        tracking.metric_key("gold", "baseline", "top1"): result["metrics"]["baseline"]["top1_accuracy"],
+        tracking.metric_key("gold", "recall_ceiling", "value"): result["recall_ceiling"],
+        tracking.metric_key("gold", "items", "n"): result["features"]["wikidata_qid"].nunique(),
+    }
+
+    run_ids = {o: tracking.resolve_model(o).run_id for o in tracking.OBJECTIVES}
+    if not any(run_ids.values()):
+        print("\n(models came from data/models/, not the registry — gold metrics not logged)")
+        return
+
+    distinct = {rid for rid in run_ids.values() if rid}
+    if len(distinct) > 1:
+        # The two objectives were registered from different runs. Log each objective's own
+        # metrics to its own run and tag the anomaly, rather than averaging it away.
+        tracking.set_tags({"gold_eval_split": "true"})
+
+    for objective, run_id in run_ids.items():
+        if run_id is None:
+            continue
+        with tracking.resume(run_id):
+            tracking.log_metrics(gold_metrics(result, reference, objective))
+            if len(distinct) == 1:
+                tracking.log_metrics(shared)
+            tracking.set_tags({"gold_eval_at": datetime.now(UTC).isoformat(timespec="seconds")})
+    print(f"\nlogged gold metrics to MLflow run(s): {', '.join(sorted(distinct))}")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -584,6 +684,8 @@ if __name__ == "__main__":
             print(f"\n--- {objective}: {misses['wikidata_qid'].nunique()} item(s) ---")
             if not misses.empty:
                 print(misses.to_string(index=False))
+
+        log_gold_metrics(result, reference)
     else:
         from .features import DEFAULT_FEATURES_PATH
 

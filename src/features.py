@@ -22,7 +22,7 @@ from .labels import (
     build_labels,
 )
 from .normalize import normalize_name
-from .paths import DATA_DIR
+from .paths import DATA_DIR, file_fingerprint
 
 N_SPLITS = 5
 RANDOM_STATE = 42
@@ -30,8 +30,18 @@ RANDOM_STATE = 42
 # Standard ranks compared between the WD ancestor chain and the iNat ancestry chain.
 COMPARISON_RANKS = ("kingdom", "family", "order")
 
+# The canonical feature table every consumer reads — train.py, evaluate.py, build_figures.py.
+# Spec §7 milestone 15 promotes the dbt-built one into this path; `dbt/models/marts/
+# fct_features.sql` writes here, and this module now writes beside it instead (below).
 DEFAULT_FEATURES_PATH = DATA_DIR / "features.parquet"
-DEFAULT_FEATURES_MANIFEST_PATH = DATA_DIR / "features.manifest.json"
+
+# What `python -m src.features` writes. Milestone 14 had this the other way round — the SQL table
+# was the newcomer written beside the canonical pandas one — because that milestone only
+# *measured* the drift and overwriting the comparand would have destroyed what the parity report
+# compares to. The two paths now agree on all 52 columns and on row order, so the promotion is a
+# no-op in values and the pandas table becomes the comparand instead.
+PANDAS_FEATURES_PATH = DATA_DIR / "features_pandas.parquet"
+DEFAULT_FEATURES_MANIFEST_PATH = DATA_DIR / "features_pandas.manifest.json"
 
 
 INAT_INDEX_COLUMNS = ["taxon_id", "name", "rank", "ancestry", "genus", "specific_epithet"]
@@ -76,6 +86,22 @@ def _wd_ancestor_names_by_rank(
     anc = ancestors.copy()
     anc["rank_name"] = anc["ancestor_rank_qid"].map(WD_RANK_TO_NAME)
     anc = anc[anc["rank_name"].isin(target_ranks)]
+
+    # A transitive P171 chain really can hold two ancestors at the same rank — 10,102 of 58,842
+    # items do. This used to take whichever the parquet happened to list first, which made the
+    # answer depend on file layout: build_fixtures.py measured sorting the ancestor fixture
+    # changing family_match/order_match on 4 of 2,610 gold rows and moving rank:map's gold top-1
+    # by half a point (platform-design §4.3.1).
+    #
+    # Explicit rule instead, matching int_ancestor_by_rank's `order by source_priority,
+    # qid_number, ancestor_name`: lowest QID number wins — the older, more established Wikidata
+    # item. `source_priority` needs no counterpart here because self-as-ancestor is assigned
+    # above and the chain uses setdefault, so it already cannot be overwritten.
+    qid_number = pd.to_numeric(anc["ancestor_qid"].str[1:], errors="coerce").fillna(0)
+    anc = anc.assign(_qid_number=qid_number).sort_values(
+        ["_qid_number", "ancestor_name"], kind="stable"
+    )
+
     for qid, rank_name, name in zip(anc["qid"], anc["rank_name"], anc["ancestor_name"]):
         result.setdefault(qid, {}).setdefault(rank_name, name)
     return result
@@ -205,13 +231,39 @@ def build_features(
     df["n_inat_taxa_same_name"] = df["inat_name"].map(inat_name_counts).fillna(0).astype(int)
     wd_name_counts = wikidata_taxa["name"].value_counts()
     df["n_wikidata_items_same_name"] = df["name"].map(wd_name_counts).fillna(0).astype(int)
-    df["sim_rank_in_group"] = df.groupby("wikidata_qid")["similarity"].rank(ascending=False, method="first")
+    # Ties broken explicitly on inat_taxon_id, matching int_group_stats' `row_number() over
+    # (partition by wikidata_qid order by similarity desc, inat_taxon_id)`.
+    #
+    # `.rank(method="first")` broke them on candidates.parquet's row order instead, which comes
+    # out of an imap_unordered pool. Ties are the common case rather than the exception here —
+    # every exact match scores similarity 1.0 — so this was the largest single disagreement
+    # between the pandas and SQL feature tables: 225,911 rows, 38.25%, all of them inside a tie.
+    # inat_taxon_id is a string on both sides, so both orderings are lexicographic.
+    ordered = df.sort_values(
+        ["wikidata_qid", "similarity", "inat_taxon_id"],
+        ascending=[True, False, True],
+        kind="stable",
+    )
+    df["sim_rank_in_group"] = (
+        ordered.groupby("wikidata_qid").cumcount().add(1).reindex(df.index).astype(float)
+    )
     top2 = df.groupby("wikidata_qid")["similarity"].transform(
         lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0]
     )
     df["sim_margin_to_runner_up"] = df["similarity"] - top2
+    # Split on '|' and test set membership, not `str.contains`. Three tags are substrings of
+    # others — `exact` of `synonym_exact`/`basionym_exact`, and the same for both fuzzy pairs —
+    # so the substring test conflated them: 735 rows were marked strategy_exact on the strength
+    # of a synonym or basionym match, of which only 42 were literally tagged `exact`. Three
+    # feature columns were therefore quietly reading as three others.
+    #
+    # get_dummies does the split once for the whole column rather than once per tag, and the
+    # reindex is what keeps the output at exactly STRATEGY_TAGS: a candidate set that never hits
+    # a synonym match (a partial gold sample, say) would otherwise produce fewer columns than
+    # FEATURE_COLUMNS expects, which is the hazard candidates.STRATEGY_TAGS exists to prevent.
+    one_hot = df["strategies"].str.get_dummies(sep="|")
     for tag in STRATEGY_TAGS:
-        df[f"strategy_{tag}"] = df["strategies"].str.contains(tag, regex=False)
+        df[f"strategy_{tag}"] = one_hot[tag].astype(bool) if tag in one_hot else False
 
     # ---- Popularity / quality ----
     df["wikidata_sitelink_count"] = df["sitelinks"]
@@ -229,6 +281,31 @@ def build_features(
     )
 
 
+# The four inputs features.parquet is derived from. Order is irrelevant (it is a dict), but the
+# key set is not: every key is always present, None for an input whose path was not passed, for
+# the same reason candidates._source_fingerprints() does it — the manifest check is a dict
+# comparison, so a key that is sometimes absent can never match and silently rebuilds forever.
+FEATURE_SOURCE_NAMES = ("candidates", "wikidata_taxa", "ancestors", "lookup_sqlite")
+
+
+def _features_source_fingerprints(source_paths: dict[str, Path] | None) -> dict:
+    """Content fingerprints of the inputs, so a change in feature *values* invalidates the cache.
+
+    The row counts in shape_key cannot see one: rebuilding the same 590,671 rows with different
+    numbers in them (a different feature definition, or the dbt-built table swapped in) leaves
+    every count identical. That is spec §7 milestone 15's ladder trap, and platform-design §4.5
+    flagged the row-count manifest as the weakest of the seven.
+    """
+    source_paths = source_paths or {}
+    unknown = set(source_paths) - set(FEATURE_SOURCE_NAMES)
+    if unknown:
+        raise ValueError(f"unknown feature source(s): {sorted(unknown)}")
+    return {
+        name: (file_fingerprint(source_paths[name]) if source_paths.get(name) is not None else None)
+        for name in FEATURE_SOURCE_NAMES
+    }
+
+
 def _features_manifest_matches(manifest_path: Path, shape_key: dict) -> bool:
     if not manifest_path.exists():
         return False
@@ -244,18 +321,25 @@ def build_features_and_splits(
     wikidata_taxa: pd.DataFrame,
     ancestors: pd.DataFrame,
     inat_index: pd.DataFrame,
-    features_path: Path = DEFAULT_FEATURES_PATH,
+    features_path: Path = PANDAS_FEATURES_PATH,
     manifest_path: Path = DEFAULT_FEATURES_MANIFEST_PATH,
+    source_paths: dict[str, Path] | None = None,
     force_refresh: bool = False,
 ) -> pd.DataFrame:
     """Full pipeline: labels (+ synthetic dropout) + features + family_key + GroupKFold fold
-    assignment, cached to parquet."""
+    assignment, cached to parquet.
+
+    `source_paths` (keys: FEATURE_SOURCE_NAMES) opts into content fingerprinting of the inputs.
+    Without it the cache key is row counts only, which cannot notice a change in feature values —
+    callers that have the paths should pass them.
+    """
     shape_key = {
         "n_candidates": len(candidates),
         "n_wikidata": len(wikidata_taxa),
         "n_ancestors": len(ancestors),
         "n_inat_index": len(inat_index),
         "n_splits": N_SPLITS,
+        "source_fingerprints": _features_source_fingerprints(source_paths),
     }
     if not force_refresh and features_path.exists() and _features_manifest_matches(manifest_path, shape_key):
         return pd.read_parquet(features_path)
@@ -281,6 +365,21 @@ def build_features_and_splits(
             fold_of_qid[qid] = fold
     df["fold"] = df["wikidata_qid"].map(fold_of_qid)
 
+    # Deterministic row order, so a rebuild from the same inputs is reproducible.
+    #
+    # It was not, and that is load-bearing rather than tidiness: candidates.parquet comes out of
+    # an imap_unordered pool, the merges here do not preserve a stable order anyway, and
+    # TREE_PARAMS's subsample=0.8 selects rows by *position*. So rebuilding this file from
+    # byte-identical inputs trained a different model — same rows, different order, different
+    # subsample draw. Verified both halves: two OOF runs over one file are bit-identical, two over
+    # differently-ordered copies of the same values are not.
+    #
+    # That made any comparison spanning a feature rebuild un-attributable, which is exactly what
+    # spec §7 milestone 15's ladder does. A fifth order-dependency, after the four in
+    # platform-design §4.3, and the same fix they got: an explicit rule instead of an incidental
+    # one. (wikidata_qid, inat_taxon_id) is unique — fct_features tests it — so the order is total.
+    df = df.sort_values(["wikidata_qid", "inat_taxon_id"]).reset_index(drop=True)
+
     features_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(features_path, index=False)
     manifest_path.write_text(json.dumps(shape_key, indent=2))
@@ -293,9 +392,21 @@ def verify_no_qid_split_across_folds(df: pd.DataFrame) -> bool:
 
 
 if __name__ == "__main__":
+    import argparse
+
     from .candidates import DEFAULT_CANDIDATES_PATH, build_lookup_cache
     from .wikidata import DEFAULT_ANCESTORS_CACHE_PATH
     from .wikidata import DEFAULT_CACHE_PATH as WIKIDATA_TAXA_PATH
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="rebuild even when the cache matches. Needed after any change to a feature "
+        "*definition*: the manifest fingerprints this stage's inputs, not the code that reads "
+        "them, so editing build_features() alone leaves the cache looking valid.",
+    )
+    args = parser.parse_args()
 
     wikidata_taxa = pd.read_parquet(WIKIDATA_TAXA_PATH)
     candidates = pd.read_parquet(DEFAULT_CANDIDATES_PATH)
@@ -303,7 +414,19 @@ if __name__ == "__main__":
     build_lookup_cache()  # ensure it exists; we read it directly below
     inat_index = _load_inat_index()
 
-    df = build_features_and_splits(candidates, wikidata_taxa, ancestors, inat_index)
+    df = build_features_and_splits(
+        candidates,
+        wikidata_taxa,
+        ancestors,
+        inat_index,
+        source_paths={
+            "candidates": DEFAULT_CANDIDATES_PATH,
+            "wikidata_taxa": WIKIDATA_TAXA_PATH,
+            "ancestors": DEFAULT_ANCESTORS_CACHE_PATH,
+            "lookup_sqlite": LOOKUP_SQLITE_PATH,
+        },
+        force_refresh=args.force_refresh,
+    )
     print(f"{len(df):,} feature rows, {df.shape[1]} columns")
 
     ok = verify_no_qid_split_across_folds(df)

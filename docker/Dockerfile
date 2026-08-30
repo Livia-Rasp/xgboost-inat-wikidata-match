@@ -25,20 +25,22 @@ WORKDIR /opt/project
 #
 # `check` gets pytest and ruff so the image can verify itself; `dbt` arrived with milestone 14,
 # which is the first thing in the image that imports it (dbt/, and tests/test_dbt.py, which is
-# part of `make test`). mlflow is still deliberately absent — declared in pyproject.toml and
-# pinned in uv.lock so the resolution is proven (docker/Dockerfile.airflow is where that proof is
-# exercised), but nothing here imports it until milestone 15. Each milestone adds its own extra
-# when it needs it, rather than the image carrying all of them from the start.
+# part of `make test`); `tracking` arrived with milestone 15 (src/tracking.py). Each milestone
+# adds its own extra when it needs it, rather than the image carrying all of them from the start.
+#
+# `tracking` is mlflow-skinny, not mlflow: this image only ever *logs*, and the tracking server
+# runs from its own image built by terraform/modules/mlflow. Nothing here is imported unless
+# MLFLOW_TRACKING_URI is set, so `make gold` stays offline and serverless.
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project --extra check --extra dbt
+    uv sync --locked --no-install-project --extra check --extra dbt --extra tracking
 
 # hatchling reads `readme` and `license` from [project], so the build fails without both files
 # present — they are not optional extras here.
 COPY README.md LICENSE ./
 COPY src/ ./src/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --extra check --extra dbt
+    uv sync --locked --extra check --extra dbt --extra tracking
 
 # ---------------------------------------------------------------------------------------------
 # Runtime
@@ -52,6 +54,13 @@ RUN apt-get update \
 
 # uid 1000, matching the sibling wikidata-inat-checker image's convention.
 RUN useradd --create-home --uid 1000 matcher
+
+# tracking.git_sha() logs the code version with every run — the provenance no cache manifest in
+# this project records. .dockerignore excludes .git/, so `git rev-parse` cannot work in here and
+# the SHA has to be injected at build time; CI passes github.sha. Empty is handled (logged as
+# null) rather than guessed at.
+ARG GIT_SHA=""
+ENV MATCHER_GIT_SHA=${GIT_SHA}
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

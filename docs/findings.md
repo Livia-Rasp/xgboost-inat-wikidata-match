@@ -9,10 +9,10 @@ reproducible with the commands in [`../README.md`](../README.md); the plots come
 ## 1. The model was overconfident, and the reason was the labels
 
 Isotonic calibration on the out-of-fold scores surfaced a gap that a plain accuracy number hides
-completely. 50,296 candidate rows score ≥0.95 on the raw `binary:logistic` probability, but only
+completely. 50,348 candidate rows score ≥0.95 on the raw `binary:logistic` probability, but only
 **83.9%** of them are actually correct. Calibration does the right thing and compresses that
 whole cluster down to ~84%, which is why the strict 99.5%-precision auto-accept band ends up
-covering **10 rows out of 590,671**.
+covering **6 rows out of 590,671**.
 
 That could mean the model is bad, the features are too weak, or the labels are wrong. Three
 checks separated those:
@@ -31,8 +31,13 @@ checks separated those:
 The hypothesis was that (3) explains the gap. Testing it needed labels P3151 never touched,
 which is the entire reason the gold set exists.
 
-**Result:** on the hand-labelled gold set, the same raw-score band reads **98.2% precision**
-(n=167) against 83.9% on the P3151 population. The ceiling was in the labels, not the model.
+**Result:** on the hand-labelled gold set, the same raw-score band reads **98.3% precision**
+(n=173) against 83.9% on the P3151 population. The ceiling was in the labels, not the model.
+
+This is the most durable result in the project. Milestone 15 retrained five separate model
+versions (§10) and re-measured the band against each: the gold side stayed between 96.9% and
+98.3% throughout, while the OOF side barely moved from 83.9%. The gap is a property of the two
+populations, not of any one fitted model.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/calibration-dark.png">
@@ -40,32 +45,44 @@ which is the entire reason the gold set exists.
 </picture>
 
 This does not mean P3151 is 14 points wrong. The gold set is a different, harder population
-(ambiguous items by construction) and 167 rows is a small sample. It does mean the
+(ambiguous items by construction) and 173 rows is a small sample. It does mean the
 overconfidence measured against P3151 cannot be read as a model deficiency, which is what the
 raw number would otherwise imply.
 
 ---
 
-## 2. The reject threshold does not survive the population change
+## 2. The reject threshold survives the population change for one objective, and not the other
 
-Both thresholds are chosen on OOF data at 99.5% precision. On that population the reject side
-does almost all of the useful work: rows below 0.82 calibrated probability are negative
-**99.61%** of the time, and that covers **91.6%** of all candidate rows.
+*Rewritten at milestone 15. This section previously reported the failure as a property of the
+task. It is a property of `binary:logistic`, and the reason only that half was visible is that
+`binary` was the reported default and nobody had run the comparison on `rank:map`.*
+
+Both thresholds are chosen on OOF data at 99.5% precision. On that population the reject side does
+almost all of the useful work: it rules out **91.8%** of candidate rows for `binary` and **91.4%**
+for `rank`, at 99.50% and 99.75% row-level negative precision respectively.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/threshold-bands-dark.png">
   <img alt="The reject, review and auto-accept bands drawn to scale." src="img/threshold-bands-light.png">
 </picture>
 
-Re-applying that same threshold to the gold set, unchanged, it drops to **95.7%** row-level
-negative precision — and it would hide the true match for **107 of 263 items**. The auto-accept
-threshold transfers no better: zero gold rows clear 0.87.
+Re-applied to the gold set, unchanged, the two come apart completely:
 
-This is a real limitation, not a presentation problem, and it is the reason this project's
-headline is stated as ranking quality rather than as automated queue clearance. The thresholds
-were fitted on a population where most items have one obvious answer. The queue this system is
-meant to shrink consists, by definition, of the items where that is not true. Anything derived
-from a threshold has to be re-derived on the deployment population before it can be trusted.
+| re-applied to gold, n=263 | `binary:logistic` | `rank:map` |
+|---|---:|---:|
+| row-level negative precision | 96.0% | **99.79%** |
+| items ruled out | 131 | 33 |
+| **items whose true match is hidden** | **98** | **5** |
+
+`binary:logistic`'s threshold is unusable on the deployment population: it would discard the
+correct answer for more than a third of the queue. `rank:map`'s holds — it clears 12.5% of the
+queue and loses five items doing it, at a row precision *above* the 99.5% it was fitted for.
+
+This is the largest practical difference between the two objectives, and it is most of why
+`rank:map` is the reported default (§6, §10). It does not make the caution obsolete: a threshold
+fitted on the P3151 population still has to be *checked* on the ambiguous one before it is
+trusted, and here that check passes for one objective and fails badly for the other. The
+auto-accept side transfers no better for either: zero gold rows clear it.
 
 ---
 
@@ -81,7 +98,7 @@ At OOF scale this barely registers — 0.9912 raw vs 0.9915 calibrated for `bina
 0.03pp — because a group rarely lands entirely inside one plateau across 590,671 rows. On the
 gold set it was worth 11 points:
 
-| gold set, n=263 | ranked by calibrated prob | ranked by raw score |
+| gold set, n=263, as measured on the frozen models | ranked by calibrated prob | ranked by raw score |
 |---|---|---|
 | `binary:logistic` top-1 | 98.7% | 98.7% |
 | `rank:map` top-1 | 86.5% | **97.8%** |
@@ -119,8 +136,13 @@ against. Left as future work, not as a silent pending change.
 ## 5. Every gold-set top-1 miss, characterised
 
 Spec §7 milestone 9 requires each miss to get a written reading rather than being counted into an
-aggregate. At n=263, `binary:logistic` misses 3 items and `rank:map` misses 5.
-`src/evaluate.py --gold` prints them with their full feature breakdown.
+aggregate. `src/evaluate.py --gold` prints them with their full feature breakdown.
+
+**Reviewed again after milestone 15's retrain.** The champion misses three items per objective,
+two of them shared. The two misses that were new to the champion are the last two rows of the
+table; reviewing them produced a third labelling correction and one genuine model weakness.
+
+At n=263 on the frozen models, `binary:logistic` missed 3 items and `rank:map` missed 5.
 
 | Item | Picked | Correct | Reading |
 |---|---|---|---|
@@ -130,37 +152,72 @@ aggregate. At n=263, `binary:logistic` misses 3 items and `rank:map` misses 5.
 | `Q16760098` *Utetheisa albilinea* | `1522832` | `1550468` | **iNat data issue.** Two iNat records for what appears to be the same taxon, differing only by an extra subgenus in the ancestry. Either answer is defensible; the labeller's note says as much. |
 | `Q46674974` *Bursaria* | `83575` | `1051126` | **iNat data issue.** Two genus records with incomplete ancestry, so no taxonomic feature can separate them. |
 | `Q106123971` *Acmella pusilla* (`rank:map` only) | `157976` | `1349465` | **Model gap specific to `rank:map`** — the unconstrained-interaction case in §4. |
+| `Q14908802` *Joziratia anjouanae* | `1609619` | `1609619` | **Was a labelling error — the model was right.** Two iNat records share the name and are identical on **all 41 features except `sim_rank_in_group`**, so the pick was decided entirely by the tie-break rule. Originally labelled `1609620` on GBIF ancestry concordance; `1609620` is **inactive** on iNaturalist, which settles it. Both are still in the local index because `taxa.db` is a snapshot taken before the deactivation. Corrected. |
+| `Q20668495` *Afrocrania* (`rank:map` only) | `1642969` (genus) | `1296985` (subgenus) | **Genuine model gap, and the worst kind for this project: a hemihomonym.** Wikidata's *Afrocrania* is a plant genus (parent *Cornaceae*); iNat holds the plant as a **subgenus** and a different *Afrocrania* — an animal — at **genus** rank. So `rank_equal` points at the animal while `kingdom_match`/`family_match`/`order_match` and `shared_ancestor_depth` all point at the plant. `binary:logistic` weighs the taxonomy and gets it right; `rank:map` weighs `rank_equal` and does not. v5's extended constraints do **not** fix it — checked directly. |
 
 Two of the three surviving `binary:logistic` misses are iNat-side duplicate records rather than
 ranking failures. That is worth knowing before chasing the last point of accuracy: the remaining
 headroom on this sample is mostly not in the model.
 
-The per-miss review has now caught a labelling error on both runs it has been done on (an earlier
-50-item run caught `Q21438872`, where the stated rank matched a subgenus but the true answer was
-the nominotypical genus of the same name). It is cheap and it keeps paying.
+**The per-miss review has now caught a labelling error on all three runs it has been done on** —
+`Q21438872` on an early 50-item run, `Q4694188` at n=263, and `Q14908802` here. It is cheap and it
+keeps paying, and it is the reason a label correction is folded into §10's table rather than
+discovered later.
+
+**The two objectives fail in mirror-image ways**, which is the most useful thing this round of the
+review produced. `rank:map` over-weights `rank_equal` and loses `Q20668495`, a hemihomonym where
+every taxonomic feature points the other way. `binary:logistic` under-weights it and loses
+`Q121887868`, where the Wikidata item is a phylum and `rank_equal` is the only signal that
+separates it from an identically-named genus. Hemihomonyms are the case this project exists for —
+`prunella` is the spec's own acceptance check — so `rank:map` failing one is a real mark against
+the current default, and it is [tracked in future-work](future-work.md) rather than explained
+away. Neither objective's failure is addressed by anything in the current feature set; both look
+like they need either a feature that encodes kingdom disagreement as a hard signal, or a
+preprocessing step that refuses cross-kingdom candidates outright.
 
 ---
 
-## 6. Why `binary:logistic` is the pick
+## 6. Why `rank:map` is the pick
 
-| | `binary:logistic` | `rank:map` |
+*Rewritten at milestone 15. This section previously picked `binary:logistic`, on a margin that
+turned out to be about twice the noise floor and on one argument that no longer reproduces.*
+
+On the promoted champion (§10):
+
+| | `rank:map` | `binary:logistic` |
 |---|---|---|
-| Gold top-1 | **98.7%** | 97.8% |
-| Gold MRR | **0.993** | 0.989 |
-| Gold Brier | **0.013** | 0.024 |
-| Gold top-1, non-trivial items only | **98.9%** | 97.7% |
-| Clears the 99.5% auto-accept bar | yes (10 rows) | no |
-| OOF top-1 | 99.1% | 99.0% |
+| Gold top-1 | 98.26% | 98.26% |
+| Gold MRR | **0.9913** | 0.9906 |
+| Gold Brier | **0.0083** | 0.0100 |
+| Gold top-1, non-trivial items only | 97.7% | **98.3%** |
+| Clears the 99.5% auto-accept bar | yes (9 rows) | yes (6 rows) |
+| **Reject threshold re-applied to gold: true matches hidden** | **5 of 263** | 98 of 263 |
+| OOF top-1 | 98.98% | **99.08%** |
 
-They are close on the OOF population, which is why milestone 6 deliberately declined to pick a
-winner there and deferred to the gold set. On gold, `binary:logistic` leads on every metric, and
-the gap widens on the non-trivial subset — the items where rank alone does not resolve the
-answer, which is the part that actually tests judgment. Its calibrated probabilities are also
-markedly better (Brier 0.013 vs 0.024), which matters for any future threshold work.
+**Gold top-1 is exactly tied** — both miss 4 of the 230 answerable items, three of them the same
+items. The pre-registered rule breaks that tie on Brier, which selects `rank:map`. That
+difference is 0.0017 against a noise floor of roughly 0.0043 (§10), so on its own it is not
+decisive, and it is worth saying so rather than dressing it up.
+
+What actually separates them is §2: **`rank:map`'s reject threshold survives the population change
+and `binary:logistic`'s does not** — 5 hidden true matches against 98. For a system whose purpose
+is to shrink a review queue, that is the difference between a usable band and an unusable one, and
+it is not a marginal effect.
+
+Two arguments from the previous version of this section have been retired:
+
+- *"the only variant clearing the 99.5% auto-accept bar"* — on the current models both clear it,
+  and even v1's recompute in the current environment has `rank` clearing at 5 rows. That was an
+  artifact of the pre-`uv.lock` environment (§10).
+- *"the gap widens on the non-trivial subset"* — it now runs the other way (98.3% against 97.7%),
+  by one item on 206. Also inside the floor.
+
+`binary:logistic` remains registered, versioned and one alias away; the two are close enough that
+a larger gold set could reasonably reverse this again. That is the honest state of it.
 
 `rank:map` was chosen over the spec's literal `rank:pairwise` because XGBoost's current
 documentation recommends it for binary-relevance labels with enough data, which is exactly this
-problem. That substitution was worth making; the objective still lost.
+problem.
 
 ---
 
@@ -201,7 +258,7 @@ no string overlap. A model trained against those learns "do the names look alike
 spectacular AUC. The negatives here are *Prunella* the bird against *Prunella* the mint —
 identical strings, differing only in ancestry — because those are the pairs that actually reach
 a human reviewer. Every number in this repo is measured against that harder distribution, which
-is why the baseline scores 20.9% on the gold set rather than something respectable.
+is why the baseline scores 21.3% on the gold set rather than something respectable.
 
 The same reasoning drives spec §3's synthetic abstention dropout: 15% of items have their true
 label hidden, so the model has to learn that "none of these" is a valid answer. Without it, a
@@ -209,6 +266,14 @@ model trained only on items that have an answer will confidently invent one for 
 not.
 
 ## 9. Rebuilding the features in SQL: what moved, and why
+
+> **Measured at v0.3.0, and kept as the milestone-14 record.** Milestone 15 then *closed* every
+> gap below: `sim_rank_in_group` and the ancestor tie-break got explicit rules on the pandas side
+> matching the SQL ones, and `parent_name_jw` moved to a rapidfuzz UDF. The two paths now agree on
+> **52 of 52 columns** and on row order, and `make parity` prints "Columns that differ: None". The
+> section is left as it was written because the causes it identifies are the reason the alignment
+> was possible, and because a parity report that has been retro-fitted to its own fix records
+> nothing. §10 covers what changed and why it had to.
 
 Spec §7 milestone 14 moves feature construction from pandas into dbt-core over DuckDB. Its
 acceptance check is not "the numbers match" — `docs/platform-design.md` §2.2 accepts drift
@@ -307,3 +372,143 @@ The SQL reproduces it, deliberately. The frozen models trained on this behaviour
 in the milestone whose entire job is to measure drift would have made every number above
 uninterpretable. It is in [`future-work.md`](future-work.md) as a one-line fix to take with
 milestone 15's retrain.
+
+---
+
+## 10. Releasing the freeze: five model versions, and what each change was worth
+
+Milestone 15 replaced the prose freeze with an MLflow registry and then released it on purpose.
+The retrain is a **ladder** — one registered version per change — rather than one combined
+retrain, so that every delta is attributable to the thing that caused it.
+[`future-work.md`](future-work.md) asked for exactly this for the monotone-constraint change: *"a
+deliberate, fully-rescored comparison … rather than a patch"*.
+
+Each rung is one commit and one `run_ladder.py --rung vN` at that commit. Gold set, n=263:
+
+| metric | v1 | v2 | v3 | v4 | v5 |
+|---|---:|---:|---:|---:|---:|
+| gold top-1 `binary` | 0.9957 | 0.9957 | 0.9826 | **0.9870** | 0.9957 |
+| gold top-1 `rank` | 0.9913 | 0.9957 | 0.9870 | **0.9870** | 0.9913 |
+| gold MRR `binary` | 0.9978 | 0.9978 | 0.9906 | **0.9928** | 0.9978 |
+| gold MRR `rank` | 0.9957 | 0.9978 | 0.9935 | **0.9935** | 0.9957 |
+| gold Brier `binary` | 0.0118 | 0.0128 | 0.0095 | **0.0100** | 0.0095 |
+| gold Brier `rank` | 0.0221 | 0.0332 | 0.0078 | **0.0083** | 0.0080 |
+| gold band precision | 0.9762 | 0.9756 | 0.9833 | **0.9827** | 0.9781 |
+| gold band n | 168 | 164 | 180 | **173** | 183 |
+| OOF top-1 `binary` | 0.9913 | 0.9912 | 0.9907 | **0.9908** | 0.9902 |
+
+All five rungs are re-scored against the **corrected** gold set — the per-miss review that closes
+this milestone found `Q14908802` mislabelled (§5), and a label correction changes the measuring
+instrument for every rung, not just the champion's. Rescoring used the models in
+`data/ladder/*/`; no rung was retrained.
+
+| rung | change |
+|---|---|
+| v1 | the frozen milestone 6/7 binaries, back-filled |
+| v2 | deterministic feature row order — **no feature definition changed** |
+| v3 | the dbt feature table becomes canonical, after aligning three tie-breaks |
+| v4 | the `strategy_*` one-hot substring fix — **the champion** |
+| v5 | monotone constraints extended — ineligible, see below |
+
+### v2 measures the noise floor, and it is not small
+
+v2 changes no feature definition at all. `features.parquet` was simply not written in a
+deterministic order — `candidates.parquet` comes out of an `imap_unordered` pool, and
+`TREE_PARAMS`'s `subsample=0.8` selects rows by *position*, so rebuilding the table from
+byte-identical inputs trained a different model. A fifth order-dependency after §9's four.
+
+Its delta is therefore what a pure reshuffle is worth: **one full gold item** of `rank:map`'s
+top-1 (0.9913 → 0.9957) and half a point of band precision, with the band's membership moving by
+four rows (168 → 164). `binary:logistic` did not move at all, and OOF is stable to ~0.05pp because
+590,671 rows average the reshuffle out. It is the 263-item gold set where this bites.
+
+Two published claims are qualified by it, and this is the main reason the rung was worth running:
+
+- §6 picked `binary:logistic` over `rank:map` on what the README calls "a two-item difference".
+  The floor is about one item, so that margin was roughly twice the noise, not comfortably above
+  it.
+- §1's gold band precision moves on row order alone, and so does which rows are in the band.
+
+**Anything on this gold set smaller than about two items should be read as noise.**
+
+### The frozen models were not reproducible, for two independent reasons
+
+Both measured while back-filling v1, and worth separating because they are usually conflated:
+
+1. **Environment drift.** `data/models/*` are dated 2026-08-23; the venv was rebuilt 2026-08-29
+   for milestones 13/14. Feeding the *same* `features.parquet` through the current environment
+   moves every one of 590,671 raw scores and `binary_avg_best_iteration` 882 → 841. It is **not**
+   thread count — `n_jobs` ∈ {1,4,8,20} give bit-identical fits, which contradicts
+   `docker/Dockerfile`'s stated reason for pinning `OMP_NUM_THREADS=4`.
+2. **Row order**, as above.
+
+Aggregate metrics survive both (0.9913 against the published 99.1%), which is why this hid for so
+long: only row-level scores and `best_iteration` move. v1's *gold* metrics are reproducible,
+because they come from scoring the committed binaries, and CI proves that on every push.
+
+### The pre-registered rule, and the two places it was uncomfortable
+
+Written before any rung had run: eligibility gate (OOF top-1 must not regress more than 0.1pp
+against v1), then gold top-1 with a ±2-item practical-equivalence band, then gold band precision,
+then gold Brier, then the lower-numbered version.
+
+**v5 ties for the best gold top-1 of any rung (0.9957, with v1 and v2) and is ineligible.** It
+regresses OOF top-1 by 0.106pp against a gate of 0.100pp — it misses by 0.006pp. Recording that
+instead of moving the threshold is the entire reason the threshold was written down first. Note
+also that v5 does **not** fix `Q20668495`, the hemihomonym `rank:map` uniquely misses (§5), even
+though that miss has exactly the shape §4's constraint argument describes — checked directly,
+and it weakens rather than strengthens the case for the rung. Its *mechanism* fix was kept, because that part was a real bug rather than a
+tuning choice: §4 and `future-work.md` both call the change "a one-line change to `MONOTONE_UP`",
+and it never could have been. `sim_rank_in_group` is built with `rank(ascending=False)`, so rank 1
+is the **best** candidate and the feature is inversely related to quality; putting it in
+`MONOTONE_UP` would have constrained it backwards, and `monotone_constraints_tuple()` could emit
+only `1` or `0`, so `-1` was not expressible at all. Both are fixed; only the constraint set is
+unadopted, and `MONOTONE_DOWN` is empty.
+
+**On the labels as they stood, the rule then selected v3, which was not a coherent answer.** The
+rungs are cumulative code states, not alternatives, so promoting v3 would have meant reverting
+v4's `strategy_*` correctness fix — on the strength of a 0.0005 Brier difference and one gold
+item, both inside the noise floor v2 had just measured. **v4 was promoted instead: the latest
+eligible rung.** That was a documented deviation from the rule as written, on the reasoning that a
+correctness fix is not subject to a metrics vote while a tuning change is.
+
+**The label correction then re-ran the rule, and v4 won it outright.** Correcting `Q14908802`
+fixes the measuring instrument rather than moving a goalpost, so the rule was re-applied rather
+than left standing on data known to be wrong. On the corrected set the primary criterion favours
+v1 and v2 (0.9957), v4 sits two items back and therefore inside the ±2-item band, v3 sits three
+items back and drops out, band precision leaves v1/v2/v4 tied, and **gold Brier picks v4** —
+0.0100 against 0.0118 and 0.0128 on `binary`, and decisively on `rank`. The deviation above turned
+out not to be load-bearing.
+
+### The objective choice flipped, and not on the metric that looks decisive
+
+§6 picked `binary:logistic`. On the promoted champion the two are **exactly tied** on gold top-1
+(0.9870 — three misses each of 230 answerable items, two of them the same items), and `rank:map`
+wins on gold Brier (0.0083 against 0.0100) and gold MRR (0.9935 against 0.9928). Applying the
+rule's tie-break literally makes `rank:map` the reported default.
+
+That tie-break is a 0.0017 Brier difference against a noise floor four times larger, so it should
+not be read as decisive on its own. Two other things carry more weight:
+
+- **§6's stated reason no longer holds.** It picked `binary` partly as "the only variant clearing
+  the 99.5% auto-accept bar at all". On the champion both clear it — `binary` with 6 rows,
+  `rank` with 9 — and even v1's current-environment recompute has `rank` clearing at 5. That
+  claim was an artifact of the pre-`uv.lock` environment and does not reproduce.
+- **The reject threshold transfers for `rank:map` and not for `binary:logistic`**, which is a
+  large operational difference rather than a marginal one. See §2, now rewritten.
+
+### What this milestone did not do
+
+It did not make the model better. On the corrected gold set the champion ranks 98.70% against the
+frozen models' 99.13% for `rank:map` — **one item worse**, inside the noise floor v2 measured, and
+two items worse on `binary`. A retrain that costs an item is the honest outcome here and it is
+reported as one.
+
+What it produced instead: a registry where every published number resolves to a logged metric on a
+named run; a feature pipeline that reproduces when rebuilt, and two feature paths that now agree
+on all 52 columns rather than 46; three real bugs fixed (the `strategy_*` one-hots, monotone
+constraints that could not express a decreasing feature, and `make gold` reaching the network
+while two files claimed it did not); a measured noise floor for every future comparison on this
+gold set; the discovery that one objective has a usable reject threshold and the other does not;
+and — through the per-miss review the milestone ends with — a third mislabelled gold item found
+and corrected.
