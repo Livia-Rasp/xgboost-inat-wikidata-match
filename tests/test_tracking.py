@@ -148,18 +148,29 @@ def test_params_blob_records_the_constrained_features():
     assert blob["monotone_down"] == sorted(MONOTONE_DOWN)
 
 
-def test_monotone_constraints_emit_minus_one_for_decreasing():
-    """sim_rank_in_group is built with rank(ascending=False), so rank 1 is the *best* candidate
-    and the feature is inversely related to quality. findings.md §4 and future-work.md both call
-    the extension "a one-line change to MONOTONE_UP"; it is not, and adding it there would have
-    constrained it the wrong way round."""
+def test_monotone_constraints_can_express_a_decreasing_feature():
+    """The mechanism, not the constraint set. MONOTONE_DOWN is empty (rung v5 was ineligible —
+    findings.md §10), but -1 has to be expressible: a feature like sim_rank_in_group is built
+    with rank(ascending=False), so rank 1 is the *best* candidate and putting it in MONOTONE_UP
+    would constrain it backwards. findings.md §4 and future-work.md both called this "a one-line
+    change to MONOTONE_UP"; it never could have been."""
     from src.train import MONOTONE_DOWN, monotone_constraints_tuple
 
     constraints = dict(zip(FEATURE_COLUMNS, monotone_constraints_tuple()))
-    assert constraints["sim_rank_in_group"] == -1
     assert constraints["jaro_winkler_full"] == 1
-    assert set(MONOTONE_DOWN) == {"sim_rank_in_group"}
+    assert constraints["sim_rank_in_group"] == 0, "v5 was not adopted"
     assert not (MONOTONE_UP & MONOTONE_DOWN)
+
+    # The mechanism still emits -1 when asked to.
+    import src.train as train
+
+    original = train.MONOTONE_DOWN
+    try:
+        train.MONOTONE_DOWN = {"sim_rank_in_group"}
+        probe = dict(zip(FEATURE_COLUMNS, train.monotone_constraints_tuple()))
+        assert probe["sim_rank_in_group"] == -1
+    finally:
+        train.MONOTONE_DOWN = original
 
 
 def test_monotone_constraints_reject_a_feature_that_does_not_exist():

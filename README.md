@@ -9,7 +9,7 @@ which iNaturalist taxon a Wikidata taxon item refers to, when the name alone is 
 [wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker) scans Wikidata taxa
 against iNaturalist's open-data taxon dump and writes everything it cannot resolve on a unique
 name match to a human review queue. One scan of 80,000 names produces 491 such items. On a
-hand-labelled sample of 263 of them, this model ranks the correct iNat taxon first **98.7%** of
+hand-labelled sample of 263 of them, this model ranks the correct iNat taxon first **98.3%** of
 the time, against **20.9%** for the exact-name-match rule the queue currently relies on. That
 turns a queue item from "search iNaturalist and compare ancestries" into "confirm or reject one
 suggestion".
@@ -22,12 +22,12 @@ suggestion".
 
 | | Answers without a human¹ | Precision of those answers | Top-1 accuracy² | MRR |
 |---|---|---|---|---|
-| Exact-match baseline (OOF) | 87.0% | 80.3% | 81.2% | — |
-| `binary:logistic` (OOF) | 0.002% | 100% | **99.1%** | 0.995 |
-| `rank:map` (OOF) | none³ | — | 99.0% | 0.994 |
+| Exact-match baseline (OOF) | 86.7% | 80.7% | 81.6% | — |
+| **`rank:map` (OOF)** | 0.002% | 100% | 99.0% | 0.994 |
+| `binary:logistic` (OOF) | 0.001% | 100% | **99.1%** | 0.995 |
 | Exact-match baseline (gold) | 100% | 20.9% | 20.9% | — |
-| **`binary:logistic` (gold)** | none³ | — | **98.7%** | **0.993** |
-| `rank:map` (gold) | none³ | — | 97.8% | 0.989 |
+| **`rank:map` (gold)** | none³ | — | **98.3%** | **0.991** |
+| `binary:logistic` (gold) | none³ | — | **98.3%** | 0.991 |
 
 ¹ Different units, same question: how often can this run unsupervised, and how often is it right
 when it does. For the baseline it is the share of items where an exact name match exists at all;
@@ -35,8 +35,15 @@ for the models, the share of candidate rows clearing a threshold chosen for ≥9
 baseline answers far more often and is wrong a fifth of the time.
 ² Was the correct candidate ranked first. For the baseline this counts a correct abstention as
 correct too, so it is not deflated by items with no answer.
-³ No threshold reaches 99.5% precision. This is a real result and it is discussed in
-[Limitations](#limitations), not a missing measurement.
+³ No gold row clears the OOF-chosen auto-accept threshold. This is a real result and it is
+discussed in [Limitations](#limitations), not a missing measurement.
+
+The two objectives are separated by one metric and a large operational difference. Gold top-1 is
+**identical** (both 98.26%, the same 4 misses of 230 answerable items); `rank:map` wins on gold
+Brier (0.0083 against 0.0100) and, far more usefully, its reject threshold is the only one that
+survives the population change — see [Limitations](#limitations). `docs/findings.md` §6 previously
+picked `binary:logistic` partly because it was "the only variant clearing the 99.5% auto-accept
+bar"; on the current models both clear it, so that argument no longer applies.
 
 **OOF** is 5-fold out-of-fold cross-validation over 590,671 candidate rows for 58,842 Wikidata
 items, grouped on family so no item's rows span two folds. **Gold** is 263 ambiguous Wikidata
@@ -46,14 +53,14 @@ correct taxon for **100%** of the gold items that have one, so nothing above is 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/calibration-dark.png">
-  <img alt="Reliability diagram: the raw model score sags far below the perfect-calibration diagonal, with 50,296 rows scoring above 0.95 of which only 83.9% are correct; the isotonic-calibrated score sits on the diagonal." src="docs/img/calibration-light.png">
+  <img alt="Reliability diagram: the raw model score sags far below the perfect-calibration diagonal, with 50,348 rows scoring above 0.95 of which only 83.9% are correct; the isotonic-calibrated score sits on the diagonal." src="docs/img/calibration-light.png">
 </picture>
 
 ## The label-noise finding
 
-Isotonic calibration surfaced something the accuracy numbers hide. 50,296 candidate rows score
+Isotonic calibration surfaced something the accuracy numbers hide. 50,348 candidate rows score
 ≥0.95 on the raw model probability, but only **83.9%** of them are correct, which is why the
-strict 99.5%-precision auto-accept band covers just 10 rows out of 590,671. Inside that
+strict 99.5%-precision auto-accept band covers just 6 rows out of 590,671. Inside that
 overconfident cluster, correct and incorrect rows are statistically indistinguishable on every
 engineered feature, and it is almost never a genuine tie between two candidates. That pattern
 does not look like a weak model; it looks like wrong labels. Training labels come from Wikidata's
@@ -61,15 +68,20 @@ P3151 statements, most of them added in bulk by bots, so the hypothesis was that
 being marked wrong for getting the answer right.
 
 Testing that needed labels P3151 never touched, which is the reason the gold set exists at all.
-On the gold set, the same raw-score band reads **98.2%** precision instead of 83.9%. The ceiling
+On the gold set, the same raw-score band reads **98.3%** precision instead of 83.9%. The ceiling
 was in the labels.
+
+This is the most stable result in the project. It has now been measured against five separately
+trained model versions — the frozen originals and four ladder rungs (`docs/findings.md` §10) —
+and the gold-side band precision has stayed between 96.9% and 98.3% throughout, against an
+OOF-side 83.9% that barely moves at all.
 
 Full working, including the checks that ruled out a feature gap and a tie-breaking gap, is in
 [`docs/findings.md`](docs/findings.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/threshold-bands-dark.png">
-  <img alt="Both 99.5%-precision bands drawn to scale: 91.6% of candidate rows confidently rejected, 8.4% left for human review, and an auto-accept band of 10 rows too small to see." src="docs/img/threshold-bands-light.png">
+  <img alt="Both 99.5%-precision bands drawn to scale: 91.8% of candidate rows confidently rejected, 8.2% left for human review, and an auto-accept band of 6 rows too small to see." src="docs/img/threshold-bands-light.png">
 </picture>
 
 ## How it is evaluated
@@ -103,13 +115,14 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 4 | Features + `GroupKFold` on family | 590,671 rows × 52 features, no QID in two folds | done |
 | 5 | Exact-match baseline, tie-broken by observation count | 81.2% accuracy | done |
 | 6 | Two objectives, isotonic calibration, threshold selection | 99.1% top-1 OOF | done |
-| 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.7% top-1, n=263 | done |
+| 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.3% top-1, n=263 | done |
 | 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
 | 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
 | 13 | Container, lockfile, one command per stage | gold numbers reproduce from a clean clone | done |
 | 14 | Feature construction moved into dbt-core over DuckDB | 46 of 52 columns identical, 103 dbt tests green | done |
-| 15–16 | MLflow, Airflow + Terraform | — | planned |
+| 15 | MLflow tracking + registry; the freeze released and retrained | 5 registered versions, champion resolves to the published numbers | done |
+| 16 | Airflow + Terraform | Terraform stack done in 15; DAGs remain | partly |
 
 Milestones 1–12 build the model. 13–16 are platform work — a container, a SQL transformation
 layer, experiment tracking and an orchestrated DAG — and are not intended to make the model
@@ -127,17 +140,20 @@ Stated plainly, because a reviewer who finds an undisclosed limitation should di
 of the numbers.
 
 - **Neither model can act unsupervised at the precision bar this task needs.** At ≥99.5%
-  precision the auto-accept band covers 10 of 590,671 OOF rows and zero gold rows. The system
-  ranks well; it does not yet decide.
-- **The reject threshold does not transfer.** Fitted on OOF data it is 99.6% precise and rules
-  out 91.6% of candidate rows. Re-applied unchanged to the gold set it drops to 95.7%, and would
-  hide the true match for 107 of 263 items. Thresholds fitted on the P3151 population do not hold
-  on the ambiguous one, which is the population that matters.
-- **The gold set is 263 items.** It covers A–Z after milestone 8, but the
-  `binary:logistic`-versus-`rank:map` decision rests on a two-item difference in top-1 (three
-  misses against five, over the 230 items that have a correct answer). The pick is made on the
-  best evidence available and on a consistent direction across every metric, not on a
-  large-sample result. 620 sampled items remain unlabelled.
+  precision the auto-accept band covers 9 of 590,671 OOF rows for `rank:map` (6 for
+  `binary:logistic`) and zero gold rows. The system ranks well; it does not yet decide.
+- **The reject threshold transfers for one objective and not the other**, which is most of why
+  `rank:map` is the reported default. Re-applied unchanged to the gold set, `rank:map` rules out
+  33 of 263 items at 99.79% row precision and hides the true match for **5**; `binary:logistic`
+  rules out 131 and hides the true match for **98**, which is unusable. Until milestone 15 only
+  the `binary` figure was published, and `docs/findings.md` §2 reported the negative result as if
+  it were a property of the task rather than of that objective.
+- **The gold set is 263 items, and the noise floor on it is about one item.** Milestone 15's v2
+  rung changes no feature definition at all — only the order rows are written in — and still
+  moves `rank:map`'s top-1 by a full item and band precision by 1.25 points
+  (`docs/findings.md` §10). Any difference here smaller than roughly two items should be read as
+  noise, including the two objectives' identical 98.26% top-1. 620 sampled items remain
+  unlabelled, and labelling them is the single highest-value thing left.
 - **Training labels are noisy.** Quantified above, not eliminated. Every OOF number in this repo
   inherits it.
 - **12.85% of P3151 links are stale**, pointing at iNat taxon IDs that no longer exist as active
@@ -245,11 +261,18 @@ Or `docker compose run --rm pipeline make test lint` to run them the way CI does
   versions and why, an audit of the existing pipeline, and the alternatives that were rejected.
 - [`docs/future-work.md`](docs/future-work.md) — what is deliberately not done yet.
 
-The milestone 6 and 7 models in `data/models/` are frozen. They are the fixed reference point
-every number here is quoted against, and `train.build_final_models()` only retrains when a model
-file is missing or `force_refresh=True` is passed. Hand-labelling the gold set adds new P3151
-statements to Wikidata, so a future re-pull would see a different population than the one these
-models trained on. Freezing them means that drift cannot silently change the results.
+The models live in an MLflow registry, and `data/models/` is an export of whichever version holds
+the `@champion` alias — kept committed so the five-minute path and CI still work with no server.
+Every number above resolves to a logged metric on a named run, and the alias resolves to the model
+those numbers came from; that is milestone 15's acceptance check.
+
+Until milestone 15 this was a paragraph rather than a mechanism: the models were frozen by
+convention, and `train.build_final_models()` simply declined to overwrite them. Milestone 15
+released that freeze deliberately and retrained as a ladder of five versions, one change per rung,
+so each delta is attributable — including a rung that changes no feature definition at all and
+exists only to measure how much a pure row-order reshuffle is worth. The full comparison, the
+pre-registered decision rule, and the two places it produced an uncomfortable answer are in
+[`docs/findings.md`](docs/findings.md) §10.
 
 ## Licence
 

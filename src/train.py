@@ -37,27 +37,25 @@ FEATURE_COLUMNS = [
     "wikidata_sitelink_count", "wikidata_statement_count", "wikidata_has_iucn", "wikidata_has_commons_cat",
 ]
 
-# Spec §5's "nice touch": monotone increasing on these — costs a little accuracy, buys
+# Spec §5's "nice touch": monotone increasing on these three — costs a little accuracy, buys
 # defensibility (a candidate can never look *less* plausible for scoring higher on any of them).
-#
-# `family_match` joins the original three at milestone 15 (docs/findings.md §4 found a case where
-# leaving it unconstrained let a candidate with strictly worse taxonomic agreement outscore one
-# with better).
-MONOTONE_UP = {
-    "jaro_winkler_full",
-    "shared_ancestor_depth",
-    "kingdom_match",
-    "family_match",
-}
+MONOTONE_UP = {"jaro_winkler_full", "shared_ancestor_depth", "kingdom_match"}
 
-# Monotone *decreasing*, and the reason this was not the one-line change findings.md §4 and
-# future-work.md both describe it as.
+# Monotone *decreasing*. Empty, deliberately — see docs/findings.md §10.
 #
-# sim_rank_in_group is built with rank(ascending=False), so **rank 1 is the best candidate** — the
-# feature is inversely related to quality. Adding it to MONOTONE_UP would have told XGBoost that a
-# worse in-group rank may only ever raise the score, which is the opposite of the intent, and
-# monotone_constraints_tuple() could only emit 1 or 0 so -1 was not expressible at all.
-MONOTONE_DOWN = {"sim_rank_in_group"}
+# Milestone 15's ladder tested extending the constraints (family_match increasing,
+# sim_rank_in_group decreasing) as rung v5. It produced the best gold top-1 and MRR of any rung
+# and was **ineligible**: the pre-registered gate allowed an OOF top-1 regression of 0.1pp against
+# v1 and it regressed 0.106pp. Missing by 0.006pp is still missing, and moving the threshold after
+# seeing the number it excludes is the failure mode writing it down beforehand exists to prevent.
+#
+# The *mechanism* stays, because that part was a real bug rather than a tuning choice:
+# findings.md §4 and future-work.md both call this "a one-line change to MONOTONE_UP", and it
+# never could have been. sim_rank_in_group is built with rank(ascending=False), so rank 1 is the
+# **best** candidate and the feature is inversely related to quality — putting it in MONOTONE_UP
+# would have constrained it backwards, and monotone_constraints_tuple() could emit only 1 or 0, so
+# -1 was not expressible at all. Both are fixed; only the constraint set is not adopted.
+MONOTONE_DOWN: set[str] = set()
 
 RANDOM_STATE = 42
 

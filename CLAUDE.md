@@ -790,6 +790,40 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   Caught here for real: the first parity check after the alignment showed no change at all.
   `--force-refresh` is the escape, and is required after any feature-definition edit.
 
+- **Promotion and the regenerated report (milestone 15, done)** — the champion is **ladder rung
+  v4**, exported to `data/models/` so the committed copy and the alias cannot drift, with `data/
+  oof_predictions.parquet` promoted alongside it so the thresholds belong to the same model.
+  `docs/findings.md` §10 is the milestone's deliverable and carries the full five-rung table, the
+  pre-registered rule and the two places it produced an uncomfortable answer.
+
+  Two of those are worth knowing before reading any number here:
+  - **v5 was ineligible by 0.006pp.** It had the best gold top-1 and MRR of any rung and regressed
+    OOF top-1 by 0.106pp against a pre-registered gate of 0.100pp. The gate was not moved. Its
+    *mechanism* fix was kept (`MONOTONE_DOWN` exists, `monotone_constraints_tuple()` emits `-1`)
+    because that was a real bug; only the constraint set is unadopted, so `MONOTONE_DOWN` is empty.
+  - **The rule selected v3, which was not a coherent answer** — rungs are cumulative code states,
+    so promoting v3 meant reverting v4's correctness fix on a 0.0005 Brier difference. v4 was
+    promoted as the latest eligible rung, and that is recorded in §10 as a deviation rather than
+    presented as the rule's output.
+
+  **`rank:map` is now the reported default**, replacing `binary:logistic`. Gold top-1 is exactly
+  tied (98.26%, four misses each, three of them the same items); the rule's Brier tie-break picks
+  `rank`, but the real argument is §2: **`rank:map`'s reject threshold survives the population
+  change and `binary:logistic`'s does not** — 5 hidden true matches against 98 of 263. §6's old
+  decisive claim (`binary` "the only variant clearing the auto-accept bar") no longer reproduces
+  in the current environment and has been retired.
+
+  Regenerated: README's results table, headline, label-noise section, Limitations and milestone
+  table; `findings.md` §§1, 2, 3, 5, 6 and the new §10; §9 **dated rather than rewritten**, since a
+  parity report retro-fitted to its own fix records nothing; the six PNGs; the five fixtures; and
+  CI's grep assertions. Verified with `docker run --rm --network none` — all five greps pass.
+
+  **`findings.md` §5 is deliberately left incomplete.** Milestone 9 requires a written reading for
+  every miss, and the champion has two the frozen models did not (`Q14908802` for both,
+  `Q20668495` for `rank:map`). Characterising a miss is a per-item review against the feature
+  breakdown, done with Livia — it is how two labelling errors were caught — so the section names
+  them as pending rather than guessing.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
