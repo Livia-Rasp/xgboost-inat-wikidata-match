@@ -202,3 +202,125 @@ def test_model_dir_can_be_overridden_independently(tmp_path, monkeypatch):
 def test_sqlite_index_built_by_the_fixture_is_readable(lookup):
     """Guards the conftest fixture itself, which every other candidate test leans on."""
     assert isinstance(lookup, sqlite3.Connection)
+
+
+# -- the feature and OOF manifests must notice a change in *values*, not just row counts --------
+#
+# Spec §7 milestone 15 retrains on a feature table that has the same 590,671 rows and the same 41
+# columns as the one before it. Both manifests keyed only on counts, so both would have reported
+# a cache hit and handed back the previous model's predictions as if they were the new ones —
+# silent, and indistinguishable from "the change made no difference".
+
+
+def _features_frame(value: float) -> pd.DataFrame:
+    """Fixed shape, variable content: exactly the case counts cannot see."""
+    return pd.DataFrame(
+        {"wikidata_qid": ["Q1", "Q2"], "similarity": [value, 0.5], "label": [1, 0], "fold": [0, 1]}
+    )
+
+
+def test_features_source_fingerprints_always_carry_every_key(tmp_path):
+    """Milestone 13's lesson, applied to the second manifest: a key that is present only
+    sometimes can never match, because the check is a dict comparison."""
+    from src import features
+
+    parquet = tmp_path / "candidates.parquet"
+    _features_frame(1.0).to_parquet(parquet, index=False)
+
+    partial = features._features_source_fingerprints({"candidates": parquet})
+    assert set(partial) == set(features.FEATURE_SOURCE_NAMES)
+    assert partial["candidates"] is not None
+    assert partial["wikidata_taxa"] is None
+
+    assert set(features._features_source_fingerprints(None)) == set(features.FEATURE_SOURCE_NAMES)
+    assert set(features._features_source_fingerprints({})) == set(features.FEATURE_SOURCE_NAMES)
+
+
+def test_features_source_fingerprints_reject_an_unknown_name(tmp_path):
+    """A typo'd source name would otherwise fingerprint nothing and be silently dropped."""
+    from src import features
+
+    with pytest.raises(ValueError, match="unknown feature source"):
+        features._features_source_fingerprints({"candidate": tmp_path / "x.parquet"})
+
+
+def test_features_manifest_notices_a_value_only_source_change(tmp_path):
+    """Row counts identical, contents different — the manifest must still change."""
+    from src import features
+
+    parquet = tmp_path / "candidates.parquet"
+    _features_frame(1.0).to_parquet(parquet, index=False)
+    before = features._features_source_fingerprints({"candidates": parquet})
+
+    _features_frame(0.25).to_parquet(parquet, index=False)  # same shape, different values
+    after = features._features_source_fingerprints({"candidates": parquet})
+
+    assert before != after, "a value-only change must move the fingerprint"
+
+
+def test_oof_shape_key_carries_a_fingerprint_of_the_features_it_was_given(tmp_path):
+    """The regression that matters: the predicate below can only notice a value change if
+    build_oof_predictions() actually puts a fingerprint in the key. Two feature tables of
+    identical shape must produce different shape keys."""
+    from src import train
+
+    frame = _features_frame(1.0)
+    a, b = tmp_path / "a.parquet", tmp_path / "b.parquet"
+    frame.to_parquet(a, index=False)
+    _features_frame(0.25).to_parquet(b, index=False)
+
+    key_a = train.oof_shape_key(frame, a)
+    key_b = train.oof_shape_key(frame, b)
+
+    assert key_a["features_fingerprint"] is not None
+    assert key_a["n_rows"] == key_b["n_rows"]
+    assert key_a["feature_columns"] == key_b["feature_columns"]
+    assert key_a != key_b, "same shape, different values — the key must still differ"
+
+    assert train.oof_shape_key(frame)["features_fingerprint"] is None
+
+
+def test_oof_manifest_misses_when_the_feature_values_change(tmp_path):
+    """The ladder trap itself, at the predicate that decides it."""
+    from src import train
+
+    manifest_path = tmp_path / "oof.manifest.json"
+    parquet = tmp_path / "features.parquet"
+    _features_frame(1.0).to_parquet(parquet, index=False)
+
+    shape_key = {"n_rows": 2, "features_fingerprint": file_fingerprint(parquet)}
+    manifest_path.write_text(json.dumps(shape_key))
+    assert train._oof_manifest_matches(manifest_path, shape_key) is True
+
+    _features_frame(0.25).to_parquet(parquet, index=False)
+    changed = {"n_rows": 2, "features_fingerprint": file_fingerprint(parquet)}
+    assert train._oof_manifest_matches(manifest_path, changed) is False
+
+
+def test_oof_manifest_hits_after_a_pure_mtime_change(tmp_path):
+    """The other half, and the reason this is a fingerprint rather than an mtime."""
+    from src import train
+
+    manifest_path = tmp_path / "oof.manifest.json"
+    parquet = tmp_path / "features.parquet"
+    _features_frame(1.0).to_parquet(parquet, index=False)
+
+    shape_key = {"n_rows": 2, "features_fingerprint": file_fingerprint(parquet)}
+    manifest_path.write_text(json.dumps(shape_key))
+
+    os.utime(parquet, (1, 1))
+    unchanged = {"n_rows": 2, "features_fingerprint": file_fingerprint(parquet)}
+    assert train._oof_manifest_matches(manifest_path, unchanged) is True
+
+
+def test_oof_manifest_still_matches_a_manifest_written_before_fingerprints_existed(tmp_path):
+    """Backwards compatibility: a caller that does not pass features_path gets None, and None is
+    what a legacy manifest's .get() returns too, so the subset match still hits. An absent path
+    is not evidence of change — the same rule _cache_is_valid() learned in milestone 13."""
+    from src import train
+
+    manifest_path = tmp_path / "oof.manifest.json"
+    manifest_path.write_text(json.dumps({"n_rows": 2, "n_folds": 2}))
+
+    legacy_shape_key = {"n_rows": 2, "n_folds": 2, "features_fingerprint": None}
+    assert train._oof_manifest_matches(manifest_path, legacy_shape_key) is True

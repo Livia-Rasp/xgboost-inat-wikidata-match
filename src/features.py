@@ -22,7 +22,7 @@ from .labels import (
     build_labels,
 )
 from .normalize import normalize_name
-from .paths import DATA_DIR
+from .paths import DATA_DIR, file_fingerprint
 
 N_SPLITS = 5
 RANDOM_STATE = 42
@@ -229,6 +229,31 @@ def build_features(
     )
 
 
+# The four inputs features.parquet is derived from. Order is irrelevant (it is a dict), but the
+# key set is not: every key is always present, None for an input whose path was not passed, for
+# the same reason candidates._source_fingerprints() does it — the manifest check is a dict
+# comparison, so a key that is sometimes absent can never match and silently rebuilds forever.
+FEATURE_SOURCE_NAMES = ("candidates", "wikidata_taxa", "ancestors", "lookup_sqlite")
+
+
+def _features_source_fingerprints(source_paths: dict[str, Path] | None) -> dict:
+    """Content fingerprints of the inputs, so a change in feature *values* invalidates the cache.
+
+    The row counts in shape_key cannot see one: rebuilding the same 590,671 rows with different
+    numbers in them (a different feature definition, or the dbt-built table swapped in) leaves
+    every count identical. That is spec §7 milestone 15's ladder trap, and platform-design §4.5
+    flagged the row-count manifest as the weakest of the seven.
+    """
+    source_paths = source_paths or {}
+    unknown = set(source_paths) - set(FEATURE_SOURCE_NAMES)
+    if unknown:
+        raise ValueError(f"unknown feature source(s): {sorted(unknown)}")
+    return {
+        name: (file_fingerprint(source_paths[name]) if source_paths.get(name) is not None else None)
+        for name in FEATURE_SOURCE_NAMES
+    }
+
+
 def _features_manifest_matches(manifest_path: Path, shape_key: dict) -> bool:
     if not manifest_path.exists():
         return False
@@ -246,16 +271,23 @@ def build_features_and_splits(
     inat_index: pd.DataFrame,
     features_path: Path = DEFAULT_FEATURES_PATH,
     manifest_path: Path = DEFAULT_FEATURES_MANIFEST_PATH,
+    source_paths: dict[str, Path] | None = None,
     force_refresh: bool = False,
 ) -> pd.DataFrame:
     """Full pipeline: labels (+ synthetic dropout) + features + family_key + GroupKFold fold
-    assignment, cached to parquet."""
+    assignment, cached to parquet.
+
+    `source_paths` (keys: FEATURE_SOURCE_NAMES) opts into content fingerprinting of the inputs.
+    Without it the cache key is row counts only, which cannot notice a change in feature values —
+    callers that have the paths should pass them.
+    """
     shape_key = {
         "n_candidates": len(candidates),
         "n_wikidata": len(wikidata_taxa),
         "n_ancestors": len(ancestors),
         "n_inat_index": len(inat_index),
         "n_splits": N_SPLITS,
+        "source_fingerprints": _features_source_fingerprints(source_paths),
     }
     if not force_refresh and features_path.exists() and _features_manifest_matches(manifest_path, shape_key):
         return pd.read_parquet(features_path)
@@ -303,7 +335,18 @@ if __name__ == "__main__":
     build_lookup_cache()  # ensure it exists; we read it directly below
     inat_index = _load_inat_index()
 
-    df = build_features_and_splits(candidates, wikidata_taxa, ancestors, inat_index)
+    df = build_features_and_splits(
+        candidates,
+        wikidata_taxa,
+        ancestors,
+        inat_index,
+        source_paths={
+            "candidates": DEFAULT_CANDIDATES_PATH,
+            "wikidata_taxa": WIKIDATA_TAXA_PATH,
+            "ancestors": DEFAULT_ANCESTORS_CACHE_PATH,
+            "lookup_sqlite": LOOKUP_SQLITE_PATH,
+        },
+    )
     print(f"{len(df):,} feature rows, {df.shape[1]} columns")
 
     ok = verify_no_qid_split_across_folds(df)

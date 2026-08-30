@@ -19,7 +19,7 @@ import pandas as pd
 import xgboost
 from sklearn.isotonic import IsotonicRegression
 
-from .paths import DATA_DIR, MODEL_DIR
+from .paths import DATA_DIR, MODEL_DIR, file_fingerprint
 
 FEATURE_COLUMNS = [
     "similarity",
@@ -286,19 +286,42 @@ def _avg_best_iteration(models: list) -> int:
     return int(round(sum(iterations) / len(iterations))) if iterations else TREE_PARAMS["n_estimators"]
 
 
-def build_oof_predictions(
-    features: pd.DataFrame,
-    oof_path: Path = DEFAULT_OOF_PATH,
-    manifest_path: Path = DEFAULT_OOF_MANIFEST_PATH,
-    force_refresh: bool = False,
-) -> pd.DataFrame:
-    shape_key = {
+def oof_shape_key(features: pd.DataFrame, features_path: Path | None = None) -> dict:
+    """Everything that must change the OOF cache: the data, the feature list, the folds, the
+    hyperparameters and the constraints.
+
+    `features_fingerprint` is None when no path is passed, so the subset match in
+    _oof_manifest_matches() still hits against a manifest written before this key existed. An
+    absent path is not evidence of change — the same rule candidates._cache_is_valid() learned in
+    milestone 13.
+    """
+    return {
         "n_rows": len(features),
         "feature_columns": FEATURE_COLUMNS,
         "n_folds": features["fold"].nunique(),
         "tree_params": TREE_PARAMS,
         "monotone_up": sorted(MONOTONE_UP),
+        "features_fingerprint": file_fingerprint(features_path) if features_path else None,
     }
+
+
+def build_oof_predictions(
+    features: pd.DataFrame,
+    oof_path: Path = DEFAULT_OOF_PATH,
+    manifest_path: Path = DEFAULT_OOF_MANIFEST_PATH,
+    features_path: Path | None = None,
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Five-fold out-of-fold predictions for both objectives, cached to parquet.
+
+    `features_path` opts into content fingerprinting of the feature table. Without it the cache
+    key cannot notice that the *values* changed: swapping data/features.parquet for a table with
+    the same 590,671 rows and the same 41 columns (the dbt-built one, or the same builder after a
+    feature fix) leaves n_rows, feature_columns, n_folds, tree_params and monotone_up all
+    identical, and the cached predictions from the previous model would be returned as if they
+    were the new ones. Callers that have the path should pass it.
+    """
+    shape_key = oof_shape_key(features, features_path)
     if not force_refresh and oof_path.exists() and _oof_manifest_matches(manifest_path, shape_key):
         return pd.read_parquet(oof_path)
 
@@ -401,7 +424,9 @@ if __name__ == "__main__":
                   f"({n_trees} trees)")
         raise SystemExit(0)
 
-    oof = build_oof_predictions(features, force_refresh=args.force_refresh)
+    oof = build_oof_predictions(
+        features, features_path=DEFAULT_FEATURES_PATH, force_refresh=args.force_refresh
+    )
     labels = oof["label"].to_numpy()
 
     for variant, prob_col, raw_col in [

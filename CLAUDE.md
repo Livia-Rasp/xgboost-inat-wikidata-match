@@ -91,7 +91,14 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   .venv/bin/python -m src.features
   ```
   First run: ~8 min (ancestor pull, network, one-time) + <1 min (everything else, local).
-  Reruns are a cache hit unless the upstream caches' row counts change or `N_SPLITS` changes.
+  Reruns are a cache hit unless `N_SPLITS` changes, or any of the four inputs changes — keyed on
+  `paths.file_fingerprint()` content hashes (`_features_source_fingerprints()`,
+  `FEATURE_SOURCE_NAMES`), not on the row counts it used to compare. Row counts cannot see a
+  change in feature *values*: rebuilding the same 590,671 rows with different numbers in them
+  leaves every count identical, so the cache reported a hit and handed back the previous frame.
+  Every key is always present, `None` for a source whose path was not passed — milestone 13's
+  lesson (a sometimes-absent key can never match a dict comparison), applied to the second
+  manifest. `source_paths=` is how a caller opts in; `python -m src.features` passes all four.
 
 - **Baseline (milestone 5)** — `src/evaluate.py`: the honest exact-match rule (spec §6), tie-
   broken by real iNat observation count. Spec's own wording implies sourcing that offline from
@@ -134,6 +141,16 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   silently retrain. (Both of these were real bugs caught here during development — worth keeping
   the guardrails, not just the fix, since the failure mode is silent either way: wrong-but-not-
   crashing results, not an exception.)
+  `shape_key` is built by `oof_shape_key(features, features_path)` and carries a
+  `features_fingerprint` — a third instance of the same silent failure. `n_rows`,
+  `feature_columns`, `n_folds`, `tree_params` and `monotone_up` are all identical between two
+  feature tables of the same shape holding different values, which is precisely what milestone
+  15's retrain produces, so without the fingerprint the previous model's predictions come back as
+  if they were the new ones. `None` when no path is passed, so the subset match still hits
+  against a manifest written before the key existed — an absent path is not evidence of change,
+  the rule `_cache_is_valid()` learned in milestone 13. Note a parquet byte-fingerprint also
+  moves on a column reorder or a compression change, neither of which affects the model: that is
+  a wasted rebuild, never a false hit, which is the right direction to fail in.
   ```
   .venv/bin/python -m src.train
   ```
