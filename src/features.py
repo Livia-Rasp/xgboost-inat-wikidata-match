@@ -313,6 +313,21 @@ def build_features_and_splits(
             fold_of_qid[qid] = fold
     df["fold"] = df["wikidata_qid"].map(fold_of_qid)
 
+    # Deterministic row order, so a rebuild from the same inputs is reproducible.
+    #
+    # It was not, and that is load-bearing rather than tidiness: candidates.parquet comes out of
+    # an imap_unordered pool, the merges here do not preserve a stable order anyway, and
+    # TREE_PARAMS's subsample=0.8 selects rows by *position*. So rebuilding this file from
+    # byte-identical inputs trained a different model — same rows, different order, different
+    # subsample draw. Verified both halves: two OOF runs over one file are bit-identical, two over
+    # differently-ordered copies of the same values are not.
+    #
+    # That made any comparison spanning a feature rebuild un-attributable, which is exactly what
+    # spec §7 milestone 15's ladder does. A fifth order-dependency, after the four in
+    # platform-design §4.3, and the same fix they got: an explicit rule instead of an incidental
+    # one. (wikidata_qid, inat_taxon_id) is unique — fct_features tests it — so the order is total.
+    df = df.sort_values(["wikidata_qid", "inat_taxon_id"]).reset_index(drop=True)
+
     features_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(features_path, index=False)
     manifest_path.write_text(json.dumps(shape_key, indent=2))

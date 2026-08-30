@@ -192,6 +192,19 @@ def pandas_features(mini_data_dir, tmp_path_factory) -> pd.DataFrame:
     )
 
 
+def test_the_feature_table_has_a_deterministic_row_order(pandas_features):
+    """A rebuild must reproduce, or nothing that spans one can be attributed.
+
+    candidates.parquet comes out of an imap_unordered pool and the merges do not preserve a
+    stable order, while TREE_PARAMS's subsample=0.8 selects rows by *position* — so before this
+    was pinned, rebuilding the feature table from byte-identical inputs trained a different model.
+    A fifth order-dependency after platform-design §4.3's four.
+    """
+    key = ["wikidata_qid", "inat_taxon_id"]
+    assert pandas_features[key].equals(pandas_features[key].sort_values(key).reset_index(drop=True))
+    assert not pandas_features.duplicated(key).any(), "the sort is only total if the key is unique"
+
+
 def _aligned(dbt_features: pd.DataFrame, pandas_features: pd.DataFrame):
     key = ["wikidata_qid", "inat_taxon_id"]
     a = pandas_features.sort_values(key).reset_index(drop=True)
