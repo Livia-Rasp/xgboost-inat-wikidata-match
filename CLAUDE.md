@@ -699,6 +699,49 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   - `MATCHER_GIT_SHA` is a build arg: `.dockerignore` excludes `.git/`, so `git rev-parse` cannot
     work in the image and CI passes `github.sha`.
 
+- **Backfilling the frozen models as registry v1 (milestone 15)** — `backfill_v1.py` at the repo
+  root (the convention for one-off tooling that drives the pipeline). Runs once, needs the stack.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python backfill_v1.py
+  ```
+  After it, `models:/inat-match-binary@champion` resolves to the exact binaries every published
+  number is quoted against — the mechanism that replaces the prose freeze. Verified: the alias
+  round-trips and scores identically, and all nine published gold numbers (README's results
+  table, findings §1/§6, the recall ceiling) resolve to a logged metric on run
+  `v1-backfill-3e59a13`, which is spec §7 milestone 15's own acceptance check.
+
+  **Metrics are recomputed, never transcribed** — copying numbers out of README.md would record
+  what the docs say, not what the models do. The two families are recomputed differently and the
+  run is tagged with the difference rather than smoothing it over:
+  - **Gold metrics** come from scoring these exact binaries; fully reproducible, and CI proves it.
+  - **OOF metrics** are a *fresh recompute of the same configuration in the current environment*
+    (`oof_metrics_source=recomputed`), because the frozen ones are not reproducible — see below.
+    Written to `data/oof_predictions.v1_recompute.parquet`, **not** over the frozen cache: gold
+    scoring reads that file for its thresholds (`load_oof_reference`), so overwriting it would
+    move `gold_band_comparison`/`gold_threshold_check` in the slice that only records numbers.
+
+  `3e59a13` is the commit whose tree holds the model bytes — verified with `git hash-object`, not
+  inferred from file dates — and is logged as the run's `git_sha` param, separately from the SHA
+  the backfill itself ran at.
+
+  **Two independent reasons a retrain does not reproduce the committed OOF**, both measured here
+  and both mattering for anything that compares model versions:
+  1. **Environment drift.** `data/models/*` are dated 2026-08-23; `.venv` was rebuilt 2026-08-29
+     for milestones 13/14. Feeding the *same* `features.parquet` through the current environment
+     moves every one of 590,671 raw scores and `binary_avg_best_iteration` 882 → 841. It is **not**
+     thread count: `n_jobs` ∈ {1,4,8,20} give bit-identical fits, which quietly contradicts
+     `docker/Dockerfile`'s stated rationale for pinning `OMP_NUM_THREADS=4` (harmless, and worth
+     keeping to bound container CPU, but the comment is wrong).
+  2. **`features.parquet`'s row order is not stable across rebuilds** — a fifth order-dependency,
+     beyond the four in platform-design §4.3. Rebuilding from byte-identical inputs yields the
+     same rows in a different order, and `TREE_PARAMS`'s `subsample=0.8` selects rows by
+     position, so the model changes. Verified: two OOF runs over the *same* file are bit-identical,
+     two over differently-ordered copies of the same values are not.
+
+  Aggregate metrics survive both (0.9913 vs the published 99.1%), which is why this hid: only the
+  row-level scores and `best_iteration` move.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
