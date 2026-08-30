@@ -114,7 +114,7 @@ def params_blob(extra: Mapping[str, Any] | None = None) -> dict:
     from .candidates import MAX_EDIT_DISTANCE, K
     from .features import N_SPLITS
     from .labels import RANDOM_SEED, SYNTHETIC_DROPOUT_FRACTION
-    from .train import FEATURE_COLUMNS, MONOTONE_UP, RANDOM_STATE, TREE_PARAMS
+    from .train import FEATURE_COLUMNS, MONOTONE_DOWN, MONOTONE_UP, RANDOM_STATE, TREE_PARAMS
 
     sha, dirty = git_sha()
     blob: dict[str, Any] = {
@@ -125,6 +125,7 @@ def params_blob(extra: Mapping[str, Any] | None = None) -> dict:
         "feature_columns": list(FEATURE_COLUMNS),
         "n_features": len(FEATURE_COLUMNS),
         "monotone_up": sorted(MONOTONE_UP),
+        "monotone_down": sorted(MONOTONE_DOWN),
         "n_splits": N_SPLITS,
         "random_state": RANDOM_STATE,
         "label_random_seed": RANDOM_SEED,

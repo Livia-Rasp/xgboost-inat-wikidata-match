@@ -37,9 +37,27 @@ FEATURE_COLUMNS = [
     "wikidata_sitelink_count", "wikidata_statement_count", "wikidata_has_iucn", "wikidata_has_commons_cat",
 ]
 
-# Spec §5's "nice touch": monotone increasing on these three — costs a little accuracy, buys
+# Spec §5's "nice touch": monotone increasing on these — costs a little accuracy, buys
 # defensibility (a candidate can never look *less* plausible for scoring higher on any of them).
-MONOTONE_UP = {"jaro_winkler_full", "shared_ancestor_depth", "kingdom_match"}
+#
+# `family_match` joins the original three at milestone 15 (docs/findings.md §4 found a case where
+# leaving it unconstrained let a candidate with strictly worse taxonomic agreement outscore one
+# with better).
+MONOTONE_UP = {
+    "jaro_winkler_full",
+    "shared_ancestor_depth",
+    "kingdom_match",
+    "family_match",
+}
+
+# Monotone *decreasing*, and the reason this was not the one-line change findings.md §4 and
+# future-work.md both describe it as.
+#
+# sim_rank_in_group is built with rank(ascending=False), so **rank 1 is the best candidate** — the
+# feature is inversely related to quality. Adding it to MONOTONE_UP would have told XGBoost that a
+# worse in-group rank may only ever raise the score, which is the opposite of the intent, and
+# monotone_constraints_tuple() could only emit 1 or 0 so -1 was not expressible at all.
+MONOTONE_DOWN = {"sim_rank_in_group"}
 
 RANDOM_STATE = 42
 
@@ -64,7 +82,17 @@ DEFAULT_MODEL_DIR = MODEL_DIR
 
 
 def monotone_constraints_tuple(feature_columns: list[str] = FEATURE_COLUMNS) -> tuple[int, ...]:
-    return tuple(1 if f in MONOTONE_UP else 0 for f in feature_columns)
+    """+1 increasing, -1 decreasing, 0 unconstrained — positional over `feature_columns`, which
+    is why the ordered list is logged as a run parameter (platform-design §4.3.3)."""
+    if MONOTONE_UP & MONOTONE_DOWN:
+        raise ValueError(
+            f"a feature cannot be both increasing and decreasing: {sorted(MONOTONE_UP & MONOTONE_DOWN)}"
+        )
+    unknown = (MONOTONE_UP | MONOTONE_DOWN) - set(feature_columns)
+    if unknown:
+        # A typo here would otherwise constrain nothing at all, silently.
+        raise ValueError(f"constrained feature(s) not in feature_columns: {sorted(unknown)}")
+    return tuple(1 if f in MONOTONE_UP else -1 if f in MONOTONE_DOWN else 0 for f in feature_columns)
 
 
 def _prepare_X(df: pd.DataFrame) -> pd.DataFrame:
@@ -301,6 +329,7 @@ def oof_shape_key(features: pd.DataFrame, features_path: Path | None = None) -> 
         "n_folds": features["fold"].nunique(),
         "tree_params": TREE_PARAMS,
         "monotone_up": sorted(MONOTONE_UP),
+        "monotone_down": sorted(MONOTONE_DOWN),
         "features_fingerprint": file_fingerprint(features_path) if features_path else None,
     }
 

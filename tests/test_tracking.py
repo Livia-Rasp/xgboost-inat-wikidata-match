@@ -141,7 +141,34 @@ def test_params_blob_logs_the_feature_columns_in_order():
 
 
 def test_params_blob_records_the_constrained_features():
-    assert tracking.params_blob()["monotone_up"] == sorted(MONOTONE_UP)
+    from src.train import MONOTONE_DOWN
+
+    blob = tracking.params_blob()
+    assert blob["monotone_up"] == sorted(MONOTONE_UP)
+    assert blob["monotone_down"] == sorted(MONOTONE_DOWN)
+
+
+def test_monotone_constraints_emit_minus_one_for_decreasing():
+    """sim_rank_in_group is built with rank(ascending=False), so rank 1 is the *best* candidate
+    and the feature is inversely related to quality. findings.md §4 and future-work.md both call
+    the extension "a one-line change to MONOTONE_UP"; it is not, and adding it there would have
+    constrained it the wrong way round."""
+    from src.train import MONOTONE_DOWN, monotone_constraints_tuple
+
+    constraints = dict(zip(FEATURE_COLUMNS, monotone_constraints_tuple()))
+    assert constraints["sim_rank_in_group"] == -1
+    assert constraints["jaro_winkler_full"] == 1
+    assert set(MONOTONE_DOWN) == {"sim_rank_in_group"}
+    assert not (MONOTONE_UP & MONOTONE_DOWN)
+
+
+def test_monotone_constraints_reject_a_feature_that_does_not_exist():
+    """A typo would otherwise constrain nothing at all, silently — the positional mapping just
+    would not match it."""
+    from src import train
+
+    with pytest.raises(ValueError, match="not in feature_columns"):
+        train.monotone_constraints_tuple(["some_other_column"])
 
 
 def test_params_blob_import_direction_does_not_cycle():
