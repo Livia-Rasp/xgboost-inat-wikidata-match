@@ -251,8 +251,19 @@ def build_features(
         lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0]
     )
     df["sim_margin_to_runner_up"] = df["similarity"] - top2
+    # Split on '|' and test set membership, not `str.contains`. Three tags are substrings of
+    # others — `exact` of `synonym_exact`/`basionym_exact`, and the same for both fuzzy pairs —
+    # so the substring test conflated them: 735 rows were marked strategy_exact on the strength
+    # of a synonym or basionym match, of which only 42 were literally tagged `exact`. Three
+    # feature columns were therefore quietly reading as three others.
+    #
+    # get_dummies does the split once for the whole column rather than once per tag, and the
+    # reindex is what keeps the output at exactly STRATEGY_TAGS: a candidate set that never hits
+    # a synonym match (a partial gold sample, say) would otherwise produce fewer columns than
+    # FEATURE_COLUMNS expects, which is the hazard candidates.STRATEGY_TAGS exists to prevent.
+    one_hot = df["strategies"].str.get_dummies(sep="|")
     for tag in STRATEGY_TAGS:
-        df[f"strategy_{tag}"] = df["strategies"].str.contains(tag, regex=False)
+        df[f"strategy_{tag}"] = one_hot[tag].astype(bool) if tag in one_hot else False
 
     # ---- Popularity / quality ----
     df["wikidata_sitelink_count"] = df["sitelinks"]

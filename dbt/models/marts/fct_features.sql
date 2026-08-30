@@ -183,7 +183,7 @@ select
     sim_rank_in_group::double                                       as sim_rank_in_group,
     sim_margin_to_runner_up,
     {% for tag in var('strategy_tags') -%}
-    contains(strategies, '{{ tag }}')                               as strategy_{{ tag }},
+    list_contains(str_split(strategies, '|'), '{{ tag }}')          as strategy_{{ tag }},
     {% endfor %}
 
     -- ---- Popularity / quality ----
