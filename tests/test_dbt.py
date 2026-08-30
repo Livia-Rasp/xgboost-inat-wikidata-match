@@ -176,7 +176,9 @@ def dbt_run(mini_data_dir) -> subprocess.CompletedProcess:
 @pytest.fixture(scope="module")
 def dbt_features(dbt_run, mini_data_dir) -> pd.DataFrame:
     assert dbt_run.returncode == 0, dbt_run.stdout + dbt_run.stderr
-    return pd.read_parquet(mini_data_dir / "features_dbt.parquet")
+    # features.parquet, not features_dbt.parquet: milestone 15 promoted the dbt table to the
+    # canonical path and moved the pandas build to features_pandas.parquet beside it.
+    return pd.read_parquet(mini_data_dir / "features.parquet")
 
 
 @pytest.fixture(scope="module")

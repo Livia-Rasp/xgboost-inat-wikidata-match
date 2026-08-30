@@ -30,8 +30,18 @@ RANDOM_STATE = 42
 # Standard ranks compared between the WD ancestor chain and the iNat ancestry chain.
 COMPARISON_RANKS = ("kingdom", "family", "order")
 
+# The canonical feature table every consumer reads — train.py, evaluate.py, build_figures.py.
+# Spec §7 milestone 15 promotes the dbt-built one into this path; `dbt/models/marts/
+# fct_features.sql` writes here, and this module now writes beside it instead (below).
 DEFAULT_FEATURES_PATH = DATA_DIR / "features.parquet"
-DEFAULT_FEATURES_MANIFEST_PATH = DATA_DIR / "features.manifest.json"
+
+# What `python -m src.features` writes. Milestone 14 had this the other way round — the SQL table
+# was the newcomer written beside the canonical pandas one — because that milestone only
+# *measured* the drift and overwriting the comparand would have destroyed what the parity report
+# compares to. The two paths now agree on all 52 columns and on row order, so the promotion is a
+# no-op in values and the pandas table becomes the comparand instead.
+PANDAS_FEATURES_PATH = DATA_DIR / "features_pandas.parquet"
+DEFAULT_FEATURES_MANIFEST_PATH = DATA_DIR / "features_pandas.manifest.json"
 
 
 INAT_INDEX_COLUMNS = ["taxon_id", "name", "rank", "ancestry", "genus", "specific_epithet"]
@@ -76,6 +86,22 @@ def _wd_ancestor_names_by_rank(
     anc = ancestors.copy()
     anc["rank_name"] = anc["ancestor_rank_qid"].map(WD_RANK_TO_NAME)
     anc = anc[anc["rank_name"].isin(target_ranks)]
+
+    # A transitive P171 chain really can hold two ancestors at the same rank — 10,102 of 58,842
+    # items do. This used to take whichever the parquet happened to list first, which made the
+    # answer depend on file layout: build_fixtures.py measured sorting the ancestor fixture
+    # changing family_match/order_match on 4 of 2,610 gold rows and moving rank:map's gold top-1
+    # by half a point (platform-design §4.3.1).
+    #
+    # Explicit rule instead, matching int_ancestor_by_rank's `order by source_priority,
+    # qid_number, ancestor_name`: lowest QID number wins — the older, more established Wikidata
+    # item. `source_priority` needs no counterpart here because self-as-ancestor is assigned
+    # above and the chain uses setdefault, so it already cannot be overwritten.
+    qid_number = pd.to_numeric(anc["ancestor_qid"].str[1:], errors="coerce").fillna(0)
+    anc = anc.assign(_qid_number=qid_number).sort_values(
+        ["_qid_number", "ancestor_name"], kind="stable"
+    )
+
     for qid, rank_name, name in zip(anc["qid"], anc["rank_name"], anc["ancestor_name"]):
         result.setdefault(qid, {}).setdefault(rank_name, name)
     return result
@@ -205,7 +231,22 @@ def build_features(
     df["n_inat_taxa_same_name"] = df["inat_name"].map(inat_name_counts).fillna(0).astype(int)
     wd_name_counts = wikidata_taxa["name"].value_counts()
     df["n_wikidata_items_same_name"] = df["name"].map(wd_name_counts).fillna(0).astype(int)
-    df["sim_rank_in_group"] = df.groupby("wikidata_qid")["similarity"].rank(ascending=False, method="first")
+    # Ties broken explicitly on inat_taxon_id, matching int_group_stats' `row_number() over
+    # (partition by wikidata_qid order by similarity desc, inat_taxon_id)`.
+    #
+    # `.rank(method="first")` broke them on candidates.parquet's row order instead, which comes
+    # out of an imap_unordered pool. Ties are the common case rather than the exception here —
+    # every exact match scores similarity 1.0 — so this was the largest single disagreement
+    # between the pandas and SQL feature tables: 225,911 rows, 38.25%, all of them inside a tie.
+    # inat_taxon_id is a string on both sides, so both orderings are lexicographic.
+    ordered = df.sort_values(
+        ["wikidata_qid", "similarity", "inat_taxon_id"],
+        ascending=[True, False, True],
+        kind="stable",
+    )
+    df["sim_rank_in_group"] = (
+        ordered.groupby("wikidata_qid").cumcount().add(1).reindex(df.index).astype(float)
+    )
     top2 = df.groupby("wikidata_qid")["similarity"].transform(
         lambda s: s.nlargest(2).min() if len(s) > 1 else s.iloc[0]
     )
@@ -269,7 +310,7 @@ def build_features_and_splits(
     wikidata_taxa: pd.DataFrame,
     ancestors: pd.DataFrame,
     inat_index: pd.DataFrame,
-    features_path: Path = DEFAULT_FEATURES_PATH,
+    features_path: Path = PANDAS_FEATURES_PATH,
     manifest_path: Path = DEFAULT_FEATURES_MANIFEST_PATH,
     source_paths: dict[str, Path] | None = None,
     force_refresh: bool = False,
@@ -340,9 +381,21 @@ def verify_no_qid_split_across_folds(df: pd.DataFrame) -> bool:
 
 
 if __name__ == "__main__":
+    import argparse
+
     from .candidates import DEFAULT_CANDIDATES_PATH, build_lookup_cache
     from .wikidata import DEFAULT_ANCESTORS_CACHE_PATH
     from .wikidata import DEFAULT_CACHE_PATH as WIKIDATA_TAXA_PATH
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="rebuild even when the cache matches. Needed after any change to a feature "
+        "*definition*: the manifest fingerprints this stage's inputs, not the code that reads "
+        "them, so editing build_features() alone leaves the cache looking valid.",
+    )
+    args = parser.parse_args()
 
     wikidata_taxa = pd.read_parquet(WIKIDATA_TAXA_PATH)
     candidates = pd.read_parquet(DEFAULT_CANDIDATES_PATH)
@@ -361,6 +414,7 @@ if __name__ == "__main__":
             "ancestors": DEFAULT_ANCESTORS_CACHE_PATH,
             "lookup_sqlite": LOOKUP_SQLITE_PATH,
         },
+        force_refresh=args.force_refresh,
     )
     print(f"{len(df):,} feature rows, {df.shape[1]} columns")
 

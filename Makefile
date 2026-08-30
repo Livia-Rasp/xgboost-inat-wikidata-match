@@ -44,12 +44,12 @@ ancestors:  ## milestone 4's input: transitive P171 ancestor chains
 candidates:  ## milestones 1+3: build the lookup cache, then generate candidates
 	$(PYTHON) -m src.candidates
 
-features:  ## milestone 4: features and GroupKFold splits
+features:  ## milestone 4: the pandas feature build, into data/features_pandas.parquet (the parity comparand)
 	$(PYTHON) -m src.features
 
 # Run from the repo root: dbt does not chdir, so `data/` in dbt/profiles.yml and in
 # fct_features' `location` resolves against the caller's working directory, not dbt/.
-features-sql:  ## milestone 14: build the same feature table with dbt, into data/features_dbt.parquet
+features-sql:  ## milestone 15: build the CANONICAL feature table with dbt, into data/features.parquet
 	$(DBT) build --project-dir dbt --profiles-dir dbt
 
 parity:  ## milestone 14: diff the dbt feature table against the pandas one, column by column
@@ -74,7 +74,10 @@ fixtures:  ## regenerate tests/fixtures/ from the full caches
 	$(PYTHON) build_fixtures.py
 
 # The full path from an empty data/, in order. Roughly 15 minutes, most of it waiting on WDQS.
-all: wikidata candidates ancestors features baseline train final-models gold  ## Run every stage in order
+# features-sql builds the canonical table the model trains on; features builds the pandas
+# comparand `parity` diffs it against. Both, in that order, so `make all` ends with a run whose
+# feature table has been checked against a second independent implementation.
+all: wikidata candidates ancestors features-sql features parity baseline train final-models gold  ## Run every stage in order
 
 # -- containers -------------------------------------------------------------------------------
 

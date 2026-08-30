@@ -20,12 +20,14 @@ import sys
 import numpy as np
 import pandas as pd
 
-from src.features import DEFAULT_FEATURES_PATH
+from src.features import DEFAULT_FEATURES_PATH, PANDAS_FEATURES_PATH
 from src.labels import WD_RANK_TO_NAME
-from src.paths import DATA_DIR
 from src.train import FEATURE_COLUMNS
 
-DBT_FEATURES_PATH = DATA_DIR / "features_dbt.parquet"
+# Inverted at milestone 15: the dbt table is now the canonical DEFAULT_FEATURES_PATH and the
+# pandas one is what is written beside it. The comparison itself is unchanged — it is still
+# "SQL against pandas, column by column" — only which of the two the pipeline actually consumes.
+DBT_FEATURES_PATH = DEFAULT_FEATURES_PATH
 KEY = ["wikidata_qid", "inat_taxon_id"]
 
 # One ULP of a 64-bit float is ~2.2e-16 near 1.0. Anything under this is the two libraries
@@ -36,11 +38,11 @@ COMPARISON_RANKS = ("kingdom", "family", "order")
 
 
 def load_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
-    for path, target in ((DEFAULT_FEATURES_PATH, "make features"), (DBT_FEATURES_PATH, "make features-sql")):
+    for path, target in ((PANDAS_FEATURES_PATH, "make features"), (DBT_FEATURES_PATH, "make features-sql")):
         if not path.exists():
             sys.exit(f"{path} is missing — run `{target}` first.")
 
-    pandas_features = pd.read_parquet(DEFAULT_FEATURES_PATH).sort_values(KEY).reset_index(drop=True)
+    pandas_features = pd.read_parquet(PANDAS_FEATURES_PATH).sort_values(KEY).reset_index(drop=True)
     dbt_features = pd.read_parquet(DBT_FEATURES_PATH).sort_values(KEY).reset_index(drop=True)
 
     if not pandas_features[KEY].equals(dbt_features[KEY]):

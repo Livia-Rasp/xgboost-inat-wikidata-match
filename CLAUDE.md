@@ -742,6 +742,54 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   Aggregate metrics survive both (0.9913 vs the published 99.1%), which is why this hid: only the
   row-level scores and `best_iteration` move.
 
+- **The ladder (milestone 15)** — `run_ladder.py --rung vN` trains one rung, refits into
+  `data/ladder/vN/`, scores the gold set with *those* models and registers a version. Models never
+  go over `data/models/`; the committed export stays the champion's until promotion, so the
+  five-minute path and CI keep reproducing numbers the README states. A rung never moves the
+  champion alias — promotion applies the pre-registered rule once every rung has run.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python run_ladder.py --rung v3
+  ```
+  **v2 measures the noise floor** — it changes no feature definition, only the order rows are
+  written in, so its delta is what a pure `subsample` reshuffle is worth. It is not small: one
+  full gold item of `rank:map`'s top-1 (0.9783 → 0.9870) and 1.25 points of band precision. Two
+  published conclusions are qualified by it, and both should be read alongside the floor:
+  `findings.md` §6 picked `binary:logistic` on what README's Limitations calls "a two-item
+  difference", i.e. about twice the noise; and §1's 98.2% band precision moves ~1pp on row order,
+  with the band's membership moving too (167 → 164 → 180 rows across v1/v2/v3).
+  `binary:logistic`'s gold top-1 is unmoved at 0.9870 across all three rungs, and OOF is stable
+  to ~0.05pp because 590k rows average the reshuffle out. It is the 263-item gold set where it
+  bites.
+
+  **v3 promoted the dbt table to `data/features.parquet`** and moved the pandas build to
+  `features_pandas.parquet`, which is now the parity comparand (`build_parity_report.py` inverted;
+  `make all` gained `features-sql` and `parity`). The promotion required aligning three tie-breaks
+  first, because `evaluate.load_gold_features()` always builds gold features with the **pandas**
+  path — training on SQL features while scoring on pandas ones would have skewed every gold number
+  on 38% of rows and been misread as the retrain's doing:
+  - `sim_rank_in_group` ties now break on `inat_taxon_id`, matching `int_group_stats`.
+  - ancestor-rank ties now take the lowest QID number, matching `int_ancestor_by_rank`.
+  - `parent_name_jw` uses a **rapidfuzz UDF** (`dbt_udf.jaro_winkler_codepoints`) instead of
+    DuckDB's `jaro_winkler_similarity`, which counts UTF-8 bytes where rapidfuzz counts code
+    points. Only this feature was exposed, being the one computed on raw rather than normalised
+    names, and every normalised name is ASCII.
+
+  `fct_features` also gained `order by wikidata_qid, inat_taxon_id`: SQL guarantees no order
+  without one, and making an unordered table canonical would have reintroduced exactly the
+  irreproducibility v2 had just fixed.
+
+  **Result: 52 of 52 columns now agree**, up from milestone 14's 46, and the two paths differ only
+  by ~5.55e-17 on three Jaro-Winkler columns over normalised ASCII names — one ULP, well inside
+  the parity tolerance. `docs/findings.md` §9's table describes the milestone-14 state and is
+  dated rather than rewritten.
+
+  **A code change to a feature definition does not invalidate `features.manifest.json`** — it
+  fingerprints this stage's *inputs*, not the code that reads them, so editing `build_features()`
+  leaves the cache looking valid and `python -m src.features` silently returns the old table.
+  Caught here for real: the first parity check after the alignment showed no change at all.
+  `--force-refresh` is the escape, and is required after any feature-definition edit.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
