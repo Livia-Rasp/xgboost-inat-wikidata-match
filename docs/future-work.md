@@ -32,6 +32,33 @@ because that is the only population large enough to fit them on. Once the gold s
 enough to fit rather than merely check a threshold, they should be re-derived there — the
 deployment distribution and the fitting distribution would finally be the same one.
 
+## Stop the model matching across kingdoms
+
+The clearest open weakness, found in milestone 15's per-miss review ([`findings.md`](findings.md)
+§5). `Q20668495` *Afrocrania* is a **hemihomonym**: Wikidata's is a plant genus (parent
+*Cornaceae*), iNaturalist holds that plant as a **subgenus** and a different, animal *Afrocrania*
+at **genus** rank. `rank_equal` therefore points at the animal while `kingdom_match`,
+`family_match`, `order_match` and `shared_ancestor_depth` all point at the plant.
+`binary:logistic` weighs the taxonomy and gets it right; `rank:map`, the current default, weighs
+`rank_equal` and does not.
+
+Matching a taxon to something in another kingdom is not a near-miss, it is a category error, and
+hemihomonyms are the case this project exists for — `prunella` is the spec's own acceptance check
+in §7 milestone 1. Two directions, not mutually exclusive:
+
+- **A feature that encodes kingdom disagreement as a hard signal.** `kingdom_match` is currently
+  one of three equal-weight boolean agreements folded into `shared_ancestor_depth`. A *confirmed
+  kingdom mismatch* — both sides have a known kingdom and they differ — is categorically stronger
+  evidence than "no ancestor matched", and the feature set cannot presently tell those apart.
+- **Preprocessing that refuses cross-kingdom candidates outright.** Cheaper and blunter. It would
+  need care: the gold set contains items whose Wikidata ancestry is incomplete, so "unknown
+  kingdom" must not be treated as "different kingdom", and candidate generation would want to keep
+  surfacing these so the recall ceiling stays measurable.
+
+Note that v5's extended monotone constraints do **not** fix this case — checked directly during
+the review — so it is a genuinely separate piece of work rather than something the parked rung
+would pick up.
+
 ## Re-test the extended monotone constraints once the gold set is bigger
 
 **Tested at milestone 15 as ladder rung v5, and not adopted.** It produced the best gold top-1

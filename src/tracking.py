@@ -184,14 +184,31 @@ def log_params(params: Mapping[str, Any]) -> None:
 
 
 def log_metrics(metrics: Mapping[str, float], step: int | None = None) -> None:
-    """Skips None values — `score_gold_set` reports mrr/brier as None for the baseline."""
+    """Skips values that are not real numbers.
+
+    `score_gold_set` reports mrr/brier as None for the baseline, and the gold threshold checks
+    report NaN precision when no row clears the threshold — which is the actual result here, not
+    an edge case. Logging NaN would record a metric that reads as a measurement; skipping it
+    records that there was nothing to measure.
+
+    Anything else that is not a real number is skipped rather than raised on. Tracking is
+    auxiliary: a stray non-numeric should not take down the run it is describing, and the failure
+    mode when it did was worse than useless — half the champion's metrics were rewritten and half
+    left stale, with nothing indicating which was which.
+    """
     if not enabled():
         return
     mlflow = _mlflow()
     for key, value in metrics.items():
-        if value is None:
+        if value is None or isinstance(value, bool | str):
             continue
-        mlflow.log_metric(key, float(value), step=step)
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            continue
+        if numeric != numeric:  # NaN
+            continue
+        mlflow.log_metric(key, numeric, step=step)
 
 
 def set_tags(tags: Mapping[str, str]) -> None:

@@ -90,9 +90,9 @@ jobs:
           docker run --rm --network none pipeline:ci make gold | tee gold.out
           grep -q "263 items, 2,610 candidate rows"       gold.out
           grep -q "Recall ceiling .*: 100.00%"            gold.out
-          grep -qE "binary +0\.982609 +0\.990580 +0\.010012" gold.out
-          grep -qE "rank +0\.982609 +0\.991304 +0\.008293"   gold.out
-          grep -qE "baseline +0\.209125"                  gold.out
+          grep -qE "binary +0\.986957 +0\.992754 +0\.010008" gold.out
+          grep -qE "rank +0\.986957 +0\.993478 +0\.008293"   gold.out
+          grep -qE "baseline +0\.212928"                  gold.out
 
       - name: Build the Airflow image
         # Not pushed, and nothing runs on it until milestone 16. This step exists to prove that

@@ -9,8 +9,8 @@ which iNaturalist taxon a Wikidata taxon item refers to, when the name alone is 
 [wikidata-inat-checker](https://github.com/Livia-Rasp/wikidata-inat-checker) scans Wikidata taxa
 against iNaturalist's open-data taxon dump and writes everything it cannot resolve on a unique
 name match to a human review queue. One scan of 80,000 names produces 491 such items. On a
-hand-labelled sample of 263 of them, this model ranks the correct iNat taxon first **98.3%** of
-the time, against **20.9%** for the exact-name-match rule the queue currently relies on. That
+hand-labelled sample of 263 of them, this model ranks the correct iNat taxon first **98.7%** of
+the time, against **21.3%** for the exact-name-match rule the queue currently relies on. That
 turns a queue item from "search iNaturalist and compare ancestries" into "confirm or reject one
 suggestion".
 
@@ -25,9 +25,9 @@ suggestion".
 | Exact-match baseline (OOF) | 86.7% | 80.7% | 81.6% | — |
 | **`rank:map` (OOF)** | 0.002% | 100% | 99.0% | 0.994 |
 | `binary:logistic` (OOF) | 0.001% | 100% | **99.1%** | 0.995 |
-| Exact-match baseline (gold) | 100% | 20.9% | 20.9% | — |
-| **`rank:map` (gold)** | none³ | — | **98.3%** | **0.991** |
-| `binary:logistic` (gold) | none³ | — | **98.3%** | 0.991 |
+| Exact-match baseline (gold) | 100% | 21.3% | 21.3% | — |
+| **`rank:map` (gold)** | none³ | — | **98.7%** | **0.993** |
+| `binary:logistic` (gold) | none³ | — | **98.7%** | 0.993 |
 
 ¹ Different units, same question: how often can this run unsupervised, and how often is it right
 when it does. For the baseline it is the share of items where an exact name match exists at all;
@@ -39,8 +39,9 @@ correct too, so it is not deflated by items with no answer.
 discussed in [Limitations](#limitations), not a missing measurement.
 
 The two objectives are separated by one metric and a large operational difference. Gold top-1 is
-**identical** (both 98.26%, the same 4 misses of 230 answerable items); `rank:map` wins on gold
-Brier (0.0083 against 0.0100) and, far more usefully, its reject threshold is the only one that
+**identical** (both 98.70% — three misses each of 230 answerable items, two of them the same
+items); `rank:map` wins on gold Brier (0.0083 against 0.0100) and MRR, and far more usefully, its
+reject threshold is the only one that
 survives the population change — see [Limitations](#limitations). `docs/findings.md` §6 previously
 picked `binary:logistic` partly because it was "the only variant clearing the 99.5% auto-accept
 bar"; on the current models both clear it, so that argument no longer applies.
@@ -91,7 +92,7 @@ Three things make these numbers mean what they say:
 - **Negatives come from the deployment distribution.** A negative here is another candidate that
   survived generation for the same Wikidata item, not a taxon drawn at random from the 1.4M-row
   index. Random negatives are trivially separable and would have inflated every number in the
-  table. This is why the baseline scores 20.9% on gold rather than something respectable.
+  table. This is why the baseline scores 21.3% on gold rather than something respectable.
 - **The metric is a decision under asymmetric cost.** A wrong write to Wikidata is much worse
   than a deferral to a human, so thresholds target 99.5% precision and the honest answer is
   sometimes "this system should not act unsupervised". Not AUC.
@@ -115,7 +116,7 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 4 | Features + `GroupKFold` on family | 590,671 rows × 52 features, no QID in two folds | done |
 | 5 | Exact-match baseline, tie-broken by observation count | 81.2% accuracy | done |
 | 6 | Two objectives, isotonic calibration, threshold selection | 99.1% top-1 OOF | done |
-| 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.3% top-1, n=263 | done |
+| 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.7% top-1, n=263 | done |
 | 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
 | 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
@@ -150,10 +151,15 @@ of the numbers.
   it were a property of the task rather than of that objective.
 - **The gold set is 263 items, and the noise floor on it is about one item.** Milestone 15's v2
   rung changes no feature definition at all — only the order rows are written in — and still
-  moves `rank:map`'s top-1 by a full item and band precision by 1.25 points
+  moves `rank:map`'s top-1 by a full item, and moves which rows fall in the auto-accept band
   (`docs/findings.md` §10). Any difference here smaller than roughly two items should be read as
-  noise, including the two objectives' identical 98.26% top-1. 620 sampled items remain
+  noise, including the two objectives' identical 98.70% top-1. 620 sampled items remain
   unlabelled, and labelling them is the single highest-value thing left.
+- **The default objective loses a hemihomonym.** `rank:map` ranks an animal genus above the
+  correct plant subgenus for *Afrocrania*, because `rank_equal` points one way and every
+  taxonomic feature the other. Cross-kingdom matching is a category error rather than a near
+  miss, and hemihomonyms are the case this project exists for; `binary:logistic` gets this one
+  right. Tracked in [future work](docs/future-work.md).
 - **Training labels are noisy.** Quantified above, not eliminated. Every OOF number in this repo
   inherits it.
 - **12.85% of P3151 links are stale**, pointing at iNat taxon IDs that no longer exist as active

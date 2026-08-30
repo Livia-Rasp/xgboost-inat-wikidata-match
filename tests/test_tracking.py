@@ -212,6 +212,44 @@ def test_metric_keys_are_legal_and_distinguish_raw_from_calibrated():
     assert tracking.metric_key("oof", "rank", "reject_threshold") == "oof.rank.reject_threshold"
 
 
+def test_gold_metrics_survive_a_threshold_no_row_clears(tracking_off):
+    """Zero gold rows clear the OOF auto-accept threshold — that is the real result on this gold
+    set for both objectives, so gold_threshold_check returns holds=None and NaN precision.
+    Building the metric dict used to call float(None) and take the whole logging call down with a
+    TypeError, silently leaving the champion run carrying stale numbers."""
+    from src.evaluate import (
+        gold_metrics,
+        load_gold_features,
+        load_oof_reference,
+        score_gold_set,
+    )
+
+    result = score_gold_set(load_gold_features())
+    reference = load_oof_reference()
+    for objective in tracking.OBJECTIVES:
+        metrics = gold_metrics(result, reference, objective)
+        assert metrics[f"gold.{objective}.raw.top1"] > 0
+        # Present-but-None would be just as fatal; the key must be absent entirely.
+        assert f"gold.{objective}.accept_threshold_holds" not in metrics
+
+
+def test_log_metrics_skips_nan_and_none(monkeypatch, tracking_on):
+    """A NaN logged as a metric reads as a measurement. There wasn't one."""
+    logged = {}
+
+    class _FakeMlflow:
+        def log_metric(self, key, value, step=None):
+            logged[key] = value
+
+    monkeypatch.setattr(tracking, "_mlflow", lambda: _FakeMlflow())
+    # 'objective' is a real key in review_queue_reduction's dict and its value is a string.
+    # Flattening that wholesale raised mid-loop and left the champion run half-rewritten.
+    tracking.log_metrics(
+        {"a": 1.0, "b": None, "c": float("nan"), "objective": "binary", "e": True, "d": 2.0}
+    )
+    assert set(logged) == {"a", "d"}
+
+
 def test_oof_metrics_reports_both_score_kinds():
     """Ranking metrics use the raw score and thresholds use the calibrated one; a report that
     quotes one should be able to show the other (docs/findings.md §3)."""

@@ -574,14 +574,22 @@ def gold_metrics(result: dict, reference: dict, objective: str) -> dict:
         metric_key("gold", objective, "top1", "raw"): variant["top1_accuracy"],
         metric_key("gold", objective, "mrr", "raw"): variant["mrr"],
         metric_key("gold", objective, "brier", "calibrated"): variant["brier"],
-        metric_key("gold", objective, "accept_threshold_holds"): float(check["holds"]),
         metric_key("gold", objective, "accept_precision"): check["gold_precision"],
     }
+    # `holds` is None and `gold_precision` NaN when no gold row clears the OOF accept threshold,
+    # which is the actual result on this gold set rather than an edge case — zero rows clear it
+    # for either objective. float(None) raised here and killed the whole logging call.
+    if check["holds"] is not None:
+        metrics[metric_key("gold", objective, "accept_threshold_holds")] = float(check["holds"])
     for bucket, values in breakdown.items():
         for name, value in values.items():
             metrics[metric_key("gold", objective, f"{bucket}.{name}")] = value
+    # review_queue_reduction() carries its own 'objective' key, which is a string. Flattening the
+    # dict wholesale fed that to log_metric and raised — after half the run's metrics were already
+    # written, which is worse than not logging at all.
     for name, value in queue.items():
-        metrics[metric_key("gold", objective, f"queue.{name}")] = value
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            metrics[metric_key("gold", objective, f"queue.{name}")] = value
     return metrics
 
 

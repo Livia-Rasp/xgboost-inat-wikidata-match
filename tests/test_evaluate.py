@@ -92,13 +92,14 @@ def test_the_observation_count_fixture_covers_every_gold_tie(no_network):
     api.inaturalist.org — so the five-minute path quietly needs the network again and the
     committed baseline number starts depending on live counts that drift.
     """
-    import pandas as pd
+    from src.evaluate import _observation_counts_fixture, load_gold_features
 
-    from src.evaluate import GOLD_HARD_CASES_PATH, _observation_counts_fixture
-
-    hard_cases = pd.read_csv(GOLD_HARD_CASES_PATH, dtype={"inat_taxon_id": str})
-    strategies = hard_cases["strategies"].fillna("")
-    exact = hard_cases[strategies.str.contains("exact", regex=False)]
+    # strategy_exact off the built frame, not re-derived from the `strategies` string. Deriving
+    # it with a substring test is the bug milestone 15 fixed, and it reappeared here and in
+    # build_fixtures.py — three places, all of which then disagreed with what baseline_predict()
+    # actually asks for.
+    features = load_gold_features()
+    exact = features[features["strategy_exact"]]
     sizes = exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size")
     tied = sorted(set(exact.loc[sizes > 1, "inat_taxon_id"]))
 

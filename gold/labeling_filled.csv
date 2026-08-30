@@ -637,7 +637,7 @@ Q10539721,Jassargus,http://www.wikidata.org/entity/Q10539721,899610;892076,Jassa
 Q87208667,Jensoa,http://www.wikidata.org/entity/Q87208667,886000;1644819,Jensoa;Jensoa,NONE,this genus doesn't seem to exist on inat -- only the subgenus 1644819 which might be the same
 Q116270045,Jimenezia,http://www.wikidata.org/entity/Q116270045,767083;1043651,Jimenezia;Jimenezia,,
 Q132201372,Jordania,http://www.wikidata.org/entity/Q132201372,89191;1676720,Jordania;Jordania,,
-Q14908802,Joziratia anjouanae,http://www.wikidata.org/entity/Q14908802,1609620;1609619,Joziratia anjouanae;Joziratia anjouanae,1609620,difficult to decide as both items on inat seem to be the same taxon but with a different tree on top attached -- going with Enariina as ancestor here because that's concordant with https://www.gbif.org/taxon/6NFXM
+Q14908802,Joziratia anjouanae,http://www.wikidata.org/entity/Q14908802,1609620;1609619,Joziratia anjouanae;Joziratia anjouanae,1609619,"corrected during the milestone 15 per-miss review: 1609620 is INACTIVE on iNaturalist, so 1609619 is the answer. Originally labelled 1609620 -- both records look like the same taxon with a different tree above them, and Enariina as ancestor is concordant with https://www.gbif.org/taxon/6NFXM, but active status settles it. Both are still in the local index because taxa.db is a snapshot taken before the deactivation."
 Q14908808,Joziratia breviclava,http://www.wikidata.org/entity/Q14908808,1609622;1609621,Joziratia breviclava;Joziratia breviclava,,
 Q111631247,Kalkadoona confinis,http://www.wikidata.org/entity/Q111631247,1401087;1581005,Kalkadoona confinis;Kalkadoona confinis,,
 Q23043766,Kentrophyllum,http://www.wikidata.org/entity/Q23043766,1404579;1442288,Kentrophyllum;Kentrophyllum,,

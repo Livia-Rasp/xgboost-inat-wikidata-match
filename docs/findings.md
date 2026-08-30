@@ -138,13 +138,9 @@ against. Left as future work, not as a silent pending change.
 Spec §7 milestone 9 requires each miss to get a written reading rather than being counted into an
 aggregate. `src/evaluate.py --gold` prints them with their full feature breakdown.
 
-> **Pending re-review after milestone 15's retrain.** The table below characterises the misses of
-> the *frozen* models. The promoted champion (§10) misses four items per objective, three of them
-> shared: `Q14908802`, `Q16760098`, `Q46674974`, plus `Q121887868` for `binary:logistic` and
-> `Q20668495` for `rank:map`. `Q16760098` and `Q46674974` carry over and their readings below
-> still stand; `Q14908802` and `Q20668495` are new and have not been reviewed yet. Milestone 9's
-> check is not met again until they have been — and that review is done item by item against the
-> feature breakdown, which is how the labelling errors below were caught, not from the aggregate.
+**Reviewed again after milestone 15's retrain.** The champion misses three items per objective,
+two of them shared. The two misses that were new to the champion are the last two rows of the
+table; reviewing them produced a third labelling correction and one genuine model weakness.
 
 At n=263 on the frozen models, `binary:logistic` missed 3 items and `rank:map` missed 5.
 
@@ -156,14 +152,28 @@ At n=263 on the frozen models, `binary:logistic` missed 3 items and `rank:map` m
 | `Q16760098` *Utetheisa albilinea* | `1522832` | `1550468` | **iNat data issue.** Two iNat records for what appears to be the same taxon, differing only by an extra subgenus in the ancestry. Either answer is defensible; the labeller's note says as much. |
 | `Q46674974` *Bursaria* | `83575` | `1051126` | **iNat data issue.** Two genus records with incomplete ancestry, so no taxonomic feature can separate them. |
 | `Q106123971` *Acmella pusilla* (`rank:map` only) | `157976` | `1349465` | **Model gap specific to `rank:map`** — the unconstrained-interaction case in §4. |
+| `Q14908802` *Joziratia anjouanae* | `1609619` | `1609619` | **Was a labelling error — the model was right.** Two iNat records share the name and are identical on **all 41 features except `sim_rank_in_group`**, so the pick was decided entirely by the tie-break rule. Originally labelled `1609620` on GBIF ancestry concordance; `1609620` is **inactive** on iNaturalist, which settles it. Both are still in the local index because `taxa.db` is a snapshot taken before the deactivation. Corrected. |
+| `Q20668495` *Afrocrania* (`rank:map` only) | `1642969` (genus) | `1296985` (subgenus) | **Genuine model gap, and the worst kind for this project: a hemihomonym.** Wikidata's *Afrocrania* is a plant genus (parent *Cornaceae*); iNat holds the plant as a **subgenus** and a different *Afrocrania* — an animal — at **genus** rank. So `rank_equal` points at the animal while `kingdom_match`/`family_match`/`order_match` and `shared_ancestor_depth` all point at the plant. `binary:logistic` weighs the taxonomy and gets it right; `rank:map` weighs `rank_equal` and does not. v5's extended constraints do **not** fix it — checked directly. |
 
 Two of the three surviving `binary:logistic` misses are iNat-side duplicate records rather than
 ranking failures. That is worth knowing before chasing the last point of accuracy: the remaining
 headroom on this sample is mostly not in the model.
 
-The per-miss review has now caught a labelling error on both runs it has been done on (an earlier
-50-item run caught `Q21438872`, where the stated rank matched a subgenus but the true answer was
-the nominotypical genus of the same name). It is cheap and it keeps paying.
+**The per-miss review has now caught a labelling error on all three runs it has been done on** —
+`Q21438872` on an early 50-item run, `Q4694188` at n=263, and `Q14908802` here. It is cheap and it
+keeps paying, and it is the reason a label correction is folded into §10's table rather than
+discovered later.
+
+**The two objectives fail in mirror-image ways**, which is the most useful thing this round of the
+review produced. `rank:map` over-weights `rank_equal` and loses `Q20668495`, a hemihomonym where
+every taxonomic feature points the other way. `binary:logistic` under-weights it and loses
+`Q121887868`, where the Wikidata item is a phylum and `rank_equal` is the only signal that
+separates it from an identically-named genus. Hemihomonyms are the case this project exists for —
+`prunella` is the spec's own acceptance check — so `rank:map` failing one is a real mark against
+the current default, and it is [tracked in future-work](future-work.md) rather than explained
+away. Neither objective's failure is addressed by anything in the current feature set; both look
+like they need either a feature that encodes kingdom disagreement as a hard signal, or a
+preprocessing step that refuses cross-kingdom candidates outright.
 
 ---
 
@@ -248,7 +258,7 @@ no string overlap. A model trained against those learns "do the names look alike
 spectacular AUC. The negatives here are *Prunella* the bird against *Prunella* the mint —
 identical strings, differing only in ancestry — because those are the pairs that actually reach
 a human reviewer. Every number in this repo is measured against that harder distribution, which
-is why the baseline scores 20.9% on the gold set rather than something respectable.
+is why the baseline scores 21.3% on the gold set rather than something respectable.
 
 The same reasoning drives spec §3's synthetic abstention dropout: 15% of items have their true
 label hidden, so the model has to learn that "none of these" is a valid answer. Without it, a
@@ -377,14 +387,20 @@ Each rung is one commit and one `run_ladder.py --rung vN` at that commit. Gold s
 
 | metric | v1 | v2 | v3 | v4 | v5 |
 |---|---:|---:|---:|---:|---:|
-| gold top-1 `binary` | 0.9870 | 0.9870 | 0.9870 | **0.9826** | 0.9913 |
-| gold top-1 `rank` | 0.9783 | 0.9870 | 0.9826 | **0.9826** | 0.9870 |
-| gold MRR `binary` | 0.9935 | 0.9935 | 0.9928 | **0.9906** | 0.9957 |
-| gold Brier `binary` | 0.0130 | 0.0128 | 0.0095 | **0.0100** | 0.0095 |
-| gold Brier `rank` | 0.0243 | 0.0428 | 0.0078 | **0.0083** | 0.0080 |
-| gold band precision | 0.9820 | 0.9695 | 0.9833 | **0.9827** | 0.9781 |
-| gold band n | 167 | 164 | 180 | **173** | 183 |
+| gold top-1 `binary` | 0.9957 | 0.9957 | 0.9826 | **0.9870** | 0.9957 |
+| gold top-1 `rank` | 0.9913 | 0.9957 | 0.9870 | **0.9870** | 0.9913 |
+| gold MRR `binary` | 0.9978 | 0.9978 | 0.9906 | **0.9928** | 0.9978 |
+| gold MRR `rank` | 0.9957 | 0.9978 | 0.9935 | **0.9935** | 0.9957 |
+| gold Brier `binary` | 0.0118 | 0.0128 | 0.0095 | **0.0100** | 0.0095 |
+| gold Brier `rank` | 0.0221 | 0.0332 | 0.0078 | **0.0083** | 0.0080 |
+| gold band precision | 0.9762 | 0.9756 | 0.9833 | **0.9827** | 0.9781 |
+| gold band n | 168 | 164 | 180 | **173** | 183 |
 | OOF top-1 `binary` | 0.9913 | 0.9912 | 0.9907 | **0.9908** | 0.9902 |
+
+All five rungs are re-scored against the **corrected** gold set — the per-miss review that closes
+this milestone found `Q14908802` mislabelled (§5), and a label correction changes the measuring
+instrument for every rung, not just the champion's. Rescoring used the models in
+`data/ladder/*/`; no rung was retrained.
 
 | rung | change |
 |---|---|
@@ -402,8 +418,8 @@ deterministic order — `candidates.parquet` comes out of an `imap_unordered` po
 byte-identical inputs trained a different model. A fifth order-dependency after §9's four.
 
 Its delta is therefore what a pure reshuffle is worth: **one full gold item** of `rank:map`'s
-top-1 (0.9783 → 0.9870) and **1.25 points** of band precision, with the band's membership moving
-too (167 → 164 rows). `binary:logistic` did not move at all, and OOF is stable to ~0.05pp because
+top-1 (0.9913 → 0.9957) and half a point of band precision, with the band's membership moving by
+four rows (168 → 164). `binary:logistic` did not move at all, and OOF is stable to ~0.05pp because
 590,671 rows average the reshuffle out. It is the 263-item gold set where this bites.
 
 Two published claims are qualified by it, and this is the main reason the rung was worth running:
@@ -411,7 +427,7 @@ Two published claims are qualified by it, and this is the main reason the rung w
 - §6 picked `binary:logistic` over `rank:map` on what the README calls "a two-item difference".
   The floor is about one item, so that margin was roughly twice the noise, not comfortably above
   it.
-- §1's headline 98.2% gold band precision moves ~1pp on row order alone.
+- §1's gold band precision moves on row order alone, and so does which rows are in the band.
 
 **Anything on this gold set smaller than about two items should be read as noise.**
 
@@ -436,10 +452,12 @@ Written before any rung had run: eligibility gate (OOF top-1 must not regress mo
 against v1), then gold top-1 with a ±2-item practical-equivalence band, then gold band precision,
 then gold Brier, then the lower-numbered version.
 
-**v5 has the best gold top-1 (0.9913) and the best gold MRR (0.9957) of any rung, and is
-ineligible.** It regresses OOF top-1 by 0.106pp against a gate of 0.100pp — it misses by
-0.006pp. Recording that instead of moving the threshold is the entire reason the threshold was
-written down first. Its *mechanism* fix was kept, because that part was a real bug rather than a
+**v5 ties for the best gold top-1 of any rung (0.9957, with v1 and v2) and is ineligible.** It
+regresses OOF top-1 by 0.106pp against a gate of 0.100pp — it misses by 0.006pp. Recording that
+instead of moving the threshold is the entire reason the threshold was written down first. Note
+also that v5 does **not** fix `Q20668495`, the hemihomonym `rank:map` uniquely misses (§5), even
+though that miss has exactly the shape §4's constraint argument describes — checked directly,
+and it weakens rather than strengthens the case for the rung. Its *mechanism* fix was kept, because that part was a real bug rather than a
 tuning choice: §4 and `future-work.md` both call the change "a one-line change to `MONOTONE_UP`",
 and it never could have been. `sim_rank_in_group` is built with `rank(ascending=False)`, so rank 1
 is the **best** candidate and the feature is inversely related to quality; putting it in
@@ -447,20 +465,27 @@ is the **best** candidate and the feature is inversely related to quality; putti
 only `1` or `0`, so `-1` was not expressible at all. Both are fixed; only the constraint set is
 unadopted, and `MONOTONE_DOWN` is empty.
 
-**The rule then selected v3, which was not a coherent answer.** The rungs are cumulative code
-states, not alternatives, so promoting v3 would have meant reverting v4's `strategy_*` correctness
-fix — on the strength of a 0.0005 Brier difference and one gold item, both inside the noise floor
-v2 had just measured. **v4 was promoted instead: the latest eligible rung.** This is a documented
-deviation from the rule as written, recorded here rather than presented as the rule's output. The
-distinction it draws is that a correctness fix is not subject to a metrics vote, while a tuning
-change is.
+**On the labels as they stood, the rule then selected v3, which was not a coherent answer.** The
+rungs are cumulative code states, not alternatives, so promoting v3 would have meant reverting
+v4's `strategy_*` correctness fix — on the strength of a 0.0005 Brier difference and one gold
+item, both inside the noise floor v2 had just measured. **v4 was promoted instead: the latest
+eligible rung.** That was a documented deviation from the rule as written, on the reasoning that a
+correctness fix is not subject to a metrics vote while a tuning change is.
+
+**The label correction then re-ran the rule, and v4 won it outright.** Correcting `Q14908802`
+fixes the measuring instrument rather than moving a goalpost, so the rule was re-applied rather
+than left standing on data known to be wrong. On the corrected set the primary criterion favours
+v1 and v2 (0.9957), v4 sits two items back and therefore inside the ±2-item band, v3 sits three
+items back and drops out, band precision leaves v1/v2/v4 tied, and **gold Brier picks v4** —
+0.0100 against 0.0118 and 0.0128 on `binary`, and decisively on `rank`. The deviation above turned
+out not to be load-bearing.
 
 ### The objective choice flipped, and not on the metric that looks decisive
 
 §6 picked `binary:logistic`. On the promoted champion the two are **exactly tied** on gold top-1
-(0.9826, the same 4 misses of 230 answerable items), and `rank:map` wins on gold Brier (0.0083
-against 0.0100) and gold MRR (0.9913 against 0.9906). Applying the rule's tie-break literally
-makes `rank:map` the reported default.
+(0.9870 — three misses each of 230 answerable items, two of them the same items), and `rank:map`
+wins on gold Brier (0.0083 against 0.0100) and gold MRR (0.9935 against 0.9928). Applying the
+rule's tie-break literally makes `rank:map` the reported default.
 
 That tie-break is a 0.0017 Brier difference against a noise floor four times larger, so it should
 not be read as decisive on its own. Two other things carry more weight:
@@ -474,9 +499,16 @@ not be read as decisive on its own. Two other things carry more weight:
 
 ### What this milestone did not do
 
-It did not make the model better. Gold top-1 is 98.26% against the frozen models' 98.70% — one
-item *worse*, inside the noise floor. What it produced instead: a registry where every published
-number resolves to a logged metric on a named run, a feature pipeline that reproduces when rebuilt,
-two real bugs fixed (`strategy_*` one-hots, and monotone constraints that could not express a
-decreasing feature), a measured noise floor for every future comparison on this gold set, and the
-discovery that one of the two objectives has a usable reject threshold and the other does not.
+It did not make the model better. On the corrected gold set the champion ranks 98.70% against the
+frozen models' 99.13% for `rank:map` — **one item worse**, inside the noise floor v2 measured, and
+two items worse on `binary`. A retrain that costs an item is the honest outcome here and it is
+reported as one.
+
+What it produced instead: a registry where every published number resolves to a logged metric on a
+named run; a feature pipeline that reproduces when rebuilt, and two feature paths that now agree
+on all 52 columns rather than 46; three real bugs fixed (the `strategy_*` one-hots, monotone
+constraints that could not express a decreasing feature, and `make gold` reaching the network
+while two files claimed it did not); a measured noise floor for every future comparison on this
+gold set; the discovery that one objective has a usable reject threshold and the other does not;
+and — through the per-miss review the milestone ends with — a third mislabelled gold item found
+and corrected.
