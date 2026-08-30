@@ -26,6 +26,7 @@ from .paths import FIXTURE_DIR
 GOLD_INAT_INDEX_FIXTURE = FIXTURE_DIR / "gold_inat_index.csv.gz"
 GOLD_ATTRIBUTES_FIXTURE = FIXTURE_DIR / "gold_wikidata_attributes.csv.gz"
 GOLD_ANCESTORS_FIXTURE = FIXTURE_DIR / "gold_wikidata_ancestors.csv.gz"
+GOLD_OBS_COUNTS_FIXTURE = FIXTURE_DIR / "gold_observation_counts.csv.gz"
 OOF_SUMMARY_FIXTURE = FIXTURE_DIR / "oof_summary.json"
 
 _announced: set[str] = set()

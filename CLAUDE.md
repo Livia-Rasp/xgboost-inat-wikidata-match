@@ -739,6 +739,17 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   identical between the fixture path and the full path, and the printed metrics match to every
   decimal.
 
+  **`make gold` was not actually offline until milestone 15, and two places claimed it was.**
+  `score_gold_set` → `baseline_predict` → `build_observation_counts` asks the iNat API for the
+  480 taxon ids involved in a gold exact-match tie, because `data/inat_observation_counts.parquet`
+  is gitignored and `docker/Dockerfile` copies only `data/models/`. So the committed baseline
+  number `0.209125` silently depended on **live** observation counts, which drift — CI could have
+  failed without a commit. Fixed with `tests/fixtures/gold_observation_counts.csv.gz` (480 rows,
+  2 KB) and `evaluate._observation_counts_fixture()`, which is used **only when it covers every
+  id asked for**: a partial fixture would zero-fill the rest, and 0 is a real tie-break value, not
+  an absence. CI now runs the acceptance check with **`--network none`**, so the claim is enforced
+  rather than asserted — verified both ways, the pre-fix image fails it with a DNS error.
+
   **The iNat index fixture is not just the candidate rows.** It also carries every row *sharing a
   name* with a candidate (otherwise `n_inat_taxa_same_name`, which counts collisions across the
   whole index, would be silently wrong rather than absent) and every ancestor reachable from a

@@ -83,6 +83,34 @@ def test_top1_and_mrr_reward_ranking_the_true_row_first():
     assert mrr == pytest.approx((1.0 + 1 / 3) / 2)  # Q2's true row is third
 
 
+def test_the_observation_count_fixture_covers_every_gold_tie(no_network):
+    """`make gold` is only offline while this holds.
+
+    score_gold_set -> baseline_predict -> build_observation_counts asks for the taxon ids in a
+    gold exact-match tie. If the fixture stops covering them, _observation_counts_fixture()
+    correctly declines to zero-fill (0 is a real tie-break value) and the call goes to
+    api.inaturalist.org — so the five-minute path quietly needs the network again and the
+    committed baseline number starts depending on live counts that drift.
+    """
+    import pandas as pd
+
+    from src.evaluate import GOLD_HARD_CASES_PATH, _observation_counts_fixture
+
+    hard_cases = pd.read_csv(GOLD_HARD_CASES_PATH, dtype={"inat_taxon_id": str})
+    strategies = hard_cases["strategies"].fillna("")
+    exact = hard_cases[strategies.str.contains("exact", regex=False)]
+    sizes = exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size")
+    tied = sorted(set(exact.loc[sizes > 1, "inat_taxon_id"]))
+
+    assert tied, "no exact-match ties in the gold set — this test would prove nothing"
+    covered = _observation_counts_fixture(tied)
+    assert covered is not None, (
+        f"the fixture does not cover all {len(tied)} tied taxon ids; "
+        "rerun `python build_fixtures.py`"
+    )
+    assert set(covered["taxon_id"]) == set(tied)
+
+
 def test_ranking_uses_the_raw_score_not_the_calibrated_one():
     """A calibrated probability is a step function and can flatten a whole group onto one value,
     which destroys within-group ordering. See evaluate.ranking_score_column()."""

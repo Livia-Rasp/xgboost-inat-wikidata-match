@@ -23,12 +23,18 @@ from pathlib import Path
 import pandas as pd
 
 from src.candidates import DEFAULT_CACHE_PATH as LOOKUP_SQLITE_PATH
-from src.evaluate import GOLD_ANCESTORS_PATH, GOLD_HARD_CASES_PATH, oof_reference
+from src.evaluate import (
+    DEFAULT_OBS_COUNTS_PATH,
+    GOLD_ANCESTORS_PATH,
+    GOLD_HARD_CASES_PATH,
+    oof_reference,
+)
 from src.features import INAT_INDEX_COLUMNS
 from src.fixtures import (
     GOLD_ANCESTORS_FIXTURE,
     GOLD_ATTRIBUTES_FIXTURE,
     GOLD_INAT_INDEX_FIXTURE,
+    GOLD_OBS_COUNTS_FIXTURE,
     OOF_SUMMARY_FIXTURE,
 )
 from src.paths import REPO_ROOT
@@ -48,6 +54,21 @@ ATTRIBUTE_COLUMNS = [
 def _require(path: Path, how: str) -> None:
     if not path.exists():
         raise SystemExit(f"{path} not found — {how}")
+
+
+def _gold_tied_taxon_ids(hard_cases: pd.DataFrame) -> list[str]:
+    """The taxon ids baseline_predict() needs observation counts for: those in a gold item's
+    exact-match tie. Mirrors its own grouping so the fixture covers exactly what gets asked for.
+
+    Derived from `strategies` rather than from a built feature frame so this runs without one.
+    Uses substring matching, matching features.py's current `str.contains(tag)` behaviour — if
+    that is fixed (the strategy_exact bug in future-work.md), the set shrinks by one id and this
+    should follow it rather than drift.
+    """
+    strategies = hard_cases["strategies"].fillna("")
+    exact = hard_cases[strategies.str.contains("exact", regex=False)]
+    sizes = exact.groupby("wikidata_qid")["inat_taxon_id"].transform("size")
+    return sorted(set(exact.loc[sizes > 1, "inat_taxon_id"].astype(str)))
 
 
 def build_inat_index_fixture(hard_cases: pd.DataFrame) -> pd.DataFrame:
@@ -115,6 +136,23 @@ def main() -> None:
     # a fixture rather than an approximation.
     ancestors.to_csv(GOLD_ANCESTORS_FIXTURE, index=False, compression="gzip")
 
+    # The observation counts the exact-match baseline needs to break ties. Without this the gold
+    # path calls api.inaturalist.org, so `make gold` is not offline and the committed baseline
+    # number depends on live counts that drift. Scoped to the ids actually involved in a gold tie
+    # — 480 of them — rather than the whole cache.
+    _require(DEFAULT_OBS_COUNTS_PATH, "run `python -m src.evaluate --gold` first")
+    obs_counts = pd.read_parquet(DEFAULT_OBS_COUNTS_PATH).astype({"taxon_id": str})
+    tied = _gold_tied_taxon_ids(hard_cases)
+    missing = sorted(set(tied) - set(obs_counts["taxon_id"]))
+    if missing:
+        raise SystemExit(
+            f"{len(missing)} tied taxon ids are absent from {DEFAULT_OBS_COUNTS_PATH.name} "
+            f"(e.g. {missing[:3]}). Run `python -m src.evaluate --gold` to refresh the cache — a "
+            "partial fixture would silently zero-fill, and 0 is a real tie-break value."
+        )
+    obs_counts = obs_counts[obs_counts["taxon_id"].isin(tied)].sort_values("taxon_id")
+    obs_counts.to_csv(GOLD_OBS_COUNTS_FIXTURE, index=False, compression="gzip")
+
     _require(DEFAULT_OOF_PATH, "run `python -m src.train` first")
     reference = oof_reference(pd.read_parquet(DEFAULT_OOF_PATH))
     OOF_SUMMARY_FIXTURE.write_text(json.dumps(reference, indent=2) + "\n")
@@ -123,6 +161,7 @@ def main() -> None:
         (GOLD_INAT_INDEX_FIXTURE, len(inat_index)),
         (GOLD_ATTRIBUTES_FIXTURE, len(attributes)),
         (GOLD_ANCESTORS_FIXTURE, len(ancestors)),
+        (GOLD_OBS_COUNTS_FIXTURE, len(obs_counts)),
         (OOF_SUMMARY_FIXTURE, reference["n_rows"]),
     ]:
         size_kb = path.stat().st_size / 1024

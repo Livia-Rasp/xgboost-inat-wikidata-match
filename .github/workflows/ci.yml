@@ -75,12 +75,19 @@ jobs:
         run: docker run --rm pipeline:ci make test lint
 
       - name: Gold-set evaluation reproduces the committed numbers
-        # Spec §7 milestone 13's acceptance check. No mounts and no network: the fixtures,
-        # gold/hard_cases.csv and the frozen models are all baked into the image. The grep is
-        # the point — a run that prints different numbers is a packaging bug, and a silently
-        # passing `make gold` would not catch it.
+        # Spec §7 milestone 13's acceptance check. The grep is the point — a run that prints
+        # different numbers is a packaging bug, and a silently passing `make gold` would not
+        # catch it.
+        #
+        # `--network none` enforces the "no network" claim rather than asserting it. It used to be
+        # false: score_gold_set -> baseline_predict -> build_observation_counts reached
+        # api.inaturalist.org for the 480 taxon ids in a gold exact-match tie, because
+        # data/inat_observation_counts.parquet is gitignored and not in the image. So the
+        # committed baseline number silently depended on live counts that drift, and this job
+        # could fail without a commit. Fixed by tests/fixtures/gold_observation_counts.csv.gz;
+        # this flag is what stops it regressing.
         run: |
-          docker run --rm pipeline:ci make gold | tee gold.out
+          docker run --rm --network none pipeline:ci make gold | tee gold.out
           grep -q "263 items, 2,610 candidate rows"       gold.out
           grep -q "Recall ceiling .*: 100.00%"            gold.out
           grep -qE "binary +0\.986957 +0\.993478 +0\.013048" gold.out

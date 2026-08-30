@@ -152,7 +152,7 @@ of the numbers.
 ### The five-minute path
 
 Runs the gold-set evaluation end to end against committed fixtures. No Node, no 189 MB download,
-no network.
+no network — CI enforces that last one by running this same command with `--network none`.
 
 ```sh
 git clone https://github.com/Livia-Rasp/xgboost-inat-wikidata-match.git

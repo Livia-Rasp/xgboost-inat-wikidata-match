@@ -64,6 +64,10 @@ def build_observation_counts(
     if not force_refresh and cache_path.exists() and _manifest_matches(manifest_path, taxon_ids):
         return pd.read_parquet(cache_path)
 
+    fixture = _observation_counts_fixture(taxon_ids)
+    if fixture is not None:
+        return fixture
+
     counts: dict[str, int] = {}
     for batch in _chunked(taxon_ids, OBSERVATION_COUNT_BATCH_SIZE):
         counts.update(_fetch_observation_counts_batch(batch))
@@ -80,6 +84,30 @@ def build_observation_counts(
         )
     )
     return df
+
+
+def _observation_counts_fixture(taxon_ids: list[str]) -> pd.DataFrame | None:
+    """The committed counts for the gold set's exact-match ties, when data/ has nothing.
+
+    Without this, `make gold` is not offline. score_gold_set -> baseline_predict ->
+    build_observation_counts hits api.inaturalist.org for the 480 taxon ids involved in a gold
+    exact-match tie, because data/inat_observation_counts.parquet is gitignored and is not copied
+    into the image. `.github/workflows/ci.yml` and README both claimed "no network" for that path
+    and were wrong — and worse, the committed baseline number depended on a live API whose counts
+    drift, so CI could fail without a commit.
+
+    Only used when it covers every id asked for; a partial fixture would silently zero-fill the
+    rest, and a zero observation count is a real tie-break value, not an absence.
+    """
+    from .fixtures import GOLD_OBS_COUNTS_FIXTURE, announce, read_csv_fixture
+
+    if not GOLD_OBS_COUNTS_FIXTURE.exists():
+        return None
+    counts = read_csv_fixture(GOLD_OBS_COUNTS_FIXTURE, dtype={"taxon_id": str})
+    if not set(taxon_ids).issubset(set(counts["taxon_id"])):
+        return None
+    announce("observation counts", GOLD_OBS_COUNTS_FIXTURE)
+    return counts[counts["taxon_id"].isin(taxon_ids)].sort_values("taxon_id").reset_index(drop=True)
 
 
 def _manifest_matches(manifest_path: Path, taxon_ids: list[str]) -> bool:
