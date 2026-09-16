@@ -264,7 +264,9 @@ Each with an acceptance check, so progress is verifiable.
     — this project's actual real-world deliverable, not just an evaluation artifact; hand-labeling
     the gold set already resolves taxa an automated match couldn't, so the resolved links should
     go back into Wikidata rather than sitting unused in a CSV. *Check:* line count matches the
-    confirmed-match row count in `gold/hard_cases.csv`.
+    confirmed-match row count in `gold/hard_cases.csv`. This milestone also absorbs the `.qs`
+    output that `platform-design.md` §5.4 originally gave milestone 16's `score_ambiguous` DAG,
+    which now writes a parquet only.
 11. **README** with the results table, the negative-sampling story, the label-noise
     disclosure, and a short model card.
 12. *(Optional)* `score_ambiguous.py` that reads `links-ambiguous.html` rows and emits
