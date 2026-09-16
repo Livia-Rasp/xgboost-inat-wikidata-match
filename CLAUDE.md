@@ -839,6 +839,33 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   Verify with: cells 0-46 byte-identical to HEAD **including `id` fields**, no code cell's source
   changed, and a grep for the superseded figures.
 
+- **Orchestration (milestone 16, in progress)** — design and the six amendments made when
+  implementation began are in `docs/platform-design.md` §5.4 (manual ingest, bind-mounted repo,
+  one-slot DuckDB pool, our own fingerprint-gated asset emission, the precise gate, SimpleAuth).
+
+  **Failure classification comes first**, because Airflow can only retry what surfaces as an
+  exception, and only retries usefully what a retry can fix. `wikidata.is_transient(exc)` is the
+  single rule the DAGs use: timeouts, dropped connections, `ChunkedEncodingError`, HTTP
+  429/502/503/504 and the new `TransientSourceError` are transient; everything else fails at once.
+  A function, not an exception tuple, because `HTTPError` is only transient for some statuses.
+  Two real gaps were closed to make that rule mean something (`tests/test_wikidata_retry.py`,
+  mutation-checked — each fix reverted by hand turns its test red):
+  1. `_fetch_with_retry()` never caught a *raised* request — a hung or dropped connection
+     propagated on first sight and discarded every batch already fetched. The same bug
+     wikidata-inat-checker's `fetchWithRetry()` had (milestone 7, attempt 2). Now retried with
+     the same backoff as a 502.
+  2. `_fetch_ancestor_batch()` **returned the partial rows** once its coverage retries ran out,
+     and `build_ancestor_chains()` cached them as complete. Now raises `TransientSourceError`.
+
+  Plus a structural truncation check on every SPARQL call (`_tsv_truncation`): WDQS ends every TSV
+  row, header included, with a newline — verified live, including for an empty result — so a body
+  without a trailing newline was cut off in transit. Before, `_parse_sparql_tsv()` parsed it into
+  fewer rows and the attribute pull, which has no coverage check, would have cached a smaller
+  population without a word. `validate=` on `_fetch_with_retry()` is the hook; the iNat API call
+  in `evaluate.py` passes none and is unchanged. One risk accepted knowingly: a 750-item ancestor
+  batch where fewer than half the items genuinely have a P171 chain now fails instead of caching —
+  implausible for Wikidata taxa, and loud if it ever happens, which is the right direction.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
