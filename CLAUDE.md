@@ -866,6 +866,51 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   batch where fewer than half the items genuinely have a P171 chain now fails instead of caching —
   implausible for Wikidata taxa, and loud if it ever happens, which is the right direction.
 
+- **The promotion gate (milestone 16)** — `src/promote.py` turns `docs/findings.md` §10's
+  pre-registered rule into code: train a challenger, score it and the champion on the *current*
+  gold set, register the challenger, decide.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python -m src.promote --dry-run     # register + decide, never move the alias
+  .venv/bin/python -m src.promote               # the real thing; promotes when the rule says so
+  .venv/bin/python -m src.promote --override-version 7 --reason "..."   # a human decision, tagged
+  ```
+  ~3 min (OOF + refit + two gold scorings). `decide()` is a **pure function over two
+  `Scorecard`s**, which is what makes the rule testable: `tests/test_promote.py` replays §10's own
+  table and asserts the recorded verdicts — v5 ineligible by its 0.006pp OOF regression, v4 over v1
+  on Brier after two ties. If the code disagreed with the decisions already published, the
+  automation would be wrong, not the history.
+
+  - **Three outcomes, not two.** *promote*; *hold* (not better — registered under the `challenger`
+    alias, nothing else changes, green); *regress* (the DAG's task fails). Only a failed OOF
+    eligibility check or a gold top-1 more than two items worse is red, so a red run means
+    something went wrong rather than "no improvement this time".
+  - **Counts, not rates, wherever §10 compared in items.** Gold top-1 is compared in *missed
+    items* (±2, the noise floor v2 measured) and the score band in *wrong rows* (±2) — §10 called
+    4, 4 and 3 wrong rows "tied", and comparing precision instead would not reproduce that while
+    the band's own size moves between 164 and 183 rows. The band is always defined on
+    `binary_raw_score` even though ranking is on `rank:map`: that is how milestone 6 defined it.
+  - **The champion is re-scored every time, never read from its logged gold metrics.** Labels get
+    added and corrected (§10's `Q14908802`), and comparing across two versions of the measuring
+    instrument measures the instrument. Its *OOF* top-1 does come from its registered run — that
+    one cannot be recomputed without retraining it.
+  - **A fresh `data/runs/<timestamp>/` per challenger**, never `data/models/`. The OOF cache is
+    keyed on the feature table's content and the hyperparameters, *not on the code* — and a
+    code-only change is exactly what this pipeline exists to measure, so a shared directory would
+    hand back the previous run's predictions. Promotion is the only thing that writes
+    `data/models/` and `data/oof_predictions.*`, and it leaves a git diff for a human to commit.
+  - `score_gold_set(features, models=...)` and `tracking.load_from_dir()` are what let the gate
+    score two model pairs in one process; `run_ladder.py` predates them and needs a subprocess
+    plus `MATCHER_MODEL_DIR` for the same effect.
+  - **Verified against the live stack**: retraining the champion's own code on its own data came
+    back identical to five decimals (OOF top-1 change 0.000pp, 3 vs 3 gold misses, 3/173 vs 3/173
+    band rows, Brier 0.0083 both sides) and the gate held. A no-op change must not move the
+    champion, and this is the check for that.
+  - One benign warning, since both variants are logged to one run: MLflow refuses to overwrite the
+    `objective` param the first `log_model` wrote (`Changing param values is not allowed`). The
+    value that matters is inside each artifact's own `model_config`; `train.py --final` and
+    `run_ladder.py` have always printed it too.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

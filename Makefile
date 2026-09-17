@@ -11,7 +11,7 @@ IMAGE  ?= ghcr.io/livia-rasp/xgboost-inat-wikidata-match
 TF_ENV ?= terraform/envs/local
 
 .PHONY: help lock sync test lint wikidata ancestors candidates features features-sql parity \
-        baseline train final-models gold figures fixtures all image image-airflow shell \
+        baseline train final-models challenger gold figures fixtures all image image-airflow shell \
         platform-up platform-plan platform-down platform-url
 
 help:
@@ -63,6 +63,9 @@ train:  ## milestone 6: both objectives, 5-fold OOF, thresholds
 
 final-models:  ## refit both variants on all folds into data/models/
 	$(PYTHON) -m src.train --final
+
+challenger:  ## milestone 16: train a challenger, score it against the champion, promote or hold
+	$(PYTHON) -m src.promote
 
 gold:  ## milestone 7: score the hand-labelled gold set
 	$(PYTHON) -m src.evaluate --gold
