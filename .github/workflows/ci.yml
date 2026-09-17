@@ -95,9 +95,9 @@ jobs:
           grep -qE "baseline +0\.212928"                  gold.out
 
       - name: Build the Airflow image
-        # Not pushed, and nothing runs on it until milestone 16. This step exists to prove that
-        # this project's dependencies still co-resolve with Airflow, Cosmos, dbt and MLflow on a
-        # single interpreter — the assumption milestones 14-16 are built on.
+        # Not pushed. It proves that this project's dependencies still co-resolve with Airflow,
+        # Cosmos, dbt and MLflow on a single interpreter, and it is the only environment where
+        # the DAG tests below can run at all — Airflow is deliberately not in the dev extra.
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -106,6 +106,18 @@ jobs:
           tags: pipeline-airflow:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: DAGs parse and keep their retry policy
+        # --network none: Cosmos renders the dbt task group by running `dbt ls` at parse time, and
+        # that must stay local. The repo is mounted the same way the containers mount it —
+        # read-only — which is also what proves dbt's logs and target/ go somewhere writable
+        # instead of into the project directory.
+        run: |
+          docker run --rm --network none \
+            -v "$PWD:/opt/project:ro" \
+            -e PYTHONPATH=/opt/project -e AIRFLOW_HOME=/tmp/airflow -e HOME=/tmp \
+            -w /opt/project --entrypoint python \
+            pipeline-airflow:ci -m pytest tests/test_dags.py
 
       - name: Log in to GHCR
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

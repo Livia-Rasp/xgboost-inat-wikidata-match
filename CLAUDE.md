@@ -911,6 +911,57 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     value that matters is inside each artifact's own `model_config`; `train.py --final` and
     `run_ladder.py` have always printed it too.
 
+- **The DAGs (milestone 16)** — `dags/`: `taxonomy_ingest` (manual, `force_refresh` param),
+  `feature_build` (asset-triggered, Cosmos `DbtTaskGroup`), `train_and_evaluate` (asset-triggered,
+  ends in the gate). `dags/_common.py` holds the assets, the retry policy and the two mechanisms
+  below. Nothing runs them until milestone 16's Terraform module lands; `tests/test_dags.py` is
+  how they are checked meanwhile.
+  ```sh
+  docker run --rm --network none -v "$PWD:/opt/project:ro" -e PYTHONPATH=/opt/project \
+    -e AIRFLOW_HOME=/tmp/airflow -e HOME=/tmp -w /opt/project --entrypoint python \
+    ghcr.io/livia-rasp/xgboost-inat-wikidata-match-airflow:dev -m pytest tests/test_dags.py
+  ```
+  - **Retries are per failure mode.** `NETWORK_TASK` (the two WDQS tasks only) retries 4× with
+    exponential backoff up to 20 minutes; `LOCAL_TASK` has `retries=0`, because re-running
+    deterministic local CPU work cannot change its outcome. `guarded()` is what makes that
+    meaningful: `wikidata.is_transient` decides whether an exception propagates (Airflow retries)
+    or is re-raised as `AirflowFailException` (fails at once). A test asserts that no task outside
+    `NETWORK_TASKS` has retries, so the blanket `retries=3` spec §7 milestone 16 warns against
+    cannot creep back in.
+  - **One asset gates scheduling.** `ingest_complete`, emitted by ingest's final `publish` task,
+    with the four artefact assets alongside it for lineage. A DAG scheduled on a *list* waits for
+    all of them, which would never fire when only the Wikidata pull moved; an OR would fire once
+    per event. The gate sits on that one final task rather than on each stage because a skipped
+    stage skips everything downstream of it.
+  - **Emission is fingerprint-gated** (`publish_if_changed`): unchanged artefacts → the task skips
+    → no asset event → no retrain. A skipped task emits nothing, which is Airflow's own rule. The
+    previous fingerprint lives in an Airflow Variable, not in the last asset event's `extra`,
+    which keeps it independent of how Cosmos constructs those and visible under Admin → Variables.
+    `Variable.get` needs `deserialize_json=True` to match how it is written, or the stored JSON
+    comes back as a string and every run looks like a change.
+  - **All dbt tasks share a one-slot pool.** DuckDB permits a single writing process per database
+    file and Cosmos runs one dbt process per model; without the pool they race and fail with
+    `Could not set lock on file`. The pool is created by Terraform's init job.
+  - **Cosmos' own asset emission is off** (`emit_datasets=False`): in `ExecutionMode.LOCAL` it is
+    derived from OpenLineage artefacts and emits nothing at all if that parsing fails, without a
+    warning (astronomer-cosmos#2959). The retrain trigger must not depend on that.
+
+  Four things learned by running it, all of which would have cost an apply cycle each:
+  1. **dbt writes `logs/` and `target/` inside the project directory**, which the read-only repo
+     mount forbids — `dbt ls` fails with `PermissionError` before it does anything. `DBT_LOG_PATH`
+     and `DBT_TARGET_PATH` must point into the writable `data/` mount.
+  2. **`dbt ls` at DAG-parse time is safe**: verified against a completely empty `data/` — it
+     never opens the DuckDB database. So `LoadMode.DBT_LS` needs no committed manifest and no
+     built `lookup.sqlite`, and the planned `dbt parse` pre-step was dropped.
+  3. **Cosmos caches that `dbt ls` output in an Airflow Variable**, which needs the metadata
+     database. Parsing must not, so `AIRFLOW__COSMOS__ENABLE_CACHE=False` in the test and the
+     cache stays on in the containers.
+  4. **Airflow 3.3 moved `DagBag`** to `airflow.dag_processing.dagbag`, dropped `include_examples`,
+     added `known_pools`, and its `get_dag()` reads the metadata DB — so the tests import the DAG
+     modules directly instead. `AirflowFailException`/`AirflowSkipException` now live in
+     `airflow.sdk.exceptions`, `TriggerRule` in `airflow.sdk`, and Cosmos' `install_deps` operator
+     arg is now `ProjectConfig.install_dbt_deps`.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps
