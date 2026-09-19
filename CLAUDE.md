@@ -994,6 +994,35 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     also fails `base64decode` outright. The rule checks the shape instead:
     `^[A-Za-z0-9_-]{43}=$`. Both wrong versions were written before the regex.
 
+- **The chain, run for real (milestone 16)** — one manual `taxonomy_ingest` trigger produced, with
+  no further human action: an `asset_triggered` `feature_build` run, and from its features event an
+  `asset_triggered` `train_and_evaluate` run ending in a **hold** — `promote_champion` skipped, the
+  champion still v4, the run green. `train_challenger` took 2m55s in the container, `feature_build`
+  2m33s (14 dbt models one at a time through the one-slot pool, then `dbt test`, then the pandas
+  build and the parity report: 52/52 columns identical). Metrics, the verdict and its reasons are
+  tagged on the MLflow run, next to `airflow_dag_id`/`airflow_run_id`.
+
+  Four things only a live run could find, three of them real bugs:
+  1. **Cosmos hands dbt a filtered environment.** `MATCHER_DATA_DIR` never reached it, so
+     `env_var('MATCHER_DATA_DIR', 'data')` fell back to the relative default and dbt died with
+     `IO Error: No files found that match the pattern "data/features.parquet"` — the same
+     resolve-against-the-wrong-cwd trap this file already records for running dbt by hand,
+     arriving by another route. `ProjectConfig(env_vars=…)` forwards it explicitly.
+  2. **`TestBehavior.BUILD` cannot order a cross-model test.** `assert_recall_ceiling` references
+     `fct_features` *and* `stg_inat_taxa`; Cosmos attaches each test to one model, so it ran
+     inside `stg_inat_taxa`'s task, before the table it reads existed. `dbt build` gets this right
+     and the per-model split cannot. Now `TestBehavior.AFTER_ALL`, which is also what
+     platform-design §5.4's table described in the first place.
+  3. **MLflow 3.15 rejects a Host header it does not know**: HTTP 403 `Invalid Host header -
+     possible DNS rebinding attack detected` for every call from inside the docker network, whose
+     clients send `Host: mlflow:5000`. `--allowed-hosts` fixes it; note that setting it *replaces*
+     the localhost defaults and that entries match literally, port included. It surfaced as the
+     gate refusing to run — `resolve_model()` swallows any registry error and falls back to the
+     committed files, so the visible message was "no registered champion", one step away from the
+     cause.
+  4. `dag_run.run_type` is an enum: `str()` tags a run `DagRunType.MANUAL`, and an
+     `== "asset_triggered"` comparison silently never matches. `.value`.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

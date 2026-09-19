@@ -65,7 +65,9 @@ with DAG(
             tags={
                 "airflow_dag_id": dag_run.dag_id,
                 "airflow_run_id": dag_run.run_id,
-                "trigger": "asset" if dag_run.run_type == "asset_triggered" else str(dag_run.run_type),
+                # .value, not str(): run_type is a DagRunType enum, and str() tags the run
+                # "DagRunType.MANUAL" — which also made an == "asset_triggered" test never match.
+                "trigger": getattr(dag_run.run_type, "value", str(dag_run.run_type)),
             },
         )
 

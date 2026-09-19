@@ -113,6 +113,15 @@ MLFLOW_ENABLE_PROXY_MULTIPART_DOWNLOAD=false
 MLFLOW_ENABLE_PROXY_MULTIPART_UPLOAD=false
 ```
 
+**MLflow only trusts Host headers it knows.** Since 3.15 the server answers HTTP 403 *"Invalid
+Host header - possible DNS rebinding attack detected"* to anything outside its defaults, which
+cover localhost and private IPs — so every client inside the docker network, sending
+`Host: mlflow:5000`, is refused. The module passes `--allowed-hosts`; setting it **replaces** the
+defaults, and each entry matches the header literally, port included, unless it contains a
+wildcard. The symptom is indirect: `resolve_model()` treats any registry error as "no champion
+registered yet" and falls back to the committed models, so the visible failure was the promotion
+gate reporting no champion.
+
 **A one-shot job that fails does not fail the apply.** The Docker provider creates a
 `must_run = false` container and reports success whatever exit code it returns, so when Airflow's
 init job died, the apply carried on and surfaced it a minute later as *"container failed to be in
