@@ -12,7 +12,7 @@ TF_ENV ?= terraform/envs/local
 
 .PHONY: help lock sync test lint wikidata ancestors candidates features features-sql parity \
         baseline train final-models challenger gold figures fixtures all image image-airflow shell \
-        platform-up platform-plan platform-down platform-url
+        platform-up platform-plan platform-down platform-url airflow-logs
 
 help:
 	@grep -E '^[a-z-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -99,11 +99,12 @@ shell:  ## Interactive shell in the pipeline image
 # line that no service appears in both files. Needs terraform/envs/local/terraform.tfvars, which
 # is gitignored — copy terraform.tfvars.example and change every value.
 
-platform-up:  ## terraform apply: Postgres + MinIO + the MLflow tracking server
+platform-up:  ## terraform apply: Postgres + MinIO + MLflow + the four Airflow components
 	terraform -chdir=$(TF_ENV) init -input=false
 	terraform -chdir=$(TF_ENV) apply -auto-approve -input=false
 	@echo
 	@terraform -chdir=$(TF_ENV) output -raw tracking_env; echo
+	@echo "Airflow: $$(terraform -chdir=$(TF_ENV) output -raw airflow_url) (user 'admin')"
 
 platform-plan:  ## terraform plan; a clean plan after apply is the milestone's acceptance check
 	terraform -chdir=$(TF_ENV) plan -input=false
@@ -111,5 +112,9 @@ platform-plan:  ## terraform plan; a clean plan after apply is the milestone's a
 platform-down:  ## terraform destroy: removes the containers, and the volumes with them
 	terraform -chdir=$(TF_ENV) destroy -auto-approve -input=false
 
-platform-url:  ## Print the export line that points the pipeline at the stack
+platform-url:  ## Print the export line that points the pipeline at the stack, and the Airflow URL
 	@terraform -chdir=$(TF_ENV) output -raw tracking_env; echo
+	@echo "Airflow: $$(terraform -chdir=$(TF_ENV) output -raw airflow_url) (user 'admin')"
+
+airflow-logs:  ## Tail the Airflow scheduler's log (where task output lands under LocalExecutor)
+	docker logs -f $$(terraform -chdir=$(TF_ENV) output -json airflow_container_names | tr -d '[]"' | cut -d, -f2)

@@ -962,6 +962,38 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
      `airflow.sdk.exceptions`, `TriggerRule` in `airflow.sdk`, and Cosmos' `install_deps` operator
      arg is now `ProjectConfig.install_dbt_deps`.
 
+- **Airflow in Terraform (milestone 16)** — `terraform/modules/airflow` adds four containers and
+  two one-shot jobs to the milestone 15 stack. `compose.yaml` is untouched; the invariant on its
+  first line still holds.
+  ```sh
+  make platform-up        # now also prints the Airflow URL; log in as `admin`
+  make platform-plan      # a clean plan after apply is the acceptance check
+  make airflow-logs       # the scheduler's log — where task output lands under LocalExecutor
+  ```
+  - **LocalExecutor**: the executor is a property of the scheduler, so there is no worker
+    container and no Redis — `api-server`, `scheduler`, `dag-processor`, `triggerer`. The
+    triggerer runs nothing today; it is there because the api server reports its health as part of
+    the stack's, and because an `AssetWatcher` is the obvious next step for the checker's findings.
+  - **The repo is bind-mounted read-only with `data/` read-write inside it** (Docker applies the
+    deeper mount second). `PYTHONPATH=/opt/project` is what makes both `src` and `dags._common`
+    importable — Airflow puts the *dags folder* on `sys.path`, not its parent. The containers run
+    as the host uid (`airflow_uid`, `id -u`) so what they write into `data/` belongs to Livia and
+    not to the image's uid 50000.
+  - **`psql` is already in the Airflow image**, so the job that creates Airflow's metadata
+    database next to MLflow's needs no second image. It checks `pg_database` first, so a re-apply
+    cannot fail on an existing database.
+  - **The admin password is seeded, not generated.** SimpleAuthManager normally writes a generated
+    password into its passwords file *and the logs*; pointing
+    `AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE` at a file the init job writes from
+    `terraform.tfvars` keeps the UI password out of every log.
+  - `DBT_LOG_PATH`/`DBT_TARGET_PATH` point into `data/`, because dbt writes `logs/` and `target/`
+    into the project directory by default and that mount is read-only.
+  - **A Fernet key cannot be length-validated in HCL.** `base64decode` returns a *string* and
+    errors on anything that is not valid UTF-8, which 32 random bytes essentially never are, so
+    `length(base64decode(...)) == 32` rejects every valid key; the urlsafe alphabet (`-`, `_`)
+    also fails `base64decode` outright. The rule checks the shape instead:
+    `^[A-Za-z0-9_-]{43}=$`. Both wrong versions were written before the regex.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

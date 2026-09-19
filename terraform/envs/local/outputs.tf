@@ -3,6 +3,16 @@ output "mlflow_url" {
   value       = module.mlflow.tracking_uri
 }
 
+output "airflow_url" {
+  description = "Airflow UI. Log in as `admin` with airflow_admin_password from terraform.tfvars."
+  value       = module.airflow.url
+}
+
+output "airflow_container_names" {
+  description = "api-server, scheduler, dag-processor, triggerer — in that order, for docker logs."
+  value       = module.airflow.container_names
+}
+
 output "minio_console_url" {
   description = "MinIO web console. Log in with the credentials from terraform.tfvars."
   value       = module.minio.console_url
