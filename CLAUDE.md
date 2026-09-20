@@ -807,7 +807,8 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     presented as the rule's output.
 
   **`rank:map` is now the reported default**, replacing `binary:logistic`. Gold top-1 is exactly
-  tied (98.26%, four misses each, three of them the same items); the rule's Brier tie-break picks
+  tied (98.70%, three misses each, two of them the same items — the figure read 98.26% with four
+  misses before the `Q14908802` label correction); the rule's Brier tie-break picks
   `rank`, but the real argument is §2: **`rank:map`'s reject threshold survives the population
   change and `binary:logistic`'s does not** — 5 hidden true matches against 98 of 263. §6's old
   decisive claim (`binary` "the only variant clearing the auto-accept bar") no longer reproduces
