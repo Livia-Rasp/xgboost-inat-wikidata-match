@@ -23,8 +23,17 @@ cp terraform.tfvars.example terraform.tfvars   # then change every value
 cd -
 make platform-up          # terraform init + apply, prints the export line
 make platform-plan        # a clean plan after apply is milestone 15's acceptance check
+make platform-scratch     # stand the whole stack up from nothing, then tear it down
 make platform-down        # destroy; takes the volumes with it
 ```
+
+`make platform-scratch` is milestone 16's *other* acceptance check — apply from a torn-down state,
+then a clean plan — run against a **throwaway copy**. `platform-down` would take the volumes with
+it, and those volumes hold the registry every published number resolves to: the v1 backfill, the
+ladder rungs, the champion. A Terraform workspace gives the copy its own state and the overrides
+give it its own container names, network and ports, so the two cannot touch each other; the
+workspace is restored even if the apply fails half way. Verified: 19 resources up from nothing, a
+second plan reporting no changes, then all 19 destroyed, with the real stack untouched throughout.
 
 `terraform.tfvars` is gitignored and has no defaults in `variables.tf`, so `apply` fails asking
 for credentials rather than standing a stack up on a password that is in a public repo.

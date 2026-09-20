@@ -968,8 +968,16 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   ```sh
   make platform-up        # now also prints the Airflow URL; log in as `admin`
   make platform-plan      # a clean plan after apply is the acceptance check
+  make platform-scratch   # apply from nothing + clean plan + destroy, in a throwaway workspace
   make airflow-logs       # the scheduler's log — where task output lands under LocalExecutor
   ```
+  - **`platform-scratch` exists because `platform-down` is not a test that can be run.** The
+    milestone's "apply from a torn-down state" check would otherwise destroy the volumes holding
+    the registry every published number resolves to. A Terraform *workspace* plus overridden
+    name prefix and ports gives an isolated copy; `plan -detailed-exitcode` makes "no changes"
+    an exit code rather than something to read; a shell trap restores the workspace even when the
+    apply fails, since otherwise the next `platform-up` would silently target the scratch stack.
+    Verified: 19 resources from nothing, clean second plan, 19 destroyed, real stack untouched.
   - **LocalExecutor**: the executor is a property of the scheduler, so there is no worker
     container and no Redis — `api-server`, `scheduler`, `dag-processor`, `triggerer`. The
     triggerer runs nothing today; it is there because the api server reports its health as part of
