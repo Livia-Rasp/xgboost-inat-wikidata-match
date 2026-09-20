@@ -71,10 +71,11 @@ module "airflow" {
 
   # The checkout itself, mounted read-only, with data/ read-write inside it. The containers carry
   # dependencies, not code — see docs/platform-design.md §5.4 amendment 2.
-  repo_path       = local.repo_root
-  inat_cache_path = var.inat_cache_path
-  uid             = var.airflow_uid
-  workers         = var.matcher_workers
+  repo_path        = local.repo_root
+  inat_cache_path  = var.inat_cache_path
+  findings_db_path = var.findings_db_path
+  uid              = var.airflow_uid
+  workers          = var.matcher_workers
 
   admin_password = var.airflow_admin_password
   jwt_secret     = var.airflow_jwt_secret

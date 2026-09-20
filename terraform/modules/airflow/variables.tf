@@ -49,6 +49,16 @@ variable "inat_cache_path" {
   default     = ""
 }
 
+variable "findings_db_path" {
+  description = <<-EOT
+    The sibling checker's findings.db, mounted read-only for the score_ambiguous DAG. Empty means
+    "not available", and that DAG's first task then fails naming the file — everything else is
+    unaffected. This repo only ever reads it (platform-design §2.4).
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "uid" {
   description = <<-EOT
     Host uid the containers run as, so files they write into data/ are owned by you rather than by

@@ -82,6 +82,16 @@ variable "inat_cache_path" {
   default     = ""
 }
 
+variable "findings_db_path" {
+  description = <<-EOT
+    The checker's findings.db, mounted read-only for the score_ambiguous DAG — usually
+    <sibling repo>/data/findings.db. Leave empty if you do not have that checkout; only that one
+    DAG needs it. Nothing here ever writes to it (platform-design §2.4).
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "matcher_workers" {
   description = "MATCHER_WORKERS inside the containers — candidate generation's pool size. Neither cpu_count() nor process_cpu_count() can see a container CPU quota, so this is the only thing that works."
   type        = number

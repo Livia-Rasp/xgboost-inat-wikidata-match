@@ -1031,6 +1031,39 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   4. `dag_run.run_type` is an enum: `str()` tags a run `DagRunType.MANUAL`, and an
      `== "asset_triggered"` comparison silently never matches. `.value`.
 
+- **Scoring the checker's queue (milestone 16)** — `src/ambiguous.py` + `dags/score_ambiguous.py`
+  read the sibling repo's `findings.db` (`kind='link', status='ambiguous'`), generate candidates
+  with *this* project's own strategies, build features the way gold scoring does, and rank them
+  with the registered champion into `data/scored_ambiguous.parquet`.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python -m src.ambiguous            # or the @daily score_ambiguous DAG
+  ```
+  - **A ranking, never a decision.** No accept/reject column: `findings.md` §2 measured that the
+    OOF-derived thresholds do not transfer to this population, and the QuickStatements export that
+    would act on one is milestone 10's, postponed. Read-only throughout (`platform-design` §2.4).
+  - **Candidates are regenerated, not taken from the finding's payload**, so the rows scored are
+    built exactly like the rows the model trained on — same strategies, same K, same similarity.
+    The attribute and ancestor pulls reuse the *gold* code paths, which already exist for items
+    with no P3151, with their own cache files.
+  - **`@daily`, not asset-triggered**: the input is written by another repository's tool, which
+    emits no asset event here. Milestone 15's rule — an absent signal is not evidence of change —
+    argues for re-reading on a schedule.
+  - **Two things only the container could teach**, both about SQLite:
+    1. **Reading a WAL database requires writing.** SQLite creates a `-shm` sidecar even for a
+       pure read, so `mode=ro` against a read-only mount fails with `attempt to write a readonly
+       database`. It worked on the host only because the checker's own directory is writable.
+    2. **The `-wal` holds committed rows the `.db` does not**, so mounting the single file — which
+       is what the module did first — would have returned a silently stale view.
+    Both are fixed by copying the database *and* its sidecars into `data/` and reading the copy;
+    Terraform mounts the directory read-only. A copy taken mid-write can be torn, so the snapshot
+    is `PRAGMA quick_check`ed and a failure raises `TransientSourceError` — which is why
+    `read_findings` is a retrying task despite touching no network.
+  - `tests/test_ambiguous.py` builds the checker's real schema in a tmp file: it pins that only
+    *ambiguous* findings are read (not the ~200 unambiguous `open` ones the checker acts on
+    itself) and that a read-only connection refuses a write — the §2.4 promise enforced by SQLite
+    rather than by this code being careful.
+
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and
   a `docker` job that builds both images, runs the suite inside the pipeline image, and **greps

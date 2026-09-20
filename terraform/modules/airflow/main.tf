@@ -39,6 +39,13 @@ locals {
     var.inat_cache_path != "" ? [
       { host_path = var.inat_cache_path, container_path = "/opt/inat-cache", read_only = true },
     ] : [],
+    # The *directory*, not the single file. findings.db is a WAL database, and its recently
+    # committed rows live in the `-wal` sidecar next to it — mounting only the .db gives a
+    # silently stale view. Read-only, and src/ambiguous.py reads a local copy rather than this,
+    # because reading a WAL database requires writing its -shm sidecar.
+    var.findings_db_path != "" ? [
+      { host_path = dirname(var.findings_db_path), container_path = "/opt/findings", read_only = true },
+    ] : [],
   )
 
   # Every component must agree on all of this, so it is built once.
@@ -81,6 +88,9 @@ locals {
     # data/, and a mount over data/ must not hide them.
     "MATCHER_MODEL_DIR=/opt/project/data/models",
     "MATCHER_TAXA_DB=/opt/inat-cache/taxa.db",
+    # Always set, mounted or not: an unset variable would fall back to a host path that means
+    # nothing inside the container, and the error would name a file nobody expected.
+    "MATCHER_FINDINGS_DB=/opt/findings/findings.db",
     "MATCHER_WORKERS=${var.workers}",
     "MLFLOW_TRACKING_URI=${var.mlflow_tracking_uri}",
     # dbt writes logs/ and target/ inside the project directory by default, which the read-only

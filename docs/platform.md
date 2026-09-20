@@ -73,6 +73,7 @@ whether the tree was dirty, so a run from uncommitted code says so.
 | `taxonomy_ingest` | manual, `force_refresh` param | lookup index, Wikidata pull, ancestor chains, candidates |
 | `feature_build` | `ingest_complete` asset | dbt build (one task per model), pandas comparand, parity report |
 | `train_and_evaluate` | `features` asset | OOF + refit, gold scoring against the champion, the promotion gate |
+| `score_ambiguous` | `@daily` | rank the checker's ambiguous queue with the champion, read-only |
 
 Ingest is manual on purpose ([`platform-design.md`](platform-design.md) §5.4 amendment 1): the
 Wikidata cache has no staleness check, so a scheduled run either does nothing or forces a re-pull

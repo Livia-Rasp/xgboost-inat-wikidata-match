@@ -111,8 +111,22 @@ no per-candidate negatives, and no audit trail of what was rejected.
 `docs/platform-design.md` §5.2 planned a `stg_link_findings` staging model attaching the sibling
 repo's `findings.db`. Milestone 14 left it out: nothing in the feature pipeline consumes it, and a
 model that fails whenever the sibling repo is absent would break `dbt build` in the container,
-which is exactly the property milestone 13 spent its effort on. Milestone 16's scoring DAG is what
-actually needs those rows, and it can add the model when it does — read-only, per §2.4.
+which is exactly the property milestone 13 spent its effort on.
+
+**Milestone 16 built the consumer and still did not add the model**, which settles it more firmly
+than deferring it again. `score_ambiguous` reads those rows in Python (`src/ambiguous.py`) for
+three reasons:
+
+- These items have **no P3151**, so they share nothing with the dbt sources, which are keyed on the
+  population that does. Their features come from the same *pandas* path gold scoring uses; a dbt
+  staging model would have no downstream model to feed.
+- `findings.db` is a **WAL** database, and reading one requires writing a `-shm` sidecar next to
+  it. A DuckDB `attach` against a read-only mount hits exactly the failure the DAG hit first:
+  `attempt to write a readonly database`. The Python path reads a local snapshot instead.
+- An attach in `profiles.yml` is unconditional, so a missing sibling checkout would break every
+  `dbt` invocation — the container property milestone 13 exists to protect.
+
+Worth revisiting only if something in the feature pipeline itself ever needs the findings.
 
 ## Smaller things
 

@@ -22,11 +22,16 @@ import pytest
 pytest.importorskip("airflow", reason="Airflow lives in the Airflow image, not the dev extra")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-EXPECTED = ("taxonomy_ingest", "feature_build", "train_and_evaluate")
+EXPECTED = ("taxonomy_ingest", "feature_build", "train_and_evaluate", "score_ambiguous")
 
 # Which tasks are allowed to retry, per DAG. Everything else must not (spec §7 milestone 16 asks
 # for retries matched to real failure modes, explicitly not a blanket retries=3).
-NETWORK_TASKS = {"taxonomy_ingest": {"wikidata_pull", "ancestor_pull"}}
+NETWORK_TASKS = {
+    "taxonomy_ingest": {"wikidata_pull", "ancestor_pull"},
+    # read_findings retries too: it copies a database another process writes, and a torn copy is
+    # transient by construction.
+    "score_ambiguous": {"score", "read_findings"},
+}
 
 
 @pytest.fixture(scope="module")
@@ -67,6 +72,9 @@ def test_ingest_is_manual_and_the_rest_are_asset_triggered(dags):
     assert dags["taxonomy_ingest"].schedule is None
     for dag_id in ("feature_build", "train_and_evaluate"):
         assert dags[dag_id].schedule is not None
+    # score_ambiguous is the exception, and for a stated reason: its input is written by another
+    # repository's tool, which emits no asset event here.
+    assert dags["score_ambiguous"].schedule == "@daily"
 
 
 def test_ingest_task_graph(dags):
