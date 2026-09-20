@@ -45,6 +45,11 @@ TAXA_DB_PATH = _env_path(
 # The sibling repo itself, for build_gold_labeling_kit.py's HTML source.
 SIBLING_REPO = _env_path("MATCHER_SIBLING_REPO", Path.home() / "repos" / "wikidata-inat-checker")
 
+# The checker's findings database, which milestone 16 reads and never writes (spec §7 milestone
+# 16, platform-design §2.4). Its own default lives in that repo's lib/paths.js; overridable here
+# because a container mounts it somewhere else, and because that repo honours FINDINGS_DB too.
+FINDINGS_DB_PATH = _env_path("MATCHER_FINDINGS_DB", SIBLING_REPO / "data" / "findings.db")
+
 # Committed, so these follow the source rather than the data volume.
 GOLD_DIR = REPO_ROOT / "gold"
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures"

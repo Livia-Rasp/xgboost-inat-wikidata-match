@@ -53,3 +53,15 @@ variable "host_port" {
   type        = number
   default     = 5000
 }
+
+variable "allowed_hosts" {
+  description = <<-EOT
+    Host headers the server accepts, comma-separated. MLflow 3.15 rejects anything else with
+    HTTP 403 "Invalid Host header - possible DNS rebinding attack detected", and its defaults
+    cover only localhost and private IPs — so a client inside the docker network, which sends
+    `Host: mlflow:5000`, is refused. Matching is literal per entry (port included) except for
+    fnmatch wildcards, and setting this REPLACES the defaults, so localhost is repeated here.
+  EOT
+  type        = string
+  default     = "localhost,localhost:*,127.0.0.1,127.0.0.1:*,mlflow,mlflow:*"
+}

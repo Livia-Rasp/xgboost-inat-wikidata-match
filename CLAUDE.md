@@ -807,7 +807,8 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
     presented as the rule's output.
 
   **`rank:map` is now the reported default**, replacing `binary:logistic`. Gold top-1 is exactly
-  tied (98.26%, four misses each, three of them the same items); the rule's Brier tie-break picks
+  tied (98.70%, three misses each, two of them the same items — the figure read 98.26% with four
+  misses before the `Q14908802` label correction); the rule's Brier tie-break picks
   `rank`, but the real argument is §2: **`rank:map`'s reject threshold survives the population
   change and `binary:logistic`'s does not** — 5 hidden true matches against 98 of 263. §6's old
   decisive claim (`binary` "the only variant clearing the auto-accept bar") no longer reproduces
@@ -838,6 +839,231 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
 
   Verify with: cells 0-46 byte-identical to HEAD **including `id` fields**, no code cell's source
   changed, and a grep for the superseded figures.
+
+- **Orchestration (milestone 16, in progress)** — design and the six amendments made when
+  implementation began are in `docs/platform-design.md` §5.4 (manual ingest, bind-mounted repo,
+  one-slot DuckDB pool, our own fingerprint-gated asset emission, the precise gate, SimpleAuth).
+
+  **Failure classification comes first**, because Airflow can only retry what surfaces as an
+  exception, and only retries usefully what a retry can fix. `wikidata.is_transient(exc)` is the
+  single rule the DAGs use: timeouts, dropped connections, `ChunkedEncodingError`, HTTP
+  429/502/503/504 and the new `TransientSourceError` are transient; everything else fails at once.
+  A function, not an exception tuple, because `HTTPError` is only transient for some statuses.
+  Two real gaps were closed to make that rule mean something (`tests/test_wikidata_retry.py`,
+  mutation-checked — each fix reverted by hand turns its test red):
+  1. `_fetch_with_retry()` never caught a *raised* request — a hung or dropped connection
+     propagated on first sight and discarded every batch already fetched. The same bug
+     wikidata-inat-checker's `fetchWithRetry()` had (milestone 7, attempt 2). Now retried with
+     the same backoff as a 502.
+  2. `_fetch_ancestor_batch()` **returned the partial rows** once its coverage retries ran out,
+     and `build_ancestor_chains()` cached them as complete. Now raises `TransientSourceError`.
+
+  Plus a structural truncation check on every SPARQL call (`_tsv_truncation`): WDQS ends every TSV
+  row, header included, with a newline — verified live, including for an empty result — so a body
+  without a trailing newline was cut off in transit. Before, `_parse_sparql_tsv()` parsed it into
+  fewer rows and the attribute pull, which has no coverage check, would have cached a smaller
+  population without a word. `validate=` on `_fetch_with_retry()` is the hook; the iNat API call
+  in `evaluate.py` passes none and is unchanged. One risk accepted knowingly: a 750-item ancestor
+  batch where fewer than half the items genuinely have a P171 chain now fails instead of caching —
+  implausible for Wikidata taxa, and loud if it ever happens, which is the right direction.
+
+- **The promotion gate (milestone 16)** — `src/promote.py` turns `docs/findings.md` §10's
+  pre-registered rule into code: train a challenger, score it and the champion on the *current*
+  gold set, register the challenger, decide.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python -m src.promote --dry-run     # register + decide, never move the alias
+  .venv/bin/python -m src.promote               # the real thing; promotes when the rule says so
+  .venv/bin/python -m src.promote --override-version 7 --reason "..."   # a human decision, tagged
+  ```
+  ~3 min (OOF + refit + two gold scorings). `decide()` is a **pure function over two
+  `Scorecard`s**, which is what makes the rule testable: `tests/test_promote.py` replays §10's own
+  table and asserts the recorded verdicts — v5 ineligible by its 0.006pp OOF regression, v4 over v1
+  on Brier after two ties. If the code disagreed with the decisions already published, the
+  automation would be wrong, not the history.
+
+  - **Three outcomes, not two.** *promote*; *hold* (not better — registered under the `challenger`
+    alias, nothing else changes, green); *regress* (the DAG's task fails). Only a failed OOF
+    eligibility check or a gold top-1 more than two items worse is red, so a red run means
+    something went wrong rather than "no improvement this time".
+  - **Counts, not rates, wherever §10 compared in items.** Gold top-1 is compared in *missed
+    items* (±2, the noise floor v2 measured) and the score band in *wrong rows* (±2) — §10 called
+    4, 4 and 3 wrong rows "tied", and comparing precision instead would not reproduce that while
+    the band's own size moves between 164 and 183 rows. The band is always defined on
+    `binary_raw_score` even though ranking is on `rank:map`: that is how milestone 6 defined it.
+  - **The champion is re-scored every time, never read from its logged gold metrics.** Labels get
+    added and corrected (§10's `Q14908802`), and comparing across two versions of the measuring
+    instrument measures the instrument. Its *OOF* top-1 does come from its registered run — that
+    one cannot be recomputed without retraining it.
+  - **A fresh `data/runs/<timestamp>/` per challenger**, never `data/models/`. The OOF cache is
+    keyed on the feature table's content and the hyperparameters, *not on the code* — and a
+    code-only change is exactly what this pipeline exists to measure, so a shared directory would
+    hand back the previous run's predictions. Promotion is the only thing that writes
+    `data/models/` and `data/oof_predictions.*`, and it leaves a git diff for a human to commit.
+  - `score_gold_set(features, models=...)` and `tracking.load_from_dir()` are what let the gate
+    score two model pairs in one process; `run_ladder.py` predates them and needs a subprocess
+    plus `MATCHER_MODEL_DIR` for the same effect.
+  - **Verified against the live stack**: retraining the champion's own code on its own data came
+    back identical to five decimals (OOF top-1 change 0.000pp, 3 vs 3 gold misses, 3/173 vs 3/173
+    band rows, Brier 0.0083 both sides) and the gate held. A no-op change must not move the
+    champion, and this is the check for that.
+  - One benign warning, since both variants are logged to one run: MLflow refuses to overwrite the
+    `objective` param the first `log_model` wrote (`Changing param values is not allowed`). The
+    value that matters is inside each artifact's own `model_config`; `train.py --final` and
+    `run_ladder.py` have always printed it too.
+
+- **The DAGs (milestone 16)** — `dags/`: `taxonomy_ingest` (manual, `force_refresh` param),
+  `feature_build` (asset-triggered, Cosmos `DbtTaskGroup`), `train_and_evaluate` (asset-triggered,
+  ends in the gate). `dags/_common.py` holds the assets, the retry policy and the two mechanisms
+  below. Nothing runs them until milestone 16's Terraform module lands; `tests/test_dags.py` is
+  how they are checked meanwhile.
+  ```sh
+  docker run --rm --network none -v "$PWD:/opt/project:ro" -e PYTHONPATH=/opt/project \
+    -e AIRFLOW_HOME=/tmp/airflow -e HOME=/tmp -w /opt/project --entrypoint python \
+    ghcr.io/livia-rasp/xgboost-inat-wikidata-match-airflow:dev -m pytest tests/test_dags.py
+  ```
+  - **Retries are per failure mode.** `NETWORK_TASK` (the two WDQS tasks only) retries 4× with
+    exponential backoff up to 20 minutes; `LOCAL_TASK` has `retries=0`, because re-running
+    deterministic local CPU work cannot change its outcome. `guarded()` is what makes that
+    meaningful: `wikidata.is_transient` decides whether an exception propagates (Airflow retries)
+    or is re-raised as `AirflowFailException` (fails at once). A test asserts that no task outside
+    `NETWORK_TASKS` has retries, so the blanket `retries=3` spec §7 milestone 16 warns against
+    cannot creep back in.
+  - **One asset gates scheduling.** `ingest_complete`, emitted by ingest's final `publish` task,
+    with the four artefact assets alongside it for lineage. A DAG scheduled on a *list* waits for
+    all of them, which would never fire when only the Wikidata pull moved; an OR would fire once
+    per event. The gate sits on that one final task rather than on each stage because a skipped
+    stage skips everything downstream of it.
+  - **Emission is fingerprint-gated** (`publish_if_changed`): unchanged artefacts → the task skips
+    → no asset event → no retrain. A skipped task emits nothing, which is Airflow's own rule. The
+    previous fingerprint lives in an Airflow Variable, not in the last asset event's `extra`,
+    which keeps it independent of how Cosmos constructs those and visible under Admin → Variables.
+    `Variable.get` needs `deserialize_json=True` to match how it is written, or the stored JSON
+    comes back as a string and every run looks like a change.
+  - **All dbt tasks share a one-slot pool.** DuckDB permits a single writing process per database
+    file and Cosmos runs one dbt process per model; without the pool they race and fail with
+    `Could not set lock on file`. The pool is created by Terraform's init job.
+  - **Cosmos' own asset emission is off** (`emit_datasets=False`): in `ExecutionMode.LOCAL` it is
+    derived from OpenLineage artefacts and emits nothing at all if that parsing fails, without a
+    warning (astronomer-cosmos#2959). The retrain trigger must not depend on that.
+
+  Four things learned by running it, all of which would have cost an apply cycle each:
+  1. **dbt writes `logs/` and `target/` inside the project directory**, which the read-only repo
+     mount forbids — `dbt ls` fails with `PermissionError` before it does anything. `DBT_LOG_PATH`
+     and `DBT_TARGET_PATH` must point into the writable `data/` mount.
+  2. **`dbt ls` at DAG-parse time is safe**: verified against a completely empty `data/` — it
+     never opens the DuckDB database. So `LoadMode.DBT_LS` needs no committed manifest and no
+     built `lookup.sqlite`, and the planned `dbt parse` pre-step was dropped.
+  3. **Cosmos caches that `dbt ls` output in an Airflow Variable**, which needs the metadata
+     database. Parsing must not, so `AIRFLOW__COSMOS__ENABLE_CACHE=False` in the test and the
+     cache stays on in the containers.
+  4. **Airflow 3.3 moved `DagBag`** to `airflow.dag_processing.dagbag`, dropped `include_examples`,
+     added `known_pools`, and its `get_dag()` reads the metadata DB — so the tests import the DAG
+     modules directly instead. `AirflowFailException`/`AirflowSkipException` now live in
+     `airflow.sdk.exceptions`, `TriggerRule` in `airflow.sdk`, and Cosmos' `install_deps` operator
+     arg is now `ProjectConfig.install_dbt_deps`.
+
+- **Airflow in Terraform (milestone 16)** — `terraform/modules/airflow` adds four containers and
+  two one-shot jobs to the milestone 15 stack. `compose.yaml` is untouched; the invariant on its
+  first line still holds.
+  ```sh
+  make platform-up        # now also prints the Airflow URL; log in as `admin`
+  make platform-plan      # a clean plan after apply is the acceptance check
+  make platform-scratch   # apply from nothing + clean plan + destroy, in a throwaway workspace
+  make airflow-logs       # the scheduler's log — where task output lands under LocalExecutor
+  ```
+  - **`platform-scratch` exists because `platform-down` is not a test that can be run.** The
+    milestone's "apply from a torn-down state" check would otherwise destroy the volumes holding
+    the registry every published number resolves to. A Terraform *workspace* plus overridden
+    name prefix and ports gives an isolated copy; `plan -detailed-exitcode` makes "no changes"
+    an exit code rather than something to read; a shell trap restores the workspace even when the
+    apply fails, since otherwise the next `platform-up` would silently target the scratch stack.
+    Verified: 19 resources from nothing, clean second plan, 19 destroyed, real stack untouched.
+  - **LocalExecutor**: the executor is a property of the scheduler, so there is no worker
+    container and no Redis — `api-server`, `scheduler`, `dag-processor`, `triggerer`. The
+    triggerer runs nothing today; it is there because the api server reports its health as part of
+    the stack's, and because an `AssetWatcher` is the obvious next step for the checker's findings.
+  - **The repo is bind-mounted read-only with `data/` read-write inside it** (Docker applies the
+    deeper mount second). `PYTHONPATH=/opt/project` is what makes both `src` and `dags._common`
+    importable — Airflow puts the *dags folder* on `sys.path`, not its parent. The containers run
+    as the host uid (`airflow_uid`, `id -u`) so what they write into `data/` belongs to Livia and
+    not to the image's uid 50000.
+  - **`psql` is already in the Airflow image**, so the job that creates Airflow's metadata
+    database next to MLflow's needs no second image. It checks `pg_database` first, so a re-apply
+    cannot fail on an existing database.
+  - **The admin password is seeded, not generated.** SimpleAuthManager normally writes a generated
+    password into its passwords file *and the logs*; pointing
+    `AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE` at a file the init job writes from
+    `terraform.tfvars` keeps the UI password out of every log.
+  - `DBT_LOG_PATH`/`DBT_TARGET_PATH` point into `data/`, because dbt writes `logs/` and `target/`
+    into the project directory by default and that mount is read-only.
+  - **A Fernet key cannot be length-validated in HCL.** `base64decode` returns a *string* and
+    errors on anything that is not valid UTF-8, which 32 random bytes essentially never are, so
+    `length(base64decode(...)) == 32` rejects every valid key; the urlsafe alphabet (`-`, `_`)
+    also fails `base64decode` outright. The rule checks the shape instead:
+    `^[A-Za-z0-9_-]{43}=$`. Both wrong versions were written before the regex.
+
+- **The chain, run for real (milestone 16)** — one manual `taxonomy_ingest` trigger produced, with
+  no further human action: an `asset_triggered` `feature_build` run, and from its features event an
+  `asset_triggered` `train_and_evaluate` run ending in a **hold** — `promote_champion` skipped, the
+  champion still v4, the run green. `train_challenger` took 2m55s in the container, `feature_build`
+  2m33s (14 dbt models one at a time through the one-slot pool, then `dbt test`, then the pandas
+  build and the parity report: 52/52 columns identical). Metrics, the verdict and its reasons are
+  tagged on the MLflow run, next to `airflow_dag_id`/`airflow_run_id`.
+
+  Four things only a live run could find, three of them real bugs:
+  1. **Cosmos hands dbt a filtered environment.** `MATCHER_DATA_DIR` never reached it, so
+     `env_var('MATCHER_DATA_DIR', 'data')` fell back to the relative default and dbt died with
+     `IO Error: No files found that match the pattern "data/features.parquet"` — the same
+     resolve-against-the-wrong-cwd trap this file already records for running dbt by hand,
+     arriving by another route. `ProjectConfig(env_vars=…)` forwards it explicitly.
+  2. **`TestBehavior.BUILD` cannot order a cross-model test.** `assert_recall_ceiling` references
+     `fct_features` *and* `stg_inat_taxa`; Cosmos attaches each test to one model, so it ran
+     inside `stg_inat_taxa`'s task, before the table it reads existed. `dbt build` gets this right
+     and the per-model split cannot. Now `TestBehavior.AFTER_ALL`, which is also what
+     platform-design §5.4's table described in the first place.
+  3. **MLflow 3.15 rejects a Host header it does not know**: HTTP 403 `Invalid Host header -
+     possible DNS rebinding attack detected` for every call from inside the docker network, whose
+     clients send `Host: mlflow:5000`. `--allowed-hosts` fixes it; note that setting it *replaces*
+     the localhost defaults and that entries match literally, port included. It surfaced as the
+     gate refusing to run — `resolve_model()` swallows any registry error and falls back to the
+     committed files, so the visible message was "no registered champion", one step away from the
+     cause.
+  4. `dag_run.run_type` is an enum: `str()` tags a run `DagRunType.MANUAL`, and an
+     `== "asset_triggered"` comparison silently never matches. `.value`.
+
+- **Scoring the checker's queue (milestone 16)** — `src/ambiguous.py` + `dags/score_ambiguous.py`
+  read the sibling repo's `findings.db` (`kind='link', status='ambiguous'`), generate candidates
+  with *this* project's own strategies, build features the way gold scoring does, and rank them
+  with the registered champion into `data/scored_ambiguous.parquet`.
+  ```sh
+  export MLFLOW_TRACKING_URI=http://localhost:5000
+  .venv/bin/python -m src.ambiguous            # or the @daily score_ambiguous DAG
+  ```
+  - **A ranking, never a decision.** No accept/reject column: `findings.md` §2 measured that the
+    OOF-derived thresholds do not transfer to this population, and the QuickStatements export that
+    would act on one is milestone 10's, postponed. Read-only throughout (`platform-design` §2.4).
+  - **Candidates are regenerated, not taken from the finding's payload**, so the rows scored are
+    built exactly like the rows the model trained on — same strategies, same K, same similarity.
+    The attribute and ancestor pulls reuse the *gold* code paths, which already exist for items
+    with no P3151, with their own cache files.
+  - **`@daily`, not asset-triggered**: the input is written by another repository's tool, which
+    emits no asset event here. Milestone 15's rule — an absent signal is not evidence of change —
+    argues for re-reading on a schedule.
+  - **Two things only the container could teach**, both about SQLite:
+    1. **Reading a WAL database requires writing.** SQLite creates a `-shm` sidecar even for a
+       pure read, so `mode=ro` against a read-only mount fails with `attempt to write a readonly
+       database`. It worked on the host only because the checker's own directory is writable.
+    2. **The `-wal` holds committed rows the `.db` does not**, so mounting the single file — which
+       is what the module did first — would have returned a silently stale view.
+    Both are fixed by copying the database *and* its sidecars into `data/` and reading the copy;
+    Terraform mounts the directory read-only. A copy taken mid-write can be torn, so the snapshot
+    is `PRAGMA quick_check`ed and a failure raises `TransientSourceError` — which is why
+    `read_findings` is a retrying task despite touching no network.
+  - `tests/test_ambiguous.py` builds the checker's real schema in a tmp file: it pins that only
+    *ambiguous* findings are read (not the ~200 unambiguous `open` ones the checker acts on
+    itself) and that a read-only connection refuses a write — the §2.4 promise enforced by SQLite
+    rather than by this code being careful.
 
 - **Tests and CI** — `pytest` over `tests/`, plus `ruff check`. Both run in
   `.github/workflows/ci.yml` on Python 3.12, 3.13 and 3.14, alongside a `uv lock --check` job and

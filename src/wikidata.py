@@ -88,13 +88,64 @@ class RateLimiter:
             time.sleep(slot - now)
 
 
-def _retry_delay(status: int, retries_left: int) -> float:
+class TransientSourceError(RuntimeError):
+    """WDQS answered with HTTP 200, but not with something usable: a body cut off mid-transfer, or
+    a transitive-path result with implausibly low coverage. Both have been seen for real (CLAUDE.md,
+    milestones 4 and 7), both carry no error status, and both go away when the identical request
+    is repeated — so they are raised as *transient*, never cached as if they were an answer."""
+
+
+# Failures of the connection itself, as opposed to a bad answer. A hung connection surfaces as
+# Timeout, a dropped one as ConnectionError, and a stream that dies after the headers as
+# ChunkedEncodingError — which is not a ConnectionError subclass, so it has to be named.
+_TRANSIENT_REQUEST_ERRORS = (
+    requests.Timeout,
+    requests.ConnectionError,
+    requests.exceptions.ChunkedEncodingError,
+)
+
+
+def is_transient(exc: BaseException) -> bool:
+    """Whether retrying the same work later can plausibly succeed.
+
+    The single classification the orchestrator uses to decide between an Airflow retry and an
+    immediate failure (dags/_common.py): a retry is worth waiting for on a timeout or a 503, and
+    worthless on a KeyError. A function rather than an exception tuple because HTTPError is only
+    transient for the statuses in RETRYABLE_STATUS — a 400 from a malformed query is permanent.
+    """
+    if isinstance(exc, (TransientSourceError, *_TRANSIENT_REQUEST_ERRORS)):
+        return True
+    if isinstance(exc, requests.HTTPError) and exc.response is not None:
+        return exc.response.status_code in RETRYABLE_STATUS
+    return False
+
+
+def _retry_delay(status: int | None, retries_left: int) -> float:
     return 30.0 if status == 429 else (4 - retries_left) * 3.0
 
 
-def _fetch_with_retry(do_request, retries: int = 3, label: str = "SPARQL") -> requests.Response:
+def _fetch_with_retry(do_request, retries: int = 3, label: str = "SPARQL", validate=None) -> requests.Response:
+    """Retry transient failures in-process, with backoff, before giving up.
+
+    Three kinds are retried: a retryable status, a connection-level failure (a timeout or a
+    dropped connection used to propagate on the first occurrence, which threw away every batch
+    already fetched — the same gap wikidata-inat-checker's fetchWithRetry() had and fixed), and a
+    response `validate` rejects. `validate(resp)` returns a problem description or None.
+
+    When the budget is spent, the last failure is raised rather than returned, so the caller —
+    and above it Airflow's task-level retry — sees it. A rejected body raises TransientSourceError.
+    """
     while True:
-        resp = do_request()
+        try:
+            resp = do_request()
+        except _TRANSIENT_REQUEST_ERRORS as exc:
+            if retries <= 0:
+                raise
+            delay = _retry_delay(None, retries)
+            print(f"{label} {type(exc).__name__}, retrying in {delay:.0f}s...")
+            time.sleep(delay)
+            retries -= 1
+            continue
         if resp.status_code in RETRYABLE_STATUS and retries > 0:
             delay = _retry_delay(resp.status_code, retries)
             print(f"{label} HTTP {resp.status_code}, retrying in {delay:.0f}s...")
@@ -102,7 +153,26 @@ def _fetch_with_retry(do_request, retries: int = 3, label: str = "SPARQL") -> re
             retries -= 1
             continue
         resp.raise_for_status()
+        problem = validate(resp) if validate else None
+        if problem:
+            if retries <= 0:
+                raise TransientSourceError(f"{label}: {problem}")
+            delay = _retry_delay(None, retries)
+            print(f"{label} {problem}, retrying in {delay:.0f}s...")
+            time.sleep(delay)
+            retries -= 1
+            continue
         return resp
+
+
+def _tsv_truncation(resp: requests.Response) -> str | None:
+    """WDQS terminates every TSV row, the header included, with a newline — checked against the
+    live endpoint, including for an empty result (`'?item\\n'`). A body that does not end in one
+    was cut off mid-transfer. _parse_sparql_tsv() would otherwise parse it happily into fewer rows,
+    and the pull would cache an incomplete population with nothing to show for it."""
+    if not resp.text.endswith("\n"):
+        return f"TSV body truncated ({len(resp.text)} chars, no trailing newline)"
+    return None
 
 
 def _parse_sparql_tsv(text: str) -> list[dict]:
@@ -144,6 +214,7 @@ def _sparql_get_tsv(query: str, retries: int = 3) -> list[dict]:
             timeout=SPARQL_TIMEOUT_S,
         ),
         retries,
+        validate=_tsv_truncation,
     )
     return _parse_sparql_tsv(resp.text)
 
@@ -157,6 +228,7 @@ def _sparql_post_tsv(query: str, retries: int = 3) -> list[dict]:
             timeout=SPARQL_TIMEOUT_S,
         ),
         retries,
+        validate=_tsv_truncation,
     )
     return _parse_sparql_tsv(resp.text)
 
@@ -446,18 +518,29 @@ def _fetch_ancestor_batch_raw(qids: list[str]) -> list[dict]:
 
 def _fetch_ancestor_batch(qids: list[str]) -> list[dict]:
     """Like _fetch_ancestor_batch_raw, but retries a suspiciously low-coverage response (see
-    ANCESTOR_MIN_COVERAGE above) instead of trusting it."""
+    ANCESTOR_MIN_COVERAGE above) instead of trusting it.
+
+    When every retry still comes back low, this raises. It used to return the last low-coverage
+    rows, which build_ancestor_chains() then cached as the complete answer — the exact silent
+    partial pull the coverage check exists to prevent, just deferred by three attempts. Raising
+    hands the decision to the caller: from the CLI the run stops, and under Airflow the task is
+    retried later, when WDQS is less loaded, rather than immediately against the same load."""
     rows = _fetch_ancestor_batch_raw(qids)
-    for attempt in range(ANCESTOR_COVERAGE_RETRIES):
+    for attempt in range(ANCESTOR_COVERAGE_RETRIES + 1):
         covered = len({r["item"] for r in rows if r.get("item")})
         if covered / len(qids) >= ANCESTOR_MIN_COVERAGE:
             return rows
+        if attempt == ANCESTOR_COVERAGE_RETRIES:
+            break
         print(
             f"ancestor batch coverage {covered}/{len(qids)} looks incomplete, "
             f"retrying ({attempt + 1}/{ANCESTOR_COVERAGE_RETRIES})..."
         )
         rows = _fetch_ancestor_batch_raw(qids)
-    return rows
+    raise TransientSourceError(
+        f"ancestor batch coverage {covered}/{len(qids)} stayed below "
+        f"{ANCESTOR_MIN_COVERAGE:.0%} after {ANCESTOR_COVERAGE_RETRIES} retries"
+    )
 
 
 def _qid_set_fingerprint(qids: list[str]) -> str:

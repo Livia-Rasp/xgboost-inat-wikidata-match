@@ -217,6 +217,17 @@ def set_tags(tags: Mapping[str, str]) -> None:
     _mlflow().set_tags(dict(tags))
 
 
+def log_text(text: str, artifact_file: str) -> None:
+    if not enabled():
+        return
+    _mlflow().log_text(text, artifact_file)
+
+
+def client():
+    """The MlflowClient, for reading runs and versions back. Only valid when enabled()."""
+    return _mlflow().MlflowClient()
+
+
 # -- models ------------------------------------------------------------------------------------
 
 
@@ -300,12 +311,20 @@ def log_and_register(
     return max(versions, key=lambda v: int(v.version)).version
 
 
-def set_champion(objective: str, version: str) -> None:
+def load_from_dir(objective: str, model_dir: Path) -> ResolvedModel:
+    """A booster/calibrator pair from any directory — a challenger's run directory, not only the
+    committed export. Independent of whether tracking is on."""
+    return _load_committed(objective, model_dir)
+
+
+def set_alias(objective: str, alias: str, version: str) -> None:
     if not enabled():
         return
-    _mlflow().MlflowClient().set_registered_model_alias(
-        REGISTERED_MODEL[objective], CHAMPION_ALIAS, version
-    )
+    _mlflow().MlflowClient().set_registered_model_alias(REGISTERED_MODEL[objective], alias, version)
+
+
+def set_champion(objective: str, version: str) -> None:
+    set_alias(objective, CHAMPION_ALIAS, version)
 
 
 def resolve_model(objective: str, model_dir: Path = MODEL_DIR) -> ResolvedModel:

@@ -123,7 +123,7 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 13 | Container, lockfile, one command per stage | gold numbers reproduce from a clean clone | done |
 | 14 | Feature construction moved into dbt-core over DuckDB | 46 of 52 columns identical, 103 dbt tests green | done |
 | 15 | MLflow tracking + registry; the freeze released and retrained | 5 registered versions, champion resolves to the published numbers | done |
-| 16 | Airflow + Terraform | Terraform stack done in 15; DAGs remain | partly |
+| 16 | Airflow + Terraform: four asset-driven DAGs, promotion gated on the champion | ingest → features → train → gate runs unattended; stack applies from nothing | done |
 
 Milestones 1–12 build the model. 13–16 are platform work — a container, a SQL transformation
 layer, experiment tracking and an orchestrated DAG — and are not intended to make the model
@@ -245,6 +245,29 @@ Paths are configurable for the container's sake and default to the layout above:
 
 The gold-set workflow — generate a fresh ambiguous sample, hand-label it, score it — is in
 [`gold/README.md`](gold/README.md).
+
+### The orchestrated path
+
+The same stages run as four Airflow DAGs on a Terraform-provisioned stack (Airflow, MLflow,
+Postgres, MinIO), described in [`docs/platform.md`](docs/platform.md):
+
+```sh
+make platform-up        # terraform apply; prints the MLflow and Airflow URLs
+```
+
+Ingest is triggered by hand — the Wikidata cache has no staleness check, so a schedule would
+either do nothing or force a re-pull that changes the training population. Everything after it is
+asset-driven, and an asset event is emitted only when an artefact's *content* changed, so
+rebuilding identical features does not retrain. `train_and_evaluate` ends at a gate that applies
+[`docs/findings.md`](docs/findings.md) §10's pre-registered rule: a challenger that wins is
+promoted and exported, one that is merely not better is held under a `challenger` alias, and only
+a real regression fails the run. A gate that can decline to promote is the thing a DAG has and a
+shell script does not — the first unattended run through it retrained the champion's own code and
+correctly held.
+
+A fourth DAG, `score_ambiguous`, ranks the checker's open ambiguous findings with the registered
+champion, read-only. It writes a ranking and no accept/reject decision, for the reason in
+[Limitations](#limitations).
 
 ### Tests
 

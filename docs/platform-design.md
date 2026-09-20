@@ -379,10 +379,10 @@ Four DAGs on Airflow 3 Assets:
 
 | DAG | Trigger | Shape |
 |---|---|---|
-| `taxonomy_ingest` | `@weekly` | lookup cache → Wikidata pull ∥ ancestor pull → candidate generation; produces four assets |
-| `feature_build` | asset-triggered | `DbtTaskGroup` (Cosmos, one task per model) → `dbt test`; produces the features asset |
-| `train_and_evaluate` | asset-triggered | OOF → final models → OOF eval ∥ gold eval → compare against champion → promote or hold |
-| `score_ambiguous` | `@daily` | read the checker's ambiguous findings (read-only) → features → score → local parquet + `.qs` output |
+| `taxonomy_ingest` | manual (was `@weekly`, see below) | lookup cache → Wikidata pull ∥ ancestor pull → candidate generation; produces four assets |
+| `feature_build` | asset-triggered | `DbtTaskGroup` (Cosmos, one task per model, tests inside each) → parity; produces the features asset |
+| `train_and_evaluate` | asset-triggered | OOF → final models → gold eval (challenger ∥ champion) → compare against champion → promote or hold |
+| `score_ambiguous` | `@daily` | read the checker's ambiguous findings (read-only) → features → score → local parquet (the `.qs` output moved to milestone 10) |
 
 Retries are matched to failure modes this project has actually hit, not a blanket `retries=3`:
 WDQS returning HTTP 200 with a silently truncated body (guarded today by
@@ -398,6 +398,51 @@ Celery** — no Redis, four Airflow containers instead of six, which is the righ
 Outputs print the service URLs. Credentials come from a gitignored `terraform.tfvars` with a
 committed `.example`; nothing secret enters the repo.
 
+#### Amendments made when implementation began (2026-09-16)
+
+The table above is the design as written before any DAG existed. Planning the implementation —
+with a round of reading the Airflow 3.3 and Cosmos 1.15 docs — changed six things. Each is recorded
+here with its reason rather than silently built differently.
+
+1. **`taxonomy_ingest` is triggered by hand, with a `force_refresh` parameter.** The Wikidata pull
+   cache has no staleness check by design (milestone 2 — it must not silently re-hit a shared
+   public endpoint), so a `@weekly` run would do nothing unless it *forced* a re-pull. A forced
+   re-pull changes the training population — new P3151 statements, including the ones added by
+   hand while labelling the gold set — and a retrain would then move code and data at once. The
+   point of this milestone, and of everything in `future-work.md` that was deferred until it
+   lands, is to measure one change at a time against the champion. Data therefore moves only when
+   someone decides it should. Everything downstream of ingest stays asset-triggered.
+2. **The repository is bind-mounted into the Airflow containers** (read-only; `data/` read-write),
+   rather than copied into the image. The working loop is *edit → trigger → compare in MLflow*,
+   and baking the code in would put a multi-gigabyte image rebuild between every edit and its
+   measurement. Provenance is not lost: `tracking.git_sha()` runs `git` against the mounted
+   checkout and logs the dirty flag, so a run from uncommitted code says so.
+3. **The dbt tasks share an Airflow pool with a single slot.** DuckDB allows one writing process
+   per database file, and Cosmos renders one Airflow task — one `dbt` process — per model. Run in
+   parallel they fail with `Could not set lock on file`. The pool serialises them without giving
+   up the per-model tasks (and per-model retries and logs) that are the reason to use Cosmos.
+4. **The features asset is emitted by an explicit task of this project's, not by Cosmos.** In
+   `ExecutionMode.LOCAL`, Cosmos derives the assets it emits from dbt's OpenLineage artefacts,
+   and when that parsing fails it emits nothing, without a warning
+   ([astronomer-cosmos#2959](https://github.com/astronomer/astronomer-cosmos/issues/2959)). The
+   trigger for retraining must not depend on that. The emitting task also compares the content
+   fingerprint (`paths.file_fingerprint`) against the previous event's `extra` and emits only on a
+   real change, so a rebuild that reproduces the same bytes does not start a pointless retrain.
+5. **The gate is §10's pre-registered rule, made precise, and it distinguishes *hold* from
+   *regress*.** Eligibility: OOF top-1 may not fall more than 0.1pp below the champion's, checked
+   for both objectives. Ranking, on `rank:map` (the reported default): gold top-1 with a ±2-item
+   equivalence band, then the number of *wrong rows* in the gold score band with the same ±2
+   band (§10 called 4, 4 and 3 wrong rows "tied"; comparing counts rather than percentages keeps
+   that verdict while the band's size moves between 164 and 183 rows), then gold Brier, then the
+   champion keeps its place. The champion is re-scored on the *current* gold set every time,
+   because labels are added and corrected. A challenger that is merely not better is **held**:
+   registered under a `challenger` alias, run green. Only a failed eligibility check or a gold
+   top-1 more than two items worse fails the task — a red run then means something.
+6. **SimpleAuthManager, not FAB.** The FAB provider is not in the lock, and Airflow's own
+   `docker-compose.yaml` pulls it in only for its Celery setup. SimpleAuthManager is documented
+   as intended for development and testing, which is exactly what a laptop stack is; one admin
+   user, with the password seeded from `terraform.tfvars`.
+
 ---
 
 ## 6. Open questions
@@ -412,6 +457,6 @@ committed `.example`; nothing secret enters the repo.
 3. **Whether the gold labeling kit moves from HTML scraping to the checker's JSON API** (§4.6).
    Cheap, and removes a markup contract both repos currently defend — but it touches the workflow
    that produced milestones 7–9's numbers, so it is not free.
-4. **What `score_ambiguous` should do with its output** until the write-back direction in §2.4 is
-   settled. Currently: a local parquet and a QuickStatements file, which overlaps with the
-   not-yet-built milestone 10.
+4. ~~**What `score_ambiguous` should do with its output** until the write-back direction in §2.4
+   is settled.~~ Settled when milestone 16 began: a local parquet only. The QuickStatements file
+   overlapped with milestone 10 and moved there.

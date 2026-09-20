@@ -13,8 +13,36 @@ postgres_password = "change-me"
 minio_access_key = "change-me"
 minio_secret_key = "change-me-too" # MinIO refuses to start on fewer than 8 characters.
 
+# Airflow (spec §7 milestone 16). The UI login is `admin` with this password; it is seeded into
+# the simple auth manager's password file, which is why it never appears in a container log.
+airflow_admin_password = "change-me-as-well"
+
+# Any random string, shared by all four components: it signs the tokens tasks use to call the
+# execution API.
+#   openssl rand -hex 32
+airflow_jwt_secret = "change-me-too-please"
+
+# Must be a urlsafe base64-encoded 32-byte key, or `terraform plan` rejects it:
+#   python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
+airflow_fernet_key = "REPLACE_WITH_A_GENERATED_FERNET_KEY_00000000="
+
+# The uid the Airflow containers run as, so what they write into data/ belongs to you: `id -u`.
+# airflow_uid = 1000
+
+# The sibling repo's cache directory, mounted read-only for the ingest DAG's first task. Leave it
+# out if you do not have that checkout.
+# inat_cache_path = "/home/you/.cache/wikidata-inat-checker"
+
+# The checker's findings database, mounted read-only for the score_ambiguous DAG. Read, never
+# written — see docs/platform-design.md §2.4.
+# findings_db_path = "/home/you/repos/wikidata-inat-checker/data/findings.db"
+
+# Candidate generation's pool size inside the containers.
+# matcher_workers = 4
+
 # Uncomment to move a port that is already taken on your machine.
 # mlflow_port        = 5000
 # postgres_port      = 5432
 # minio_api_port     = 9000
 # minio_console_port = 9001
+# airflow_port       = 8080

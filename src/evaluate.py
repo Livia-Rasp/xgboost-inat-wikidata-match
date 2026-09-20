@@ -272,13 +272,19 @@ def load_gold_features() -> pd.DataFrame:
     return features
 
 
-def score_gold_with_model(features: pd.DataFrame, objective: str) -> tuple[np.ndarray, np.ndarray]:
+def score_gold_with_model(features: pd.DataFrame, objective: str, model=None) -> tuple[np.ndarray, np.ndarray]:
     """Resolved through tracking.resolve_model(): the registry's champion when
     MLFLOW_TRACKING_URI is set, the committed data/models/ files otherwise — which is what keeps
-    the five-minute path and CI's offline `make gold` working with no server."""
-    from .tracking import resolve_model
+    the five-minute path and CI's offline `make gold` working with no server.
 
-    return resolve_model(objective).score(features)
+    `model` (a tracking.ResolvedModel) overrides that, so the promotion gate can score a
+    challenger and the champion side by side in one process. run_ladder.py predates it and gets
+    the same effect with a subprocess and MATCHER_MODEL_DIR."""
+    if model is None:
+        from .tracking import resolve_model
+
+        model = resolve_model(objective)
+    return model.score(features)
 
 
 def ranking_score_column(objective: str) -> str:
@@ -513,15 +519,16 @@ def review_queue_reduction(features: pd.DataFrame, reference: dict, objective: s
     }
 
 
-def score_gold_set(features: pd.DataFrame) -> dict:
+def score_gold_set(features: pd.DataFrame, models: dict | None = None) -> dict:
     """Full gold-set scoring: both model variants + baseline. Mutates and returns `features`
     with score columns attached (so callers can reuse it for plots/error taxonomy) alongside a
-    metrics dict."""
+    metrics dict. `models` maps objective -> tracking.ResolvedModel; omitted, each objective is
+    resolved the usual way (see score_gold_with_model)."""
     labels = features["label"].to_numpy()
     metrics = {}
 
     for objective in ("binary", "rank"):
-        raw, calibrated = score_gold_with_model(features, objective)
+        raw, calibrated = score_gold_with_model(features, objective, (models or {}).get(objective))
         features[f"{objective}_raw_score"] = raw
         features[f"{objective}_calibrated_prob"] = calibrated
         top1, mrr = gold_top1_and_mrr(features, ranking_score_column(objective))
@@ -593,6 +600,20 @@ def gold_metrics(result: dict, reference: dict, objective: str) -> dict:
     return metrics
 
 
+def gold_shared_metrics(result: dict, reference: dict) -> dict:
+    """The gold numbers that belong to the pair of models rather than to one objective."""
+    from .tracking import metric_key
+
+    band = gold_band_comparison(result["features"], reference)
+    return {
+        metric_key("gold", "band", "n"): band["gold_n"],
+        metric_key("gold", "band", "precision"): band["gold_precision"],
+        metric_key("gold", "baseline", "top1"): result["metrics"]["baseline"]["top1_accuracy"],
+        metric_key("gold", "recall_ceiling", "value"): result["recall_ceiling"],
+        metric_key("gold", "items", "n"): result["features"]["wikidata_qid"].nunique(),
+    }
+
+
 def log_gold_metrics(result: dict, reference: dict) -> None:
     """Attach the gold numbers to the run that registered the model they were produced with.
 
@@ -605,14 +626,7 @@ def log_gold_metrics(result: dict, reference: dict) -> None:
     if not tracking.enabled():
         return
 
-    band = gold_band_comparison(result["features"], reference)
-    shared = {
-        tracking.metric_key("gold", "band", "n"): band["gold_n"],
-        tracking.metric_key("gold", "band", "precision"): band["gold_precision"],
-        tracking.metric_key("gold", "baseline", "top1"): result["metrics"]["baseline"]["top1_accuracy"],
-        tracking.metric_key("gold", "recall_ceiling", "value"): result["recall_ceiling"],
-        tracking.metric_key("gold", "items", "n"): result["features"]["wikidata_qid"].nunique(),
-    }
+    shared = gold_shared_metrics(result, reference)
 
     run_ids = {o: tracking.resolve_model(o).run_id for o in tracking.OBJECTIVES}
     if not any(run_ids.values()):

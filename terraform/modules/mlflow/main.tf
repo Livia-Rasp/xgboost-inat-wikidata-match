@@ -48,6 +48,9 @@ resource "docker_container" "mlflow" {
     "--backend-store-uri", var.backend_store_uri,
     "--artifacts-destination", var.artifacts_destination,
     "--serve-artifacts",
+    # Without this, anything calling the server by its docker-network name gets a 403 from
+    # MLflow's DNS-rebinding protection — which is every Airflow task (milestone 16).
+    "--allowed-hosts", var.allowed_hosts,
   ]
 
   env = [

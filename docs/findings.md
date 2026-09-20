@@ -186,16 +186,23 @@ On the promoted champion (§10):
 
 | | `rank:map` | `binary:logistic` |
 |---|---|---|
-| Gold top-1 | 98.26% | 98.26% |
-| Gold MRR | **0.9913** | 0.9906 |
+| Gold top-1 | 98.70% | 98.70% |
+| Gold MRR | **0.9935** | 0.9928 |
 | Gold Brier | **0.0083** | 0.0100 |
-| Gold top-1, non-trivial items only | 97.7% | **98.3%** |
-| Clears the 99.5% auto-accept bar | yes (9 rows) | yes (6 rows) |
+| Gold top-1, non-trivial items only | 98.3% | **98.9%** |
+| Clears the 99.5% auto-accept bar (OOF rows) | yes (9 rows) | yes (6 rows) |
 | **Reject threshold re-applied to gold: true matches hidden** | **5 of 263** | 98 of 263 |
 | OOF top-1 | 98.98% | **99.08%** |
 
-**Gold top-1 is exactly tied** — both miss 4 of the 230 answerable items, three of them the same
-items. The pre-registered rule breaks that tie on Brier, which selects `rank:map`. That
+*The gold rows above are the corrected label set — the same one §10's table and the README quote.
+An earlier version of this table predated the `Q14908802` correction and read 98.26% top-1 with
+four misses; the conclusion did not change, but the numbers disagreed with §10 two sections later.*
+
+**Gold top-1 is exactly tied** — both miss 3 of the 230 answerable items, two of them the same
+items (`Q16760098` and `Q46674974`, the iNaturalist duplicate records no taxonomic feature can
+separate). Each also has one miss of its own: `binary:logistic` misses `Q121887868`, `rank:map`
+misses `Q20668495`, the *Afrocrania* hemihomonym §5 describes. The pre-registered rule breaks the
+tie on Brier, which selects `rank:map`. That
 difference is 0.0017 against a noise floor of roughly 0.0043 (§10), so on its own it is not
 decisive, and it is worth saying so rather than dressing it up.
 

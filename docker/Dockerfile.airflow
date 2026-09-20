@@ -1,9 +1,12 @@
-# The Airflow image for spec §7 milestone 16. Nothing runs on it yet.
+# The Airflow image for spec §7 milestone 16: the scheduler, api-server, dag-processor and
+# triggerer all run from it, provisioned by terraform/modules/airflow.
 #
-# It is built now for one reason: it is the only real proof that this project's dependencies can
-# co-exist with Airflow, Cosmos, dbt and MLflow on a single interpreter. Discovering otherwise
-# three milestones from now would invalidate the shared-lockfile design that 14, 15 and 16 all
-# rest on. `make image-airflow` and the CI job that builds it are that proof.
+# It carries dependencies, not this project's code — the repository is bind-mounted into the
+# containers (platform-design §5.4 amendment 2), so an edit is measurable on the next DAG run
+# without a rebuild of a 5.6 GB image. It also proves the thing it was originally built to prove:
+# that this project's dependencies co-exist with Airflow, Cosmos, dbt and MLflow on one
+# interpreter. The `check` extra is here so CI can run the DAG-parsing tests inside the image,
+# which is the only environment where Airflow is importable.
 
 FROM apache/airflow:3.3.1-python3.14
 
@@ -29,7 +32,7 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/home/airflow/.cache/uv \
     pip install --no-cache-dir uv==0.12.6 \
     && uv export --locked --no-emit-project --no-hashes \
-         --extra dbt --extra tracking --extra airflow -o /tmp/requirements.txt \
+         --extra dbt --extra tracking --extra airflow --extra check -o /tmp/requirements.txt \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
     && rm /tmp/requirements.txt
 

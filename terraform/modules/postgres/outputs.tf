@@ -12,6 +12,11 @@ output "host" {
   value       = "postgres"
 }
 
+output "username" {
+  description = "Superuser name, so a second consumer (Airflow's metadata database) can build its own URI rather than hardcoding it."
+  value       = var.username
+}
+
 output "host_port" {
   description = "Published port, for psql from the host."
   value       = var.host_port
