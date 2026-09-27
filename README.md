@@ -119,7 +119,7 @@ Spec §7's checkable list. Every "key number" below is reproduced by the command
 | 7 | Hand-labelled gold set of ambiguous, no-P3151 items | 98.7% top-1, n=263 | done |
 | 8 | Fix the alphabetic bias in the gold sample | A–Z coverage, 491 items found | done |
 | 9 | Per-miss review, and picking between the two objectives | `binary:logistic` picked | done |
-| 10–12 | QuickStatements export, loop back into the Node tool | — | [future work](docs/future-work.md) |
+| 10–12 | QuickStatements export, loop back into the Node tool | — | not built |
 | 13 | Container, lockfile, one command per stage | gold numbers reproduce from a clean clone | done |
 | 14 | Feature construction moved into dbt-core over DuckDB | 46 of 52 columns identical, 103 dbt tests green | done |
 | 15 | MLflow tracking + registry; the freeze released and retrained | 5 registered versions, champion resolves to the published numbers | done |
@@ -159,7 +159,7 @@ of the numbers.
   correct plant subgenus for *Afrocrania*, because `rank_equal` points one way and every
   taxonomic feature the other. Cross-kingdom matching is a category error rather than a near
   miss, and hemihomonyms are the case this project exists for; `binary:logistic` gets this one
-  right. Tracked in [future work](docs/future-work.md).
+  right. Found in the per-miss review in [`docs/findings.md`](docs/findings.md) §5; not yet fixed.
 - **Training labels are noisy.** Quantified above, not eliminated. Every OOF number in this repo
   inherits it.
 - **12.85% of P3151 links are stale**, pointing at iNat taxon IDs that no longer exist as active
@@ -288,7 +288,9 @@ Or `docker compose run --rm pipeline make test lint` to run them the way CI does
   result, every gold-set miss characterised, and why `binary:logistic` won.
 - [`docs/platform-design.md`](docs/platform-design.md) — the design for milestones 13–16: tool
   versions and why, an audit of the existing pipeline, and the alternatives that were rejected.
-- [`docs/future-work.md`](docs/future-work.md) — what is deliberately not done yet.
+
+What would extend the study — including milestones 10–12 — is kept in the maintainer's own
+planning notes, outside this repository. Git history keeps the versions that were published here.
 
 The models live in an MLflow registry, and `data/models/` is an export of whichever version holds
 the `@champion` alias — kept committed so the five-minute path and CI still work with no server.

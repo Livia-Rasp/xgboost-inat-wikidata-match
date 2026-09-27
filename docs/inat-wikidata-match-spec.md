@@ -332,19 +332,10 @@ alternatives that were considered and rejected — is in
     Airflow services) through the Docker provider, so the infrastructure is code that is actually
     applied rather than HCL that has never run. Reading the checker's ambiguous findings is in
     scope; writing anything back to it is not — that integration is deliberately deferred, and
-    its direction inverted, in `docs/future-work.md`. *Check:* `terraform apply` from a
+    its direction inverted, in the maintainer's planning notes. *Check:* `terraform apply` from a
     torn-down state brings the whole stack up and a subsequent `terraform plan` is clean; the
     ingest → features → train → evaluate chain then runs end to end from the Airflow UI without
     manual intervention and lands a tracked run.
 
----
-
-## 8. What makes this interesting to showcase
-
-Three things, worth making explicit in the README:
-
-- Negatives are sampled from the deployment distribution, and the write-up explains why
-  random negatives would have inflated every number.
-- The metric is a decision under asymmetric cost, not accuracy — a wrong write to Wikidata is
-  much worse than a deferral to a human.
-- The label noise is disclosed and quantified rather than assumed away.
+Milestones 10 and 12 are not built. What would extend the study, including those two, is kept in
+the maintainer's planning notes, outside this repository.

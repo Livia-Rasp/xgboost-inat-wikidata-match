@@ -7,7 +7,7 @@ the gold set was drawn from it, and every number in the README describes how wel
 exactly these.
 
 **Read-only, and a ranking rather than a decision.** Reading the findings is in scope for this
-milestone and writing anything back is not (`platform-design.md` §2.4, `future-work.md`) — the
+milestone and writing anything back is not (`platform-design.md` §2.4) — the
 direction of that integration is still open, and it should be the checker calling a service here
 rather than this repo writing into its database. Nor does the output carry accept/reject flags:
 `findings.md` §2 is the measurement that says the OOF-derived thresholds do **not** transfer to

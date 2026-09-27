@@ -170,8 +170,7 @@ every taxonomic feature points the other way. `binary:logistic` under-weights it
 `Q121887868`, where the Wikidata item is a phylum and `rank_equal` is the only signal that
 separates it from an identically-named genus. Hemihomonyms are the case this project exists for —
 `prunella` is the spec's own acceptance check — so `rank:map` failing one is a real mark against
-the current default, and it is [tracked in future-work](future-work.md) rather than explained
-away. Neither objective's failure is addressed by anything in the current feature set; both look
+the current default, and it is tracked as future work rather than explained away. Neither objective's failure is addressed by anything in the current feature set; both look
 like they need either a feature that encodes kingdom disagreement as a hard signal, or a
 preprocessing step that refuses cross-kingdom candidates outright.
 
@@ -377,8 +376,8 @@ of a synonym or basionym match; only 42 of them were literally tagged `exact`.
 
 The SQL reproduces it, deliberately. The frozen models trained on this behaviour, and changing it
 in the milestone whose entire job is to measure drift would have made every number above
-uninterpretable. It is in [`future-work.md`](future-work.md) as a one-line fix to take with
-milestone 15's retrain.
+uninterpretable. It was recorded as a one-line fix to take with milestone 15's retrain, and was
+fixed there, as ladder rung v4 (§10).
 
 ---
 
@@ -387,8 +386,8 @@ milestone 15's retrain.
 Milestone 15 replaced the prose freeze with an MLflow registry and then released it on purpose.
 The retrain is a **ladder** — one registered version per change — rather than one combined
 retrain, so that every delta is attributable to the thing that caused it.
-[`future-work.md`](future-work.md) asked for exactly this for the monotone-constraint change: *"a
-deliberate, fully-rescored comparison … rather than a patch"*.
+The future-work list asked for exactly this for the monotone-constraint change: *"a deliberate,
+fully-rescored comparison … rather than a patch"*.
 
 Each rung is one commit and one `run_ladder.py --rung vN` at that commit. Gold set, n=263:
 
@@ -465,7 +464,7 @@ instead of moving the threshold is the entire reason the threshold was written d
 also that v5 does **not** fix `Q20668495`, the hemihomonym `rank:map` uniquely misses (§5), even
 though that miss has exactly the shape §4's constraint argument describes — checked directly,
 and it weakens rather than strengthens the case for the rung. Its *mechanism* fix was kept, because that part was a real bug rather than a
-tuning choice: §4 and `future-work.md` both call the change "a one-line change to `MONOTONE_UP`",
+tuning choice: §4 and the future-work list both called the change "a one-line change to `MONOTONE_UP`",
 and it never could have been. `sim_rank_in_group` is built with `rank(ascending=False)`, so rank 1
 is the **best** candidate and the feature is inversely related to quality; putting it in
 `MONOTONE_UP` would have constrained it backwards, and `monotone_constraints_tuple()` could emit

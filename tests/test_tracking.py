@@ -152,7 +152,7 @@ def test_monotone_constraints_can_express_a_decreasing_feature():
     """The mechanism, not the constraint set. MONOTONE_DOWN is empty (rung v5 was ineligible —
     findings.md §10), but -1 has to be expressible: a feature like sim_rank_in_group is built
     with rank(ascending=False), so rank 1 is the *best* candidate and putting it in MONOTONE_UP
-    would constrain it backwards. findings.md §4 and future-work.md both called this "a one-line
+    would constrain it backwards. findings.md §4 and the future-work list both called this "a one-line
     change to MONOTONE_UP"; it never could have been."""
     from src.train import MONOTONE_DOWN, monotone_constraints_tuple
 

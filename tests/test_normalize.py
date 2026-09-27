@@ -38,7 +38,7 @@ def test_ligatures_are_a_known_gap():
 
     Pinned rather than fixed: there are zero such names in the 1.4M-row iNat index, and changing
     normalisation would invalidate every cached feature the frozen models were trained against.
-    Recorded in docs/future-work.md instead of silently left as a surprise."""
+    Pinned here instead of silently left as a surprise."""
     assert normalize_name("Sedum bæticum").specific_epithet is None
     assert normalize_name("Æthusa cynapioides").normalized == ""
     assert normalize_name("Sedum baeticum").specific_epithet == "baeticum"

@@ -50,7 +50,7 @@ MONOTONE_UP = {"jaro_winkler_full", "shared_ancestor_depth", "kingdom_match"}
 # seeing the number it excludes is the failure mode writing it down beforehand exists to prevent.
 #
 # The *mechanism* stays, because that part was a real bug rather than a tuning choice:
-# findings.md §4 and future-work.md both call this "a one-line change to MONOTONE_UP", and it
+# findings.md §4 and the future-work list both called this "a one-line change to MONOTONE_UP", and it
 # never could have been. sim_rank_in_group is built with rank(ascending=False), so rank 1 is the
 # **best** candidate and the feature is inversely related to quality — putting it in MONOTONE_UP
 # would have constrained it backwards, and monotone_constraints_tuple() could emit only 1 or 0, so

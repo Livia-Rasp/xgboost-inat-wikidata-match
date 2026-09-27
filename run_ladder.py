@@ -2,8 +2,9 @@
 
 Spec §7 milestone 15 releases the model freeze and retrains. It does so as a *ladder* — one
 registered version per change — rather than one combined retrain, so that every delta is
-attributable to the thing that caused it. `docs/future-work.md` asks for exactly this for the
-monotone-constraint change: *"a deliberate, fully-rescored comparison ... rather than a patch"*.
+attributable to the thing that caused it. The future-work list asked for exactly this for the
+monotone-constraint change: *"a deliberate, fully-rescored comparison ... rather than a patch"*
+(`docs/findings.md` §10).
 
 Each rung is one commit plus one invocation of this script at that commit:
 

@@ -106,8 +106,8 @@ and writes its output locally. Nothing is written back.
 **Deferred, with the direction inverted:** when this is built, `wikidata-inat-checker` should call
 a scoring service exposed by this repo, rather than this repo pushing rows into its database.
 That keeps the model's deployment surface here, where the registry and the feature code are, and
-keeps the checker's database owned by exactly one writer. Recorded in `docs/future-work.md`; not
-settled.
+keeps the checker's database owned by exactly one writer. Recorded in the maintainer's planning
+notes; not settled.
 
 ### 2.5 Everything lands in this repo
 
@@ -409,9 +409,9 @@ here with its reason rather than silently built differently.
    public endpoint), so a `@weekly` run would do nothing unless it *forced* a re-pull. A forced
    re-pull changes the training population — new P3151 statements, including the ones added by
    hand while labelling the gold set — and a retrain would then move code and data at once. The
-   point of this milestone, and of everything in `future-work.md` that was deferred until it
-   lands, is to measure one change at a time against the champion. Data therefore moves only when
-   someone decides it should. Everything downstream of ingest stays asset-triggered.
+   point of this milestone, and of all the future work that was deferred until it lands, is to
+   measure one change at a time against the champion. Data therefore moves only when someone
+   decides it should. Everything downstream of ingest stays asset-triggered.
 2. **The repository is bind-mounted into the Airflow containers** (read-only; `data/` read-write),
    rather than copied into the image. The working loop is *edit → trigger → compare in MLflow*,
    and baking the code in would put a multi-gigabyte image rebuild between every edit and its
@@ -455,8 +455,7 @@ here with its reason rather than silently built differently.
    retrain does not have to wait — though §9 also records one *pre-existing* pandas-side bug that
    milestone 15's retrain is the right moment to fix, since fixing it changes the features.
 3. **Whether the gold labeling kit moves from HTML scraping to the checker's JSON API** (§4.6).
-   Cheap, and removes a markup contract both repos currently defend — but it touches the workflow
-   that produced milestones 7–9's numbers, so it is not free.
+   Still open; moved to the maintainer's planning notes with the rest of the future work.
 4. ~~**What `score_ambiguous` should do with its output** until the write-back direction in §2.4
    is settled.~~ Settled when milestone 16 began: a local parquet only. The QuickStatements file
    overlapped with milestone 10 and moved there.

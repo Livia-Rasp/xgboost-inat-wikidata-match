@@ -8,7 +8,10 @@ iNaturalist taxa, built on data from
 
 Vault note: `XGBoost iNat Wikidata Match` in knowledge vault. Project-level ToDos
 live there, not here — query with `vault_tasks` / `vault_overview` (`winged-eye-obsidian` MCP,
-read-only; never write to the vault).
+read-only). **Plans are vault plan notes** under `Plans/XGBoost iNat Wikidata Match/`, titled
+`XGBoost iNat Wikidata Match – <Topic>` — the *Future Work* note holds what `docs/future-work.md`
+used to, plus milestones 10 and 12; `vault_search` finds them. Edit plan notes directly as part of
+the work they plan, and commit them in the vault separately; never write any other vault note.
 
 ## The spec
 
@@ -410,8 +413,8 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   scale the same change is worth 0.03pp (99.15% → 99.12%), which is why it hid for so long.
   `src/train.py`'s `__main__` now prints both so the difference stays auditable. Finding 1
   (extending `MONOTONE_UP`) stays parked deliberately: adopting it means retraining, which breaks
-  the model freeze every published number is quoted against — moved to `docs/future-work.md` as a
-  fully-rescored comparison rather than a patch.
+  the model freeze every published number is quoted against — moved to future work (now the
+  vault's *Future Work* plan note) as a fully-rescored comparison rather than a patch.
 
   **Final numbers at n=263** (263/883 sampled items answered, A-Z after milestone 8):
   binary 98.70%/0.9935 top-1/MRR, rank 97.83%/0.9891, baseline 20.91%; non-trivial-by-rank subset
@@ -450,7 +453,8 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   labeling HTML's per-row copy button (easy to miss rows, no consolidated record of what was
   submitted). Will read `gold/hard_cases.csv`'s confirmed matches (`label == 1`) and write one
   `{qid}\tP3151 "{inatId}"` line each to a `.qs` file for a single QuickStatements paste.
-  Now tracked in `docs/future-work.md` rather than here, since the study itself is closed.
+  Now tracked in the vault's *Future Work* plan note rather than here, since the study itself is
+  closed.
 
 - **README figures (milestone 11)** — `build_figures.py` at the repo root writes six PNGs to
   `docs/img/` (three figures × light/dark, embedded through `<picture>` so GitHub serves the
@@ -1090,7 +1094,7 @@ Needs the venv for all of the below (`pandas`/`pyarrow`/`requests`/`rapidfuzz`/`
   and a ligature (`æ`/`œ`/`ß`) is not decomposed by NFKD, so it fails the genus/epithet character
   classes and the name parses empty or loses its epithet. There are zero such names in the 1.4M-row
   iNat index and changing normalisation would invalidate every cached feature the frozen models
-  trained against, so it is recorded in `docs/future-work.md` instead.
+  trained against, so it is recorded in the vault's *Future Work* plan note instead.
 
 - **Fixtures for the five-minute path** — `build_fixtures.py` regenerates
   `tests/fixtures/gold_*.csv.gz` + `oof_summary.json` from the full caches, so
@@ -1143,9 +1147,10 @@ Python, per the spec's §0 repo shape (`src/`, `pyproject.toml`, `data/` gitigno
 **Where prose goes.** `README.md` is the 90-second read: what the classifier decides, the results
 table, the three figures, the label-noise section, a milestone table, limitations, and the two run
 paths. Reasoning and investigation go to `docs/findings.md`; the motivating Absidia narrative to
-`docs/motivation.md`; anything deliberately not done to `docs/future-work.md`; the design of the
-platform milestones (13-16) — tool versions and why, the audit of the existing pipeline, and the
-alternatives that were rejected — to `docs/platform-design.md`. This file stays the
+`docs/motivation.md`; the design of the platform milestones (13-16) — tool versions and why, the
+audit of the existing pipeline, and the alternatives that were rejected — to
+`docs/platform-design.md`. Anything deliberately not done yet is intent, not a description of the
+code, so it goes to the vault's *Future Work* plan note rather than into `docs/`. This file stays the
 engineering log — long is fine here, not there. The README also declares that the code was written
 with Claude Code as a pair programmer; keep that line, it is the honest framing.
 
